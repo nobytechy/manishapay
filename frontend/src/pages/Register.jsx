@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { Zap } from 'lucide-react';
 
 export default function Register() {
   const { signUp } = useAuth();
@@ -35,10 +34,10 @@ export default function Register() {
   return (
     <div className="grid min-h-screen place-items-center bg-slate-950 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand text-slate-950"><Zap size={20}/></div>
+        <Link to="/" className="mb-8 flex items-center justify-center gap-2.5 hover:opacity-90">
+          <img src="/logo.svg" alt="ManishaPay" className="h-10 w-10 rounded-lg shadow-glow"/>
           <span className="text-lg font-semibold text-slate-100">ManishaPay</span>
-        </div>
+        </Link>
         <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-card">
           <h1 className="text-lg font-semibold text-slate-100">Create your account</h1>
           <Input label="Full name" value={fullName} onChange={(e)=>setFullName(e.target.value)} required/>

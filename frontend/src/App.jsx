@@ -5,6 +5,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import GetStarted from './pages/GetStarted';
 
 import Overview from './pages/developer/Dashboard';
 import Projects from './pages/developer/Projects';
@@ -40,6 +41,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/get-started" element={<GetStarted />} />
+      <Route path="/docs" element={<GetStarted />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 

@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "ManishaPay",
+    "description": "Reference collection for the ManishaPay middleware. Set the {{api_base}} and {{api_key}} variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "f8b9d3c0-1a2e-4d44-a5e9-9c7c3a8e1b00"
+  },
+  "variable": [
+    { "key": "api_base", "value": "http://localhost:8787" },
+    { "key": "api_key", "value": "mp_test_REPLACE_ME" },
+    { "key": "reference", "value": "INV-001" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{api_key}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{api_base}}/health", "host": ["{{api_base}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Health (deep)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{api_base}}/health/deep", "host": ["{{api_base}}"], "path": ["health", "deep"] }
+      }
+    },
+    {
+      "name": "Pay — initiate",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/pay", "host": ["{{api_base}}"], "path": ["v1", "pay"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"{{reference}}\",\n  \"amount\": \"10.00\",\n  \"description\": \"Pro plan\",\n  \"email\": \"buyer@test.com\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Pay — express (Ecocash)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/pay", "host": ["{{api_base}}"], "path": ["v1", "pay"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"{{reference}}\",\n  \"amount\": \"5.00\",\n  \"method\": \"ecocash\",\n  \"phone\": \"0772123456\",\n  \"email\": \"buyer@test.com\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Pay — status",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{api_base}}/v1/pay/{{reference}}/status",
+          "host": ["{{api_base}}"],
+          "path": ["v1", "pay", "{{reference}}", "status"]
+        }
+      }
+    },
+    {
+      "name": "Tools — hash",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/tools/hash", "host": ["{{api_base}}"], "path": ["v1", "tools", "hash"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fields\": {\n    \"id\": \"12345\",\n    \"reference\": \"{{reference}}\",\n    \"amount\": \"10.00\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Tools — decimal",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/tools/decimal", "host": ["{{api_base}}"], "path": ["v1", "tools", "decimal"] },
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": \"2,00\"\n}" }
+      }
+    },
+    {
+      "name": "Tools — phone",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/tools/phone", "host": ["{{api_base}}"], "path": ["v1", "tools", "phone"] },
+        "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+263 77 212 3456\"\n}" }
+      }
+    },
+    {
+      "name": "Tools — mock pay",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/tools/mock/pay", "host": ["{{api_base}}"], "path": ["v1", "tools", "mock", "pay"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"mock-1\",\n  \"amount\": \"1.00\"\n}"
+        }
+      }
+    }
+  ]
+}

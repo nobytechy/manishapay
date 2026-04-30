@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="mp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#mp-grad)"/>
+  <!-- Stylised "M" with a forward arrow built into its right leg, evoking
+       movement / payments flowing. White on emerald gradient. -->
+  <path d="M14 46 V18 h6 l8 14 8 -14 h6 v28 h-6 V28 l-8 14 -8 -14 v18 z"
+        fill="#ffffff" opacity="0.96"/>
+  <path d="M44 32 h6 l-3 -4 m3 4 l-3 4"
+        stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+</svg>

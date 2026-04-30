@@ -1,0 +1,4 @@
+.pnbc-wrap .form-table th { width: 180px; }
+.pnbc-wrap code { background: #f6f7f7; padding: 2px 6px; border-radius: 3px; }
+#pnbc-test-result.ok  { color: #10b981; font-weight: 600; }
+#pnbc-test-result.err { color: #e43d5e; font-weight: 600; }

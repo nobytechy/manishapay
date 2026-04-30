@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────
+# ManishaPay — production .htaccess for the React SPA on cPanel/Apache.
+# Drop this file in public_html/ alongside the contents of frontend/dist.
+# ─────────────────────────────────────────────────────────────────────
+
+# ─── HTTPS redirect ──────────────────────────────────────────────────
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ─── SPA fallback ─────────────────────────────────────────────────────
+# If the request isn't for an existing file or directory, serve index.html
+# so React Router can take over.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+
+# ─── Compression ──────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json application/xml image/svg+xml font/woff2
+</IfModule>
+
+# ─── Caching ──────────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# Hashed asset filenames are immutable; tell browsers so.
+<FilesMatch "\.(js|css|woff2|svg|png|jpg|jpeg|webp)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+<FilesMatch "index\.html$">
+  Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>
+
+# ─── Security headers ─────────────────────────────────────────────────
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://api.manishapay.dev http://localhost:8787;"
+</IfModule>
+
+# ─── Block sensitive files ───────────────────────────────────────────
+<FilesMatch "\.(env|log|sql|md|sh|gitignore)$">
+  Require all denied
+</FilesMatch>
+
+# ─── MIME ────────────────────────────────────────────────────────────
+AddType application/javascript .mjs
+AddType image/svg+xml .svg
+
+# ─── Disable directory listing ───────────────────────────────────────
+Options -Indexes

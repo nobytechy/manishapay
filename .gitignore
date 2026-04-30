@@ -1,0 +1,39 @@
+# ── Dependencies ─────────────────────────────────────────────────────────
+node_modules/
+vendor/
+
+# ── Build output ─────────────────────────────────────────────────────────
+dist/
+build/
+.vite/
+
+# ── Secrets — never commit ──────────────────────────────────────────────
+# All .env variants are gitignored; only .env.example is checked in.
+.env
+.env.*
+!.env.example
+!.env.production.example
+backend/.env*
+!backend/.env.example
+frontend/.env*
+!frontend/.env.example
+!frontend/.env.production.example
+
+# ── Logs / temporary files ──────────────────────────────────────────────
+*.log
+*.zip
+*.tar.gz
+.DS_Store
+Thumbs.db
+
+# ── Editor / IDE ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Test coverage / cache ───────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Claude / dev scratch ────────────────────────────────────────────────
+.claude/

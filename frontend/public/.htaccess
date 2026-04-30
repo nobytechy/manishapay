@@ -1,0 +1,35 @@
+# SPA deep-link fallback for cPanel (Apache). Any path that doesn't match
+# a real file/dir gets index.html so React Router can take over.
+#
+# Important: paths under /api/ are NOT rewritten — those are handled by
+# the cPanel Node.js app (you'll set this up via cPanel → "Setup Node.js
+# App" → Application URL: pay.aizim.co.zw/api).
+RewriteEngine On
+RewriteBase /
+
+# Don't rewrite the API path; let cPanel's Passenger handle it.
+RewriteCond %{REQUEST_URI} ^/api(/|$) [NC]
+RewriteRule .* - [L]
+
+# Don't rewrite real files or directories.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule .* - [L]
+
+# Everything else → SPA entry.
+RewriteRule . /index.html [L]
+
+# Long cache for hashed asset bundles.
+<FilesMatch "\.(js|css|svg|woff2?|ttf|otf)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# Short cache for the entry HTML so deploys land immediately.
+<FilesMatch "^index\.html$">
+  Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>
+
+# Reasonable security defaults for a payments dashboard host.
+Header set X-Content-Type-Options "nosniff"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set X-Frame-Options "SAMEORIGIN"

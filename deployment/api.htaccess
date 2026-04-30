@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────
+# ManishaPay — .htaccess for the API subdomain (api.yourdomain.com).
+# Use this if you're proxying the Node app via mod_proxy on cPanel,
+# rather than the Passenger / Node Setup approach.
+# ─────────────────────────────────────────────────────────────────────
+
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Proxy to local Node app on 127.0.0.1:8787
+RewriteCond %{HTTP:Upgrade} websocket [NC]
+RewriteRule .* ws://127.0.0.1:8787%{REQUEST_URI} [P,L]
+RewriteRule ^(.*)$ http://127.0.0.1:8787/$1 [P,L]
+
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "no-referrer"
+</IfModule>
+
+# Lock the gateway down to JSON callers — block known scrapers
+<IfModule mod_setenvif.c>
+  SetEnvIfNoCase User-Agent "(libwww-perl|MJ12bot|AhrefsBot|SemrushBot)" bad_bot
+  Deny from env=bad_bot
+</IfModule>

@@ -1,0 +1,21 @@
+{
+  "name": "manishapay/manishapay",
+  "description": "Official PHP SDK for ManishaPay — PayNow Zimbabwe middleware",
+  "type": "library",
+  "license": "MIT",
+  "keywords": ["paynow", "zimbabwe", "ecocash", "payments", "manishapay"],
+  "authors": [
+    { "name": "Noby Tebulo", "homepage": "https://noby.aizim.co.zw" }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ManishaPay\\": "src/"
+    }
+  },
+  "homepage": "https://pay.aizim.co.zw"
+}

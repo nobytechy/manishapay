@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  /* Default focus ring matches the brand colour */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-slate-950;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-slate-800 bg-slate-900/60 p-5 shadow-card;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-slate-950 hover:bg-brand-dark hover:text-white disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply btn border border-slate-700 text-slate-200 hover:bg-slate-800;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-rose-600;
+  }
+  .skeleton {
+    @apply rounded-md bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%] animate-shimmer;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+  .badge-success {
+    @apply badge bg-emerald-500/10 text-emerald-400;
+  }
+  .badge-warn {
+    @apply badge bg-amber-500/10 text-amber-400;
+  }
+  .badge-danger {
+    @apply badge bg-rose-500/10 text-rose-400;
+  }
+}

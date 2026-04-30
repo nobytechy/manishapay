@@ -13,6 +13,11 @@
 **Live:** [pay.aizim.co.zw](https://pay.aizim.co.zw) ·
 **Author:** [Noby Tebulo](https://noby.aizim.co.zw)
 
+📚 **Companion docs:**
+- [`HANDOFF.md`](HANDOFF.md) — first-time deploy runbook (the 4 things only you can do)
+- [`OPERATIONS.md`](OPERATIONS.md) — day-to-day operator manual (managing devs, transactions, billing, master-key rotation, support playbook)
+- [`docs/API.md`](docs/API.md) · [`docs/ERRORS.md`](docs/ERRORS.md) · [`docs/INTEGRATION.md`](docs/INTEGRATION.md) — public API reference
+
 ---
 
 ## What you get

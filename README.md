@@ -99,26 +99,100 @@ The same `mp_test_*` key now hits real PayNow with your test integration. Switch
 
 ## Local development
 
+Local dev runs on two ports — neither conflicts with XAMPP's Apache (80) or
+MySQL (3306), so you can keep aizim running alongside.
+
+### Local URLs
+
+| Service | URL | What runs |
+|---|---|---|
+| **Frontend SPA** | `http://localhost:5173` | Vite dev server — hot reload, source maps |
+| **Backend API** | `http://localhost:8787` | Express + the simulator HTML page |
+| **Simulator** | `http://localhost:8787/simulator/<tracker>` | Backend serves the page; click Paid/Cancelled/Timeout to fire webhooks |
+| **Drop-in widget** | `http://localhost:5173/checkout.js` | Same file as production |
+| **Health check** | `http://localhost:8787/health` | `{ ok: true, configured: true }` |
+
+### Setup (one-time)
+
 ```bash
 # 0. Apply the schema on your Supabase project (once):
 #    Open Supabase Studio → SQL Editor → paste supabase/install.sql → Run
 
-# 1. Backend env
+# 1. Backend
 cd backend
 cp .env.example .env.local
 # Fill in: SUPABASE_URL, SUPABASE_SERVICE_ROLE, SUPABASE_ANON_KEY, JWT_SECRET,
-# PAYNOW_RETURN_URL, PAYNOW_RESULT_URL, MANISHAPAY_MASTER_KEY (= openssl rand -hex 32)
+# PAYNOW_RETURN_URL, PAYNOW_RESULT_URL, MANISHAPAY_MASTER_KEY (= openssl rand -hex 32),
+# SIMULATOR_BASE_URL=http://localhost:8787,
+# ALLOW_CORS_ORIGINS=http://localhost:5173
 npm install
 npm test              # 21 tests should pass
-npm run dev           # starts on :8787
 
-# 2. Frontend env
+# 2. Frontend
 cd ../frontend
 cp .env.example .env
-# Fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON, VITE_API_BASE
+# VITE_SUPABASE_URL=https://your-project.supabase.co
+# VITE_SUPABASE_ANON=eyJ...
+# VITE_API_BASE=http://localhost:8787
 npm install
-npm run dev           # starts on :5173
 ```
+
+### Daily start (two terminals)
+
+```bash
+# Terminal 1 — backend (auto-restarts on save)
+cd backend && npm run dev
+
+# Terminal 2 — frontend (hot module reload)
+cd frontend && npm run dev
+```
+
+Then open http://localhost:5173 — sign up, get a test key, hit the API
+either via the dashboard's tools page or curl:
+
+```bash
+curl -X POST http://localhost:8787/v1/pay \
+  -H "Authorization: Bearer mp_test_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"reference":"local-1","amount":"5.00"}'
+```
+
+### What works on bad internet
+
+| Action | Needs internet? |
+|---|---|
+| Frontend code editing + hot reload | ❌ no — Vite is fully local once `npm install`ed |
+| Backend code editing + nodemon restart | ❌ no — same |
+| `npm test` (the 21 unit tests) | ❌ no — hash, crypto, normalizers all offline |
+| Sign up / log in | ✅ yes — Supabase Auth is cloud-only |
+| Simulated `POST /v1/pay` | ⚠️ tiny burst — one Supabase round-trip per call (~10 KB) |
+| Click outcome on simulator → fire webhook | ⚠️ depends — if your webhook endpoint is also localhost, fully offline |
+| Real PayNow test/live transaction | ✅ yes — has to reach paynow.co.zw |
+
+**Bottom line:** if you can sign in once at the start of the day, the
+session cookie auto-refreshes hourly and you can dev through brief
+connectivity gaps. Simulated mode + tests + UI work give you ~80% of
+the dev loop offline.
+
+### Tunneling localhost for real PayNow webhooks
+
+PayNow can't POST to `localhost:8787`. To test the real PayNow → your
+laptop webhook path:
+
+```bash
+# Option A: Cloudflare Tunnel (no signup, fastest)
+cloudflared tunnel --url http://localhost:8787
+
+# Option B: ngrok
+ngrok http 8787
+```
+
+Either gives you a public `https://xxx.trycloudflare.com` URL. Set it as
+your `PAYNOW_RESULT_URL` (env) and the project's `result_url` (dashboard).
+Real PayNow callbacks now reach your laptop.
+
+For simulated mode you don't need any of this — both the simulator and
+webhook delivery run on localhost.
 
 ## Architecture: where the money flows
 

@@ -105,7 +105,11 @@ const partnerPoints = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
+      {/* Page-wide animated tech backdrop — sits behind every section */}
+      <TechBackdrop />
+
+      <div className="relative z-10">
       {/* ── Header ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -133,7 +137,6 @@ export default function Landing() {
       {/* ── Hero ────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-40 mx-auto h-[480px] max-w-5xl bg-brand/10 blur-3xl"/>
-        <TechBackdrop />
         <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-20 text-center">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
@@ -466,6 +469,7 @@ export default function Landing() {
           for the PayNow Zimbabwe community
         </div>
       </footer>
+      </div>
     </div>
   );
 }

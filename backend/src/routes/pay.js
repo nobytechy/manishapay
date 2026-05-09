@@ -66,8 +66,11 @@ router.post('/', async (req, res, next) => {
 
     const merchantAmount = paynow.normalizeAmount(parsed.data.amount);
 
-    // Persist the transaction. Failures are logged but don't block the
-    // response — the merchant already has a working redirect URL.
+    // Persist the transaction. Must succeed — without the row, downstream
+    // routes (/simulator/:tracker, /v1/webhook, /v1/pay/:ref/status) all
+    // 404 because they look up by tracker / reference. Previously this was
+    // a warn-and-continue, which meant the API would return a fake-success
+    // response with a tracker that didn't exist in the database.
     const { error: insertErr } = await supabase.from('manishapay_transactions').insert({
       developer_id: req.developer.id,
       project_id: project.id,
@@ -84,8 +87,14 @@ router.post('/', async (req, res, next) => {
       request_id: req.id,
       billable: result.mode !== 'simulated', // simulated transactions don't count toward billing
     });
-    if (insertErr && req.log) {
-      req.log.warn({ err: insertErr }, 'transaction insert failed');
+    if (insertErr) {
+      if (req.log) req.log.error({ err: insertErr }, 'transaction insert failed');
+      throw new AppError({
+        status: 500,
+        code: 'TRANSACTION_INSERT_FAILED',
+        message: insertErr.message || 'Failed to persist transaction',
+        detail: insertErr.details || insertErr.hint || null,
+      });
     }
 
     res.status(201).json({

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, ShieldCheck, Workflow, Code2, Rocket, CheckCircle2, Terminal,
   Zap, Lock, Globe, Webhook, BarChart3, Smartphone, Github, Mail, ExternalLink,
-  Layers, Wallet, Server, Sparkles,
+  Layers, Wallet, Server, Sparkles, FlaskConical, MessageSquare,
 } from 'lucide-react';
 import TechBackdrop from '../components/landing/TechBackdrop';
 
@@ -94,6 +94,45 @@ const faqs = [
   },
 ];
 
+const forumIssues = [
+  {
+    title: 'Hash mismatch on amount format',
+    forumQuote: '"Invalid Hash. Hash should start with: 0395E9"',
+    problem: 'PayNow expects amounts as exactly two decimals. Send "5" or "5.5" with your own hash and PayNow\'s server-side recomputation will never match yours.',
+    fix: 'Server-side amount normalisation before hash compute. You send "5", we send "5.00". No mismatch.',
+  },
+  {
+    title: 'Mobile OTP never fires',
+    forumQuote: '"…customer enters their PIN and transaction is not going through…"',
+    problem: 'Zimbabweans type "0771234567"; PayNow\'s mobile-money endpoints (Ecocash, OneMoney) need "+263…" to fire the OTP gateway.',
+    fix: 'Phone normaliser maps every common local form (077…, 263…, +263…) to the canonical format before forwarding.',
+  },
+  {
+    title: 'Method "" is not recognized',
+    forumQuote: '"Initiate Payment Error: The method \'\' is not recognized" (WooCommerce, Sept 2025)',
+    problem: 'Plugins occasionally pass an empty or stale method string, breaking checkout mid-flow.',
+    fix: 'Method validated on the API edge against PayNow\'s real channel codes. Empty values fall back to web redirect instead of failing.',
+  },
+  {
+    title: 'Status not reflecting in your DB',
+    forumQuote: '"Status not reflecting in database when using mobile transactions sandbox" (Nov 2025)',
+    problem: 'Customer pays but your DB stays "pending" — webhook lost, hash verification failing silently, or your endpoint timed out.',
+    fix: 'HMAC-SHA256 signed webhooks with timestamp, exponential-backoff retry, and a full delivery log per project. Manual replay on demand.',
+  },
+  {
+    title: 'Test-mode auth email mismatch',
+    forumQuote: '"…authemail must match the merchants registered email address" (recurring on WooCommerce)',
+    problem: 'Plugins forward the customer\'s email as authemail; PayNow rejects in test mode unless it\'s the merchant\'s registered address.',
+    fix: 'Auto-swaps to the project-registered email in test mode. Customer email is still recorded, just not forwarded as authemail.',
+  },
+  {
+    title: 'ReturnUrl format errors',
+    forumQuote: '"Initiate Payment Error: The ReturnUrl must start with http:// or https://" (Apr 2025)',
+    problem: 'Trailing whitespace, missing scheme, or relative paths fail PayNow\'s validation at runtime — meaning your customer is the one who sees the error.',
+    fix: 'URL format validation in the dashboard at save time. Misconfiguration fails fast, never at checkout.',
+  },
+];
+
 const partnerPoints = [
   { icon: Layers, title: 'White-label option',
     body: 'For agencies and platforms — host the dashboard under your own domain, your branding, your support. ManishaPay handles the PayNow plumbing underneath.' },
@@ -119,6 +158,7 @@ export default function Landing() {
           </Link>
           <nav className="flex items-center gap-1 text-sm md:gap-3">
             <a href="#features" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Features</a>
+            <a href="#forum" className="hidden lg:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Forum fixes</a>
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
             <a href="#security" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Security</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
@@ -208,6 +248,60 @@ export default function Landing() {
               <p className="text-sm leading-relaxed text-slate-400">{body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Forum issues, fixed ─────────────────────────────── */}
+      <section id="forum" className="relative mx-auto max-w-6xl px-6 pb-24">
+        <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
+          From the PayNow forums
+        </h2>
+        <p className="mb-3 text-center text-3xl font-semibold tracking-tight md:text-4xl">
+          Real threads. Real errors. Solved at the middleware layer.
+        </p>
+        <p className="mx-auto mb-10 max-w-2xl text-center text-slate-400">
+          These show up monthly on{' '}
+          <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">
+            forums.paynow.co.zw
+          </a>
+          . Every one of them is fixed once at the integration layer — your code never has to think about them again. Each one has a one-click preset in the in-dashboard Sandbox so you can verify the fix yourself.
+        </p>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {forumIssues.map(({ title, forumQuote, problem, fix }) => (
+            <div
+              key={title}
+              className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-brand/40 hover:bg-slate-900"
+            >
+              <div className="mb-2 flex items-center gap-2 text-brand-300">
+                <MessageSquare size={14}/>
+                <span className="text-xs font-semibold uppercase tracking-wider">Forum thread</span>
+              </div>
+              <h3 className="font-semibold text-slate-100">{title}</h3>
+              <p className="mt-1 text-xs italic text-slate-500">{forumQuote}</p>
+
+              <div className="mt-4 space-y-3 text-sm leading-relaxed">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-300">Without ManishaPay</p>
+                  <p className="mt-0.5 text-slate-400">{problem}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
+                  <p className="mt-0.5 text-slate-300">{fix}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            to="/register"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
+          >
+            <FlaskConical size={18}/> Try every scenario in the Sandbox
+          </Link>
+          <span className="text-sm text-slate-500">Free · no PayNow account required to test</span>
         </div>
       </section>
 

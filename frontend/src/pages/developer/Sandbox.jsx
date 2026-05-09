@@ -1,5 +1,5 @@
 /**
- * /app/sandbox — in-dashboard end-to-end test harness for developers.
+ * /app/sandbox — in-dashboard end-to-end test harness.
  *
  * Lets a developer:
  *   1. Send a fake `/v1/pay` request using their currently-active API key
@@ -7,6 +7,8 @@
  *      directly from this page — no new tab needed
  *   3. See live status updates and a session history of recent tests
  *   4. Copy tracker / browser_url to clipboard for any external SDK testing
+ *   5. Reproduce common PayNow forum errors with one-click presets to verify
+ *      ManishaPay's middleware fixes them transparently
  *
  * Replaces the curl-based smoke test described in HANDOFF.md.
  */
@@ -15,10 +17,78 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   Play, ExternalLink, CheckCircle2, XCircle, Clock, Copy, KeyRound, RefreshCw,
+  FlaskConical, Lightbulb, AlertCircle,
 } from 'lucide-react';
 import { api, getActiveKey } from '../../lib/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+// ── Forum-driven scenarios ───────────────────────────────────────
+// Each one mirrors a real recurring thread on https://forums.paynow.co.zw —
+// load the preset, send a payment, and observe how ManishaPay handles the
+// pain point that catches direct PayNow integrators.
+const SCENARIOS = [
+  {
+    id: 'hash-mismatch',
+    title: 'Decimal-format hash mismatch',
+    forumQuote: '"Invalid Hash. Hash should start with: 0395E9"',
+    explanation:
+      'PayNow expects amounts formatted as exactly two decimal places. Send "5" or "5.5" with your own hash and PayNow\'s server-side recomputation will not match — you get the dreaded "Invalid Hash" error.',
+    fix:
+      'ManishaPay normalises the amount to two decimals before computing the hash. This preset fills the form with "5"; ManishaPay sends "5.00" to PayNow. No mismatch.',
+    preset: { amount: '5', phone: '', method: '' },
+  },
+  {
+    id: 'phone-format',
+    title: 'Mobile OTP never fires (phone format)',
+    forumQuote: '"…OTP from PayNow is not coming…"',
+    explanation:
+      'Zimbabwean customers usually type "0771234567", but PayNow\'s mobile-money endpoints (Ecocash, OneMoney) need the international format "+263771234567" before they\'ll fire the OTP prompt.',
+    fix:
+      'ManishaPay\'s phone normaliser maps every common local form (077…, 263…, +263…) into the canonical "+263…" before forwarding. This preset fills "0771111111"; the actual API request sends "+263771111111".',
+    preset: { amount: '1.00', phone: '0771111111', method: 'ecocash' },
+  },
+  {
+    id: 'method-validation',
+    title: 'Method "" is not recognized',
+    forumQuote: '"Initiate Payment Error: The method \'\' is not recognized" (WooCommerce, Sept 2025)',
+    explanation:
+      'PayNow accepts a fixed set of channel codes (ecocash, onemoney, innbucks, omari, zimswitch, vmc). Sending anything else — including the empty string a WooCommerce plugin can produce — yields this error mid-checkout.',
+    fix:
+      'ManishaPay validates the method on the API edge and only forwards known values. An empty method falls back to the standard web-redirect flow (PayNow\'s express checkout) instead of failing.',
+    preset: { amount: '1.00', phone: '', method: '' },
+  },
+  {
+    id: 'status-not-reflecting',
+    title: 'Status not reflecting after payment',
+    forumQuote: '"Status not reflecting in database when using mobile transactions" (Nov 2025)',
+    explanation:
+      'Customers complete payment but your database stays "pending" — usually because the webhook from PayNow never reaches your server, or your hash verification on the callback fails.',
+    fix:
+      'ManishaPay signs every webhook with HMAC-SHA256 and a timestamp, retries failed deliveries with exponential backoff, and exposes the full delivery log on the Webhooks page. After you click "Mark Paid" below, check Webhooks → Deliveries to see the signed POST.',
+    preset: { amount: '2.50', phone: '', method: '' },
+  },
+  {
+    id: 'test-email-mismatch',
+    title: 'Auth email must match merchant email (test mode)',
+    forumQuote: '"…The integration ID is in test mode, so if authemail is specified then it must match the merchants registered email address" (Sept 2025)',
+    explanation:
+      'PayNow\'s test mode rejects any "authemail" value that isn\'t the registered merchant email. A WooCommerce plugin that auto-passes the customer\'s email triggers this every time on a test integration.',
+    fix:
+      'ManishaPay swaps in the project-registered email automatically when a test-mode key is in use, so customer-supplied emails are recorded but not forwarded as authemail. You can pass any email here without breaking the test flow.',
+    preset: { amount: '3.00', email: 'random-customer@example.com', phone: '', method: '' },
+  },
+  {
+    id: 'return-url',
+    title: 'ReturnUrl must start with http://',
+    forumQuote: '"Initiate Payment Error: The ReturnUrl must start with http:// or https://" (Apr 2025)',
+    explanation:
+      'A trailing whitespace, missing scheme, or relative path in the ReturnUrl causes PayNow to reject the request before the customer ever sees a checkout page.',
+    fix:
+      'ManishaPay\'s project settings validate URL format on save, and the per-call return_url is sanity-checked before forwarding. Misconfiguration fails fast, in the dashboard, not at customer checkout.',
+    preset: { amount: '1.00', phone: '', method: '' },
+  },
+];
 
 function autoReference() {
   const now = new Date();
@@ -36,10 +106,10 @@ function autoReference() {
 
 function StatusPill({ status }) {
   const map = {
-    pending: { cls: 'bg-amber-500/10 text-amber-300 border-amber-500/30', icon: Clock,        label: 'Pending' },
-    paid:    { cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', icon: CheckCircle2, label: 'Paid' },
-    cancelled:{ cls: 'bg-rose-500/10 text-rose-300 border-rose-500/30',   icon: XCircle,      label: 'Cancelled' },
-    timeout: { cls: 'bg-slate-500/10 text-slate-300 border-slate-500/30', icon: Clock,        label: 'Timeout (no webhook)' },
+    pending:   { cls: 'bg-amber-500/10 text-amber-300 border-amber-500/30',     icon: Clock,        label: 'Pending' },
+    paid:      { cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', icon: CheckCircle2, label: 'Paid' },
+    cancelled: { cls: 'bg-rose-500/10 text-rose-300 border-rose-500/30',         icon: XCircle,      label: 'Cancelled' },
+    timeout:   { cls: 'bg-slate-500/10 text-slate-300 border-slate-500/30',      icon: Clock,        label: 'Timeout (no webhook)' },
   };
   const cfg = map[status?.toLowerCase()] || map.pending;
   const Icon = cfg.icon;
@@ -54,6 +124,7 @@ function StatusPill({ status }) {
 function CopyField({ label, value }) {
   const [copied, setCopied] = useState(false);
   const onCopy = () => {
+    if (!value) return;
     navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
@@ -62,7 +133,7 @@ function CopyField({ label, value }) {
     <div>
       <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
       <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-200">
-        <span className="flex-1 truncate">{value}</span>
+        <span className="flex-1 truncate">{value || '—'}</span>
         <button
           onClick={onCopy}
           className="rounded px-1.5 py-0.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
@@ -81,12 +152,34 @@ export default function Sandbox() {
   const [amount, setAmount] = useState('1.00');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [method, setMethod] = useState('');
+  const [scenarioId, setScenarioId] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [outcomeBusy, setOutcomeBusy] = useState(null); // 'paid' | 'cancelled' | 'timeout' | null
-  const [current, setCurrent] = useState(null); // last created txn
-  const [history, setHistory] = useState([]);   // [{ tracker, reference, amount, status, browser_url, mode, createdAt }]
+  const [outcomeBusy, setOutcomeBusy] = useState(null);
+  const [current, setCurrent] = useState(null);
+  const [history, setHistory] = useState([]);
 
   const activeKey = getActiveKey();
+  const scenario = SCENARIOS.find((s) => s.id === scenarioId) || null;
+
+  const loadScenario = (s) => {
+    setScenarioId(s.id);
+    setAmount(s.preset.amount ?? amount);
+    setPhone(s.preset.phone ?? '');
+    setMethod(s.preset.method ?? '');
+    if ('email' in s.preset) setEmail(s.preset.email);
+    setReference(autoReference());
+    toast.success(`Loaded scenario: ${s.title}`, { duration: 2200 });
+  };
+
+  const clearScenario = () => {
+    setScenarioId(null);
+    setAmount('1.00');
+    setEmail('');
+    setPhone('');
+    setMethod('');
+    setReference(autoReference());
+  };
 
   const sendPayment = async (e) => {
     e?.preventDefault();
@@ -101,10 +194,10 @@ export default function Sandbox() {
     setCreating(true);
     try {
       const body = { reference: reference.trim(), amount: amount.trim() };
-      if (email.trim())   body.email   = email.trim();
-      if (phone.trim())   body.phone   = phone.trim();
+      if (email.trim())  body.email  = email.trim();
+      if (phone.trim())  body.phone  = phone.trim();
+      if (method.trim()) body.method = method.trim();
       const res = await api.pay(body);
-      // /v1/pay returns { data: {...}, requestId } — unwrap.
       const payload = res?.data || res || {};
       if (!payload.tracker) {
         throw new Error('API did not return a tracker — check Render logs.');
@@ -116,15 +209,14 @@ export default function Sandbox() {
         browser_url: payload.browser_url,
         mode: payload.mode,
         status: 'pending',
+        scenarioId,
         createdAt: new Date().toISOString(),
       };
       setCurrent(entry);
       setHistory((h) => [entry, ...h].slice(0, 8));
       toast.success(`Created — mode: ${payload.mode}`);
-      // Auto-rotate the reference for the next attempt
       setReference(autoReference());
     } catch (err) {
-      // api.js already toasts the error
       // eslint-disable-next-line no-console
       console.error('sandbox /v1/pay error', err);
     } finally {
@@ -143,15 +235,11 @@ export default function Sandbox() {
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-
-      const newStatus = outcome === 'paid' ? 'paid'
-                      : outcome === 'cancelled' ? 'cancelled'
-                      : 'timeout';
+      const newStatus = outcome === 'paid' ? 'paid' : outcome === 'cancelled' ? 'cancelled' : 'timeout';
       setCurrent((c) => c ? { ...c, status: newStatus } : c);
       setHistory((h) => h.map((entry) =>
         entry.tracker === current.tracker ? { ...entry, status: newStatus } : entry,
       ));
-
       const wd = j.webhooks_dispatched ?? 0;
       const tail = outcome === 'timeout'
         ? ' — no webhook fired (timeout simulates expiry)'
@@ -182,9 +270,13 @@ export default function Sandbox() {
   if (!activeKey) {
     return (
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-semibold text-slate-100">Sandbox</h1>
+        <div className="mb-2 flex items-center gap-2 text-brand-300">
+          <FlaskConical size={18}/>
+          <span className="text-xs font-semibold uppercase tracking-wider">Sandbox</span>
+        </div>
+        <h1 className="text-2xl font-semibold text-slate-100">Test the entire payment lifecycle, end-to-end</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Test the entire payment lifecycle without leaving the dashboard.
+          Send a fake payment, trigger any outcome, watch the webhook fire, and see the dashboard reflect the status — all without leaving this page or writing a line of curl.
         </p>
         <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">
           <div className="flex items-start gap-4">
@@ -210,22 +302,115 @@ export default function Sandbox() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-100">Sandbox</h1>
-          <p className="mt-2 max-w-xl text-sm text-slate-400">
-            Send a test payment, trigger any outcome, and see status updates — the full lifecycle without curl or a new tab.
-          </p>
+    <div className="mx-auto max-w-5xl space-y-8">
+      {/* ── Header / brief ─────────────────────────────────── */}
+      <header>
+        <div className="mb-2 flex items-center gap-2 text-brand-300">
+          <FlaskConical size={18}/>
+          <span className="text-xs font-semibold uppercase tracking-wider">Sandbox</span>
         </div>
-        <div className="rounded-md border border-slate-800 bg-slate-900/50 px-3 py-1.5 text-xs text-slate-400">
-          <span className="text-slate-500">Active key</span>{' '}
-          <code className="font-mono text-slate-200">{activeKey.slice(0, 12)}…{activeKey.slice(-4)}</code>
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl font-semibold text-slate-100">Test the entire payment lifecycle, end-to-end</h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Send a fake payment, trigger any outcome (paid / cancelled / timeout), watch a signed webhook fire, and see the dashboard reflect the status — all without leaving this page or writing a line of curl.
+            </p>
+          </div>
+          <div className="rounded-md border border-slate-800 bg-slate-900/50 px-3 py-1.5 text-xs text-slate-400">
+            <span className="text-slate-500">Active key</span>{' '}
+            <code className="font-mono text-slate-200">{activeKey.slice(0, 12)}…{activeKey.slice(-4)}</code>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {/* ── Form ───────────────────────────────────────────── */}
+        {/* "What this is for" callout */}
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <div className="mb-1 font-medium text-slate-200">Validate your integration</div>
+            Run end-to-end tests against your project key without touching real PayNow.
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <div className="mb-1 font-medium text-slate-200">Trigger every outcome</div>
+            Click Paid / Cancelled / Timeout — verify your webhook handler responds correctly.
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <div className="mb-1 font-medium text-slate-200">Reproduce forum issues</div>
+            Load presets that mirror real PayNow forum threads and see how ManishaPay handles them.
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+            <div className="mb-1 font-medium text-slate-200">Onboard teammates</div>
+            Show new devs the full lifecycle in 60 seconds — no PayNow account required.
+          </div>
+        </div>
+      </header>
+
+      {/* ── Forum scenario presets ─────────────────────────── */}
+      <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand-300">
+              <Lightbulb size={14}/> PayNow forum scenarios
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Click a card to load a preset that reproduces a real recurring issue from{' '}
+              <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">forums.paynow.co.zw</a>{' '}
+              — see how ManishaPay handles it.
+            </p>
+          </div>
+          {scenarioId && (
+            <button
+              type="button"
+              onClick={clearScenario}
+              className="text-xs text-slate-400 hover:text-slate-100"
+            >
+              Reset to defaults
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {SCENARIOS.map((s) => {
+            const active = s.id === scenarioId;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => loadScenario(s)}
+                className={`rounded-lg border p-3 text-left transition ${
+                  active
+                    ? 'border-brand/60 bg-brand/10 ring-1 ring-brand/50'
+                    : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900'
+                }`}
+              >
+                <p className="text-sm font-medium text-slate-100">{s.title}</p>
+                <p className="mt-1 line-clamp-2 text-[11px] italic text-slate-500">{s.forumQuote}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {scenario && (
+          <div className="mt-5 rounded-lg border border-brand/30 bg-brand/5 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-brand-300"/>
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-slate-100">{scenario.title}</p>
+                <p className="text-xs italic text-slate-400">From the forums: {scenario.forumQuote}</p>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-rose-300">Without ManishaPay</p>
+                  <p className="text-sm text-slate-300">{scenario.explanation}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
+                  <p className="text-sm text-slate-300">{scenario.fix}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Form + current transaction ─────────────────────── */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={sendPayment} className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-300">1 · New test payment</h2>
 
@@ -255,34 +440,46 @@ export default function Sandbox() {
                 <label className="mb-1 block text-xs font-medium text-slate-400">Amount (USD)</label>
                 <input
                   className="input"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+                  type="text"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                 />
               </div>
               <div>
+                <label className="mb-1 block text-xs font-medium text-slate-400">Method <span className="text-slate-600">(optional)</span></label>
+                <select className="input" value={method} onChange={(e) => setMethod(e.target.value)}>
+                  <option value="">Web redirect</option>
+                  <option value="ecocash">EcoCash</option>
+                  <option value="onemoney">OneMoney</option>
+                  <option value="innbucks">InnBucks</option>
+                  <option value="omari">Omari</option>
+                  <option value="zimswitch">ZimSwitch</option>
+                  <option value="vmc">Visa / Mastercard</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="mb-1 block text-xs font-medium text-slate-400">Phone <span className="text-slate-600">(optional)</span></label>
                 <input
                   className="input"
-                  placeholder="+263 77 111 1111"
+                  placeholder="0771234567"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-400">Email <span className="text-slate-600">(optional)</span></label>
-              <input
-                className="input"
-                type="email"
-                placeholder="customer@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-400">Email <span className="text-slate-600">(optional)</span></label>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="customer@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
             </div>
 
             <button
@@ -305,7 +502,6 @@ export default function Sandbox() {
           </div>
         </form>
 
-        {/* ── Current transaction + outcome buttons ──────────── */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-brand-300">2 · Current transaction</h2>
@@ -391,7 +587,7 @@ export default function Sandbox() {
 
       {/* ── Session history ──────────────────────────────────── */}
       {history.length > 0 && (
-        <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-300">3 · Recent in this session</h2>
           <div className="overflow-hidden rounded-lg border border-slate-800">
             <table className="w-full text-sm">
@@ -406,7 +602,7 @@ export default function Sandbox() {
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {history.map((h) => (
-                  <tr key={h.tracker} className="hover:bg-slate-900/40">
+                  <tr key={h.tracker || h.reference} className="hover:bg-slate-900/40">
                     <td className="px-4 py-2.5 font-mono text-xs text-slate-200">{h.reference}</td>
                     <td className="px-4 py-2.5 text-slate-300">${h.amount}</td>
                     <td className="px-4 py-2.5 text-slate-400">{h.mode}</td>

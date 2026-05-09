@@ -13,6 +13,7 @@ import {
   Megaphone,
   Activity,
   Lock,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +25,7 @@ const developerNav = [
   { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },
   { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
   { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
+  { to: '/app/sandbox', icon: FlaskConical, label: 'Sandbox' },
   { to: '/app/tools', icon: Wrench, label: 'Problem solvers' },
   { to: '/app/docs', icon: BookOpen, label: 'Documentation' },
   { to: '/app/settings', icon: Settings, label: 'Settings' },

@@ -14,6 +14,7 @@ import Credentials from './pages/developer/Credentials';
 import Webhooks from './pages/developer/Webhooks';
 import Transactions from './pages/developer/Transactions';
 import Tools from './pages/developer/Tools';
+import Sandbox from './pages/developer/Sandbox';
 import Docs from './pages/developer/Docs';
 import Settings from './pages/developer/Settings';
 
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="credentials" element={<Credentials />} />
         <Route path="webhooks" element={<Webhooks />} />
         <Route path="transactions" element={<Transactions />} />
+        <Route path="sandbox" element={<Sandbox />} />
         <Route path="tools" element={<Tools />} />
         <Route path="docs" element={<Docs />} />
         <Route path="settings" element={<Settings />} />

@@ -5,6 +5,7 @@ import {
   Webhook, Wallet, FileCode2, AlertCircle, ArrowLeft, ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BackToTop from '../components/BackToTop';
 
 /**
  * /get-started — full developer onboarding walkthrough.
@@ -495,6 +496,8 @@ export default function GetStarted() {
         </a>{' '}
         for the PayNow Zimbabwe community
       </footer>
+
+      <BackToTop />
     </div>
   );
 }

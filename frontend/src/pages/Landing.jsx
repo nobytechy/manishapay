@@ -7,6 +7,13 @@ import {
 import TechBackdrop from '../components/landing/TechBackdrop';
 import FadeInOnScroll from '../components/FadeInOnScroll';
 import WhatsAppFloating from '../components/WhatsAppFloating';
+import BackToTop from '../components/BackToTop';
+
+const scrollToTop = () => {
+  if (typeof window !== 'undefined') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
 
 const features = [
   {
@@ -146,7 +153,7 @@ const partnerPoints = [
 
 export default function Landing() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div id="top" className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Page-wide animated tech backdrop — sits behind every section */}
       <TechBackdrop />
 
@@ -159,18 +166,22 @@ export default function Landing() {
             <span className="text-lg font-semibold tracking-tight">ManishaPay</span>
           </Link>
           <nav className="flex items-center gap-1 text-sm md:gap-3">
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
+              Home
+            </button>
             <a href="#features" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Features</a>
-            <a href="#forum" className="hidden lg:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Forum fixes</a>
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
-            <a href="#security" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Security</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
             <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
-            <Link to="/login" className="rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Log in</Link>
             <Link
-              to="/register"
-              className="rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
+              to="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
             >
-              Sign up
+              Log in
             </Link>
           </nav>
         </div>
@@ -182,10 +193,10 @@ export default function Landing() {
         <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-20 text-center">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
-            PayNow Zimbabwe — middleware, done right
+            PayNow Zimbabwe-first · extensible to any payment gateway
           </p>
           <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            PayNow integrations,<br/>
+            Payment integrations,<br/>
             <span className="bg-gradient-to-r from-brand-300 via-brand to-brand-700 bg-clip-text text-transparent">
               without the headaches.
             </span>
@@ -194,6 +205,9 @@ export default function Landing() {
             Hash mismatches. Decimal-format crashes. Phone prompts that never fire. Webhooks
             you can&apos;t see. ManishaPay solves all of them at the middleware layer so your
             payment code stays five lines long.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">
+            Built first for <span className="font-medium text-slate-300">PayNow Zimbabwe</span> — the same middleware patterns now extend to other online payment gateways. Stripe, PayStack, Flutterwave, and more, on the same dashboard, same SDK shape, same webhook contract.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -218,7 +232,7 @@ export default function Landing() {
 
         {/* Stats strip */}
         <div className="relative z-10 mx-auto max-w-5xl px-6 pb-16">
-          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-800/25 bg-slate-900/20 p-6 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.l} className="text-center">
                 <div className="text-2xl font-bold tracking-tight text-brand-300 md:text-3xl">{s.v}</div>
@@ -243,7 +257,7 @@ export default function Landing() {
               <FadeInOnScroll
                 key={title}
                 delay={i * 70}
-                className="group rounded-xl border border-slate-800/50 bg-slate-900/40 p-6 transition hover:border-brand/40 hover:bg-slate-900/70"
+                className="group rounded-xl border border-slate-800/25 bg-slate-900/20 p-6 transition hover:border-brand/40 hover:bg-slate-900/70"
               >
                 <div className="mb-4 grid h-10 w-10 place-items-center rounded-lg bg-brand-gradient text-white shadow-glow">
                   <Icon size={20}/>
@@ -252,6 +266,49 @@ export default function Landing() {
                 <p className="text-sm leading-relaxed text-slate-400">{body}</p>
               </FadeInOnScroll>
             ))}
+          </div>
+        </section>
+      </FadeInOnScroll>
+
+      {/* ── Multi-gateway banner ────────────────────────────── */}
+      <FadeInOnScroll>
+        <section className="mx-auto max-w-5xl px-6 pb-24">
+          <div className="rounded-2xl border border-slate-800/25 bg-gradient-to-br from-slate-900/30 via-slate-900/10 to-brand/5 p-8 md:p-10">
+            <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-2xl">
+                <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-300">
+                  <Globe size={11}/> Multi-gateway by design
+                </p>
+                <h3 className="text-2xl font-semibold tracking-tight text-slate-100 md:text-3xl">
+                  Built for PayNow Zimbabwe — extensible to every other gateway.
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                  The middleware shape is gateway-agnostic. Same dashboard, same SDK API, same signed webhook contract. Drop in your PayNow integration today, add Stripe / PayStack / Flutterwave / IntaSend tomorrow without changing application code. Whatever gateway you adopt next, the integration patterns ManishaPay solves don&apos;t change.
+                </p>
+              </div>
+              <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:flex md:flex-col md:gap-1.5">
+                {[
+                  'PayNow Zimbabwe',
+                  'Stripe',
+                  'PayStack',
+                  'Flutterwave',
+                  'IntaSend',
+                  '+ any gateway with a webhook',
+                ].map((g, i) => (
+                  <span
+                    key={g}
+                    className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
+                      i === 0
+                        ? 'border-brand/40 bg-brand/10 text-brand-200'
+                        : 'border-slate-800/40 bg-slate-900/30 text-slate-400'
+                    }`}
+                  >
+                    {i === 0 && <span className="h-1 w-1 animate-pulse rounded-full bg-brand-300"/>}
+                    {g}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </FadeInOnScroll>
@@ -279,7 +336,7 @@ export default function Landing() {
               <FadeInOnScroll
                 key={title}
                 delay={i * 80}
-                className="flex flex-col rounded-xl border border-slate-800/50 bg-slate-900/40 p-5 transition hover:border-brand/40 hover:bg-slate-900/70"
+                className="flex flex-col rounded-xl border border-slate-800/25 bg-slate-900/20 p-5 transition hover:border-brand/40 hover:bg-slate-900/70"
               >
                 <div className="mb-2 flex items-center gap-2 text-brand-300">
                   <MessageSquare size={14}/>
@@ -324,7 +381,7 @@ export default function Landing() {
       <section id="partners" className="mx-auto max-w-6xl px-6 pb-24">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* For developers */}
-          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-8">
+          <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-8">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">For developers</p>
             <h3 className="mb-4 text-2xl font-semibold tracking-tight">Ship payments today, not next sprint.</h3>
             <ul className="mb-6 space-y-2.5 text-sm text-slate-300">
@@ -344,7 +401,7 @@ export default function Landing() {
           </div>
 
           {/* For partners */}
-          <div className="rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/40 to-brand/5 p-8">
+          <div className="rounded-2xl border border-slate-800/25 bg-gradient-to-br from-slate-900/20 to-brand/5 p-8">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">For partners</p>
             <h3 className="mb-4 text-2xl font-semibold tracking-tight">Embed Zim payments in your platform.</h3>
             <div className="mb-6 space-y-4">
@@ -379,7 +436,7 @@ export default function Landing() {
           Free until you&apos;re actually selling.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-6">
+          <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">Developer</p>
             <p className="mt-3 text-4xl font-bold tracking-tight">$0</p>
             <p className="mb-5 text-sm text-slate-500">forever</p>
@@ -391,7 +448,7 @@ export default function Landing() {
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>All SDKs</li>
             </ul>
           </div>
-          <div className="relative rounded-2xl border-2 border-brand/50 bg-gradient-to-br from-slate-900 to-brand/5 p-6 shadow-glow">
+          <div className="relative rounded-2xl border border-brand/40 bg-gradient-to-br from-slate-900/40 to-brand/5 p-6 shadow-glow">
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-gradient px-3 py-1 text-xs font-semibold text-white">
               Most popular
             </span>
@@ -406,7 +463,7 @@ export default function Landing() {
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Monthly invoice via PayNow</li>
             </ul>
           </div>
-          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-6">
+          <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">Partner</p>
             <p className="mt-3 text-4xl font-bold tracking-tight">Custom</p>
             <p className="mb-5 text-sm text-slate-500">white-label + revenue share</p>
@@ -427,7 +484,7 @@ export default function Landing() {
       {/* ── Security ────────────────────────────────────────── */}
       <FadeInOnScroll>
       <section id="security" className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-8 md:p-12">
+        <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-8 md:p-12">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">Security</p>
           <h2 className="mb-3 text-3xl font-semibold tracking-tight">Built like your money depends on it. Because it does.</h2>
           <p className="mb-8 max-w-2xl text-slate-400">
@@ -528,7 +585,8 @@ export default function Landing() {
       </footer>
       </div>
 
-      {/* Floating WhatsApp CTA */}
+      {/* Floating CTAs — BackToTop sits above WhatsApp */}
+      <BackToTop bottom={96} />
       <WhatsAppFloating />
     </div>
   );

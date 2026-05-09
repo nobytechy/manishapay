@@ -22,6 +22,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Menu, X } from 'lucide-react';
+import BackToTop from './BackToTop';
 
 export default function SidebarDoc({
   headerTitle,
@@ -124,6 +125,8 @@ export default function SidebarDoc({
           </div>
         </main>
       </div>
+
+      <BackToTop />
     </div>
   );
 }

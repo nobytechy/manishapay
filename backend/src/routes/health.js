@@ -21,7 +21,7 @@ router.get('/deep', async (_req, res) => {
 
   try {
     const start = Date.now();
-    const { error } = await supabase.from('api_keys').select('id').limit(1);
+    const { error } = await supabase.from('manishapay_api_keys').select('id').limit(1);
     checks.supabase = { ok: !error, latency_ms: Date.now() - start, error: error?.message };
   } catch (err) {
     checks.supabase = { ok: false, error: err.message };

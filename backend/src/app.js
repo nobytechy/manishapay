@@ -19,6 +19,7 @@ const errorHandler = require('./middleware/errorHandler');
 const { devRateLimiter } = require('./middleware/rateLimit');
 
 const healthRouter = require('./routes/health');
+const authRouter = require('./routes/auth');
 const payRouter = require('./routes/pay');
 const webhookRouter = require('./routes/webhooks');
 const toolsRouter = require('./routes/tools');
@@ -81,6 +82,7 @@ function buildApp() {
 
   // ─── Public routes (no auth needed) ────────────────────
   app.use('/health', healthRouter);
+  app.use('/v1/auth', authRouter);         // Bootstrap a developer profile from any Supabase session
   app.use('/v1/webhook', webhookRouter);   // PayNow → us, signature-validated inside the router
   app.use('/simulator', simulatorRouter);  // Simulated checkout pages + outcome triggers
 

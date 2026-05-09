@@ -6,6 +6,8 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import GetStarted from './pages/GetStarted';
+import DocsHome from './pages/DocsHome';
+import ForumCoverage from './pages/ForumCoverage';
 
 import Overview from './pages/developer/Dashboard';
 import Projects from './pages/developer/Projects';
@@ -43,7 +45,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/get-started" element={<GetStarted />} />
-      <Route path="/docs" element={<GetStarted />} />
+      <Route path="/docs" element={<DocsHome />} />
+      <Route path="/forum-coverage" element={<ForumCoverage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 

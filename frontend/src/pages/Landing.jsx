@@ -5,6 +5,8 @@ import {
   Layers, Wallet, Server, Sparkles, FlaskConical, MessageSquare,
 } from 'lucide-react';
 import TechBackdrop from '../components/landing/TechBackdrop';
+import FadeInOnScroll from '../components/FadeInOnScroll';
+import WhatsAppFloating from '../components/WhatsAppFloating';
 
 const features = [
   {
@@ -162,7 +164,7 @@ export default function Landing() {
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
             <a href="#security" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Security</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
-            <Link to="/get-started" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
+            <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
             <Link to="/login" className="rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Log in</Link>
             <Link
               to="/register"
@@ -228,129 +230,101 @@ export default function Landing() {
       </section>
 
       {/* ── Features ────────────────────────────────────────── */}
-      <section id="features" className="mx-auto max-w-6xl px-6 pb-24">
-        <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
-          What you get
-        </h2>
-        <p className="mb-10 text-center text-3xl font-semibold tracking-tight">
-          Real solutions to real PayNow forum threads.
-        </p>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ icon: Icon, title, body }) => (
-            <div
-              key={title}
-              className="group rounded-xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-brand/50 hover:bg-slate-900"
-            >
-              <div className="mb-4 grid h-10 w-10 place-items-center rounded-lg bg-brand-gradient text-white shadow-glow">
-                <Icon size={20}/>
-              </div>
-              <h3 className="mb-1.5 font-semibold text-slate-100">{title}</h3>
-              <p className="text-sm leading-relaxed text-slate-400">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Forum issues, fixed ─────────────────────────────── */}
-      <section id="forum" className="relative mx-auto max-w-6xl px-6 pb-24">
-        <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
-          From the PayNow forums
-        </h2>
-        <p className="mb-3 text-center text-3xl font-semibold tracking-tight md:text-4xl">
-          Real threads. Real errors. Solved at the middleware layer.
-        </p>
-        <p className="mx-auto mb-10 max-w-2xl text-center text-slate-400">
-          These show up monthly on{' '}
-          <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">
-            forums.paynow.co.zw
-          </a>
-          . Every one of them is fixed once at the integration layer — your code never has to think about them again. Each one has a one-click preset in the in-dashboard Sandbox so you can verify the fix yourself.
-        </p>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {forumIssues.map(({ title, forumQuote, problem, fix }) => (
-            <div
-              key={title}
-              className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-brand/40 hover:bg-slate-900"
-            >
-              <div className="mb-2 flex items-center gap-2 text-brand-300">
-                <MessageSquare size={14}/>
-                <span className="text-xs font-semibold uppercase tracking-wider">Forum thread</span>
-              </div>
-              <h3 className="font-semibold text-slate-100">{title}</h3>
-              <p className="mt-1 text-xs italic text-slate-500">{forumQuote}</p>
-
-              <div className="mt-4 space-y-3 text-sm leading-relaxed">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-300">Without ManishaPay</p>
-                  <p className="mt-0.5 text-slate-400">{problem}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
-                  <p className="mt-0.5 text-slate-300">{fix}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            to="/register"
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
-          >
-            <FlaskConical size={18}/> Try every scenario in the Sandbox
-          </Link>
-          <span className="text-sm text-slate-500">Free · no PayNow account required to test</span>
-        </div>
-      </section>
-
-      {/* ── Quickstart ──────────────────────────────────────── */}
-      <section id="quickstart" className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 md:p-12">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">
-            Quickstart
+      <FadeInOnScroll>
+        <section id="features" className="mx-auto max-w-6xl px-6 pb-24">
+          <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
+            What you get
           </h2>
-          <p className="mb-8 text-2xl font-semibold tracking-tight md:text-3xl">
-            One curl, one webhook, you&apos;re shipping.
+          <p className="mb-10 text-center text-3xl font-semibold tracking-tight md:text-4xl">
+            Real solutions to real PayNow forum threads.
           </p>
-          <div className="grid gap-8 md:grid-cols-2">
-            <ol className="space-y-5 text-sm">
-              {[
-                { n: 1, t: 'Sign up', d: 'Get an mp_test_… key the moment you confirm your email.' },
-                { n: 2, t: 'POST /v1/pay', d: 'Send a reference and amount. Get a redirect URL back.' },
-                { n: 3, t: 'Open the simulator', d: 'Click any outcome to fire a signed webhook to your URL.' },
-                { n: 4, t: 'Add your PayNow keys', d: 'When ready, paste your Integration ID + Key in the dashboard. Same code now hits real PayNow.' },
-              ].map(({ n, t, d }) => (
-                <li key={n} className="flex gap-4">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold text-white">{n}</span>
-                  <div>
-                    <div className="font-medium text-slate-100">{t}</div>
-                    <div className="mt-0.5 text-slate-400">{d}</div>
-                  </div>
-                </li>
-              ))}
-              <li className="pt-2">
-                <Link to="/get-started" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-300 hover:underline">
-                  Read the full guide <ArrowRight size={14}/>
-                </Link>
-              </li>
-            </ol>
-            <div className="rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-300">
-              <div className="mb-3 flex items-center gap-2 text-slate-500">
-                <Terminal size={14}/> bash
-              </div>
-              <pre className="overflow-x-auto whitespace-pre">{codeSample}</pre>
-            </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {features.map(({ icon: Icon, title, body }, i) => (
+              <FadeInOnScroll
+                key={title}
+                delay={i * 70}
+                className="group rounded-xl border border-slate-800/50 bg-slate-900/40 p-6 transition hover:border-brand/40 hover:bg-slate-900/70"
+              >
+                <div className="mb-4 grid h-10 w-10 place-items-center rounded-lg bg-brand-gradient text-white shadow-glow">
+                  <Icon size={20}/>
+                </div>
+                <h3 className="mb-1.5 font-semibold text-slate-100">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-400">{body}</p>
+              </FadeInOnScroll>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </FadeInOnScroll>
+
+      {/* ── Forum issues, fixed (preview — full list at /forum-coverage) ── */}
+      <FadeInOnScroll>
+        <section id="forum" className="relative mx-auto max-w-6xl px-6 pb-24">
+          <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
+            From the PayNow forums
+          </h2>
+          <p className="mb-3 text-center text-3xl font-semibold tracking-tight md:text-4xl">
+            Real threads. Real errors. Solved at the middleware layer.
+          </p>
+          <p className="mx-auto mb-10 max-w-2xl text-center text-slate-400">
+            Recurring issues from{' '}
+            <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">
+              forums.paynow.co.zw
+            </a>
+            , solved at the integration layer. Three highlights below; the full categorised map lives on{' '}
+            <Link to="/forum-coverage" className="text-brand-300 hover:underline">/forum-coverage</Link>.
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {forumIssues.slice(0, 3).map(({ title, forumQuote, problem, fix }, i) => (
+              <FadeInOnScroll
+                key={title}
+                delay={i * 80}
+                className="flex flex-col rounded-xl border border-slate-800/50 bg-slate-900/40 p-5 transition hover:border-brand/40 hover:bg-slate-900/70"
+              >
+                <div className="mb-2 flex items-center gap-2 text-brand-300">
+                  <MessageSquare size={14}/>
+                  <span className="text-xs font-semibold uppercase tracking-wider">Forum thread</span>
+                </div>
+                <h3 className="font-semibold text-slate-100">{title}</h3>
+                <p className="mt-1 text-xs italic text-slate-500">{forumQuote}</p>
+
+                <div className="mt-4 space-y-3 text-sm leading-relaxed">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-300">Without ManishaPay</p>
+                    <p className="mt-0.5 text-slate-400">{problem}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
+                    <p className="mt-0.5 text-slate-300">{fix}</p>
+                  </div>
+                </div>
+              </FadeInOnScroll>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/forum-coverage"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/60 px-6 py-3 text-sm font-semibold text-slate-100 hover:border-brand/40 hover:bg-slate-900"
+            >
+              See the full forum coverage map <ArrowRight size={14}/>
+            </Link>
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-glow transition hover:opacity-95"
+            >
+              <FlaskConical size={16}/> Try in the Sandbox
+            </Link>
+          </div>
+        </section>
+      </FadeInOnScroll>
 
       {/* ── For developers / for partners split ──────────────── */}
+      <FadeInOnScroll>
       <section id="partners" className="mx-auto max-w-6xl px-6 pb-24">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* For developers */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
+          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-8">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">For developers</p>
             <h3 className="mb-4 text-2xl font-semibold tracking-tight">Ship payments today, not next sprint.</h3>
             <ul className="mb-6 space-y-2.5 text-sm text-slate-300">
@@ -370,7 +344,7 @@ export default function Landing() {
           </div>
 
           {/* For partners */}
-          <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900/60 to-brand/5 p-8">
+          <div className="rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/40 to-brand/5 p-8">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">For partners</p>
             <h3 className="mb-4 text-2xl font-semibold tracking-tight">Embed Zim payments in your platform.</h3>
             <div className="mb-6 space-y-4">
@@ -393,8 +367,10 @@ export default function Landing() {
           </div>
         </div>
       </section>
+      </FadeInOnScroll>
 
       {/* ── Pricing ─────────────────────────────────────────── */}
+      <FadeInOnScroll>
       <section id="pricing" className="mx-auto max-w-5xl px-6 pb-24">
         <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">
           Pricing
@@ -403,7 +379,7 @@ export default function Landing() {
           Free until you&apos;re actually selling.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">Developer</p>
             <p className="mt-3 text-4xl font-bold tracking-tight">$0</p>
             <p className="mb-5 text-sm text-slate-500">forever</p>
@@ -430,7 +406,7 @@ export default function Landing() {
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Monthly invoice via PayNow</li>
             </ul>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-6">
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">Partner</p>
             <p className="mt-3 text-4xl font-bold tracking-tight">Custom</p>
             <p className="mb-5 text-sm text-slate-500">white-label + revenue share</p>
@@ -446,10 +422,12 @@ export default function Landing() {
           Money flows directly customer → PayNow → your wallet. We never custody funds; we only charge for the developer tools.
         </p>
       </section>
+      </FadeInOnScroll>
 
       {/* ── Security ────────────────────────────────────────── */}
+      <FadeInOnScroll>
       <section id="security" className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 md:p-12">
+        <div className="rounded-2xl border border-slate-800/50 bg-slate-900/40 p-8 md:p-12">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">Security</p>
           <h2 className="mb-3 text-3xl font-semibold tracking-tight">Built like your money depends on it. Because it does.</h2>
           <p className="mb-8 max-w-2xl text-slate-400">
@@ -471,49 +449,34 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      {/* ── FAQ ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-3xl px-6 pb-24">
-        <h2 className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-brand-300">FAQ</h2>
-        <p className="mb-10 text-center text-3xl font-semibold tracking-tight">Common questions</p>
-        <div className="space-y-3">
-          {faqs.map((f) => (
-            <details key={f.q} className="group rounded-xl border border-slate-800 bg-slate-900/60 p-5 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between gap-3 font-medium text-slate-100">
-                <span>{f.q}</span>
-                <span className="grid h-6 w-6 place-items-center rounded-full border border-slate-700 text-slate-400 transition group-open:rotate-45">+</span>
-              </summary>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">{f.a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+      </FadeInOnScroll>
 
       {/* ── Final CTA ───────────────────────────────────────── */}
-      <section className="mx-auto max-w-4xl px-6 pb-24">
-        <div className="rounded-3xl border border-brand/30 bg-gradient-to-br from-slate-900 via-slate-900 to-brand/10 p-10 text-center md:p-14">
-          <Zap size={36} className="mx-auto mb-5 text-brand"/>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">Ready to ship payments?</h2>
-          <p className="mx-auto mb-8 max-w-xl text-slate-400">
-            Free for the first 50 transactions a month. Money flows direct to your PayNow wallet —
-            we&apos;re developer tools, not a payment processor. Sign up takes 30 seconds.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
-            >
-              Create your account <ArrowRight size={18}/>
-            </Link>
-            <Link
-              to="/get-started"
-              className="rounded-lg border border-slate-700 bg-slate-900/50 px-7 py-3.5 text-slate-200 hover:bg-slate-800"
-            >
-              Read the developer guide
-            </Link>
+      <FadeInOnScroll>
+        <section className="mx-auto max-w-4xl px-6 pb-24">
+          <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-slate-900 via-slate-900 to-brand/10 p-10 text-center md:p-14">
+            <Zap size={36} className="mx-auto mb-5 text-brand"/>
+            <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">Ready to ship payments?</h2>
+            <p className="mx-auto mb-8 max-w-xl text-slate-400">
+              Free for the first 50 transactions a month. Money flows direct to your PayNow wallet — we&apos;re developer tools, not a payment processor. Sign up takes 30 seconds, and the in-dashboard Sandbox lets you complete a full lifecycle without ever touching real PayNow.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
+              >
+                Create your account <ArrowRight size={18}/>
+              </Link>
+              <Link
+                to="/docs"
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-7 py-3.5 text-slate-200 hover:bg-slate-800"
+              >
+                Read the docs
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </FadeInOnScroll>
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer className="border-t border-slate-800 bg-slate-950">
@@ -564,6 +527,9 @@ export default function Landing() {
         </div>
       </footer>
       </div>
+
+      {/* Floating WhatsApp CTA */}
+      <WhatsAppFloating />
     </div>
   );
 }

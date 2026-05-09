@@ -104,18 +104,23 @@ export default function Sandbox() {
       if (email.trim())   body.email   = email.trim();
       if (phone.trim())   body.phone   = phone.trim();
       const res = await api.pay(body);
+      // /v1/pay returns { data: {...}, requestId } — unwrap.
+      const payload = res?.data || res || {};
+      if (!payload.tracker) {
+        throw new Error('API did not return a tracker — check Render logs.');
+      }
       const entry = {
-        tracker: res.tracker,
-        reference: res.reference || reference.trim(),
-        amount: res.amount || amount.trim(),
-        browser_url: res.browser_url,
-        mode: res.mode,
+        tracker: payload.tracker,
+        reference: payload.reference || reference.trim(),
+        amount: payload.amount || amount.trim(),
+        browser_url: payload.browser_url,
+        mode: payload.mode,
         status: 'pending',
         createdAt: new Date().toISOString(),
       };
       setCurrent(entry);
       setHistory((h) => [entry, ...h].slice(0, 8));
-      toast.success(`Created — mode: ${res.mode}`);
+      toast.success(`Created — mode: ${payload.mode}`);
       // Auto-rotate the reference for the next attempt
       setReference(autoReference());
     } catch (err) {
@@ -163,7 +168,8 @@ export default function Sandbox() {
     if (!current) return;
     try {
       const r = await api.status(current.reference);
-      const newStatus = (r?.status_normalized || r?.status || 'pending').toLowerCase();
+      const payload = r?.data || r || {};
+      const newStatus = (payload.status_normalized || payload.status || 'pending').toLowerCase();
       setCurrent((c) => c ? { ...c, status: newStatus } : c);
       setHistory((h) => h.map((entry) =>
         entry.tracker === current.tracker ? { ...entry, status: newStatus } : entry,
@@ -404,7 +410,7 @@ export default function Sandbox() {
                     <td className="px-4 py-2.5 font-mono text-xs text-slate-200">{h.reference}</td>
                     <td className="px-4 py-2.5 text-slate-300">${h.amount}</td>
                     <td className="px-4 py-2.5 text-slate-400">{h.mode}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-slate-400">{h.tracker.slice(0, 14)}…</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-400">{h.tracker ? `${h.tracker.slice(0, 14)}…` : '—'}</td>
                     <td className="px-4 py-2.5"><StatusPill status={h.status} /></td>
                   </tr>
                 ))}

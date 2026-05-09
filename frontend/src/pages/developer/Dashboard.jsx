@@ -36,7 +36,7 @@ export default function DeveloperDashboard() {
         supabase.from('manishapay_webhook_endpoints').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
         supabase
           .from('manishapay_transactions')
-          .select('reference, amount, status, created_at')
+          .select('id, merchant_reference, merchant_amount, status, created_at')
           .eq('developer_id', user.id)
           .order('created_at', { ascending: false })
           .limit(8),
@@ -84,9 +84,9 @@ export default function DeveloperDashboard() {
             </thead>
             <tbody>
               {recent.map((t) => (
-                <tr key={t.reference} className="border-t border-slate-800">
-                  <td className="py-2 font-mono text-xs text-slate-300">{t.reference}</td>
-                  <td className="text-slate-300">${t.amount}</td>
+                <tr key={t.id} className="border-t border-slate-800">
+                  <td className="py-2 font-mono text-xs text-slate-300">{t.merchant_reference}</td>
+                  <td className="text-slate-300">${t.merchant_amount}</td>
                   <td><span className={`badge-${statusVariant(t.status)}`}>{t.status}</span></td>
                   <td className="text-slate-400">{formatDate(t.created_at)}</td>
                 </tr>

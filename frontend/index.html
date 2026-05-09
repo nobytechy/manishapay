@@ -1,19 +1,164 @@
 <!doctype html>
+<!--
+  ManishaPay — PayNow Zimbabwe middleware
+
+  © 2026 Noby Tebulo. All rights reserved.
+  Source: https://github.com/nobytechy/manishapay
+  Author: Noby Tebulo (https://noby.aizim.co.zw)
+  Contact: nobytechy@gmail.com · +263 774 603 865
+
+  This codebase, design, copy, and every page on this domain were
+  authored and built by Noby Tebulo. If you encounter a clone of this
+  product, the original is at https://pay.aizim.co.zw and was first
+  released April 2026.
+-->
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1220" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Primary -->
+    <title>ManishaPay — PayNow Zimbabwe middleware that fixes integration headaches</title>
     <meta
       name="description"
-      content="ManishaPay — middleware that fixes PayNow integration headaches: hash mismatches, decimal bugs, broken redirects, webhooks, and more."
+      content="ManishaPay is the middleware layer for PayNow Zimbabwe. Solves hash mismatches, decimal-format bugs, mobile-OTP issues, and broken webhooks at the integration layer so your code never has to. Built by Noby Tebulo."
     />
+    <meta
+      name="keywords"
+      content="PayNow Zimbabwe, PayNow integration, ManishaPay, EcoCash, OneMoney, Zimbabwe payments, PayNow middleware, PayNow API, PayNow webhook, hash mismatch, Noby Tebulo"
+    />
+
+    <!-- Author / attribution (so this is unambiguously credited) -->
+    <meta name="author" content="Noby Tebulo" />
+    <meta name="creator" content="Noby Tebulo" />
+    <meta name="publisher" content="Noby Tebulo" />
+    <meta name="copyright" content="© 2026 Noby Tebulo. All rights reserved." />
+    <meta name="designer" content="Noby Tebulo" />
+    <meta name="owner" content="Noby Tebulo" />
+    <link rel="author" href="https://noby.aizim.co.zw" />
+    <link rel="canonical" href="https://pay.aizim.co.zw/" />
+
+    <!-- Open Graph (Facebook / LinkedIn / WhatsApp) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ManishaPay" />
+    <meta property="og:url" content="https://pay.aizim.co.zw/" />
+    <meta
+      property="og:title"
+      content="ManishaPay — PayNow Zimbabwe middleware that fixes integration headaches"
+    />
+    <meta
+      property="og:description"
+      content="Hash mismatches, decimal bugs, mobile-OTP failures, broken webhooks — solved at the middleware layer so your PayNow integration just works. Built by Noby Tebulo."
+    />
+    <meta property="og:image" content="https://pay.aizim.co.zw/og-image.png" />
+    <meta property="og:image:secure_url" content="https://pay.aizim.co.zw/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ManishaPay — PayNow Zimbabwe middleware by Noby Tebulo" />
+    <meta property="og:locale" content="en_ZW" />
+    <meta property="article:author" content="Noby Tebulo" />
+    <meta property="article:publisher" content="https://noby.aizim.co.zw" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="ManishaPay — PayNow Zimbabwe middleware that fixes integration headaches"
+    />
+    <meta
+      name="twitter:description"
+      content="Hash mismatches, decimal bugs, mobile OTP, broken webhooks — solved at the middleware layer. Built by Noby Tebulo."
+    />
+    <meta name="twitter:image" content="https://pay.aizim.co.zw/og-image.png" />
+    <meta name="twitter:image:alt" content="ManishaPay — PayNow Zimbabwe middleware by Noby Tebulo" />
+    <meta name="twitter:creator" content="@nobytechy" />
+    <meta name="twitter:site" content="@nobytechy" />
+
+    <!-- Robots / discovery -->
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="googlebot" content="index,follow" />
+
+    <!-- Geo (regional context) -->
+    <meta name="geo.region" content="ZW" />
+    <meta name="geo.country" content="Zimbabwe" />
+    <meta name="geo.placename" content="Harare, Zimbabwe" />
+
+    <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <title>ManishaPay — PayNow Bridge</title>
+
+    <!-- Structured data (JSON-LD) — names Noby Tebulo as the creator unambiguously -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Person",
+            "@id": "https://noby.aizim.co.zw/#person",
+            "name": "Noby Tebulo",
+            "url": "https://noby.aizim.co.zw",
+            "email": "mailto:nobytechy@gmail.com",
+            "jobTitle": "Software Developer",
+            "sameAs": [
+              "https://github.com/nobytechy",
+              "https://www.linkedin.com/in/nobytechy/",
+              "https://noby.aizim.co.zw"
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "ZW",
+              "addressLocality": "Harare"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "ManishaPay",
+            "alternateName": "ManishaPay PayNow Bridge",
+            "url": "https://pay.aizim.co.zw",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Any (Web)",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free for the first 50 transactions per month, then $0.05 per successful transaction."
+            },
+            "creator": {
+              "@id": "https://noby.aizim.co.zw/#person"
+            },
+            "author": {
+              "@id": "https://noby.aizim.co.zw/#person"
+            },
+            "publisher": {
+              "@id": "https://noby.aizim.co.zw/#person"
+            },
+            "copyrightHolder": {
+              "@id": "https://noby.aizim.co.zw/#person"
+            },
+            "copyrightYear": 2026,
+            "description": "ManishaPay is a middleware platform that fixes common PayNow Zimbabwe integration issues — hash mismatches, decimal-format bugs, mobile OTP failures, broken webhooks — at the integration layer so developers don't have to. Includes an in-dashboard sandbox, signed webhooks with retries, encrypted credential storage, and SDKs for Node.js and PHP."
+          },
+          {
+            "@type": "WebSite",
+            "url": "https://pay.aizim.co.zw",
+            "name": "ManishaPay",
+            "publisher": {
+              "@id": "https://noby.aizim.co.zw/#person"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased">
     <div id="root"></div>

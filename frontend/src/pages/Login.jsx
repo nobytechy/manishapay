@@ -5,14 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import GoogleButton from '../components/auth/GoogleButton';
+import GithubButton from '../components/auth/GithubButton';
 
 export default function Login() {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithGithub } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [githubBusy, setGithubBusy] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -39,6 +41,16 @@ export default function Login() {
     }
   };
 
+  const onGithub = async () => {
+    setGithubBusy(true);
+    try {
+      await signInWithGithub();
+    } catch (err) {
+      toast.error(err.message || 'GitHub sign-in failed');
+      setGithubBusy(false);
+    }
+  };
+
   return (
     <div className="grid min-h-screen place-items-center bg-slate-950 px-4">
       <div className="w-full max-w-sm">
@@ -61,7 +73,10 @@ export default function Login() {
             <div className="h-px flex-1 bg-slate-800" />
           </div>
 
-          <GoogleButton onClick={onGoogle} busy={googleBusy} />
+          <div className="grid grid-cols-2 gap-3">
+            <GoogleButton onClick={onGoogle} busy={googleBusy} />
+            <GithubButton onClick={onGithub} busy={githubBusy} />
+          </div>
 
           <p className="text-center text-xs text-slate-400">
             No account? <Link to="/register" className="text-brand hover:underline">Create one</Link>

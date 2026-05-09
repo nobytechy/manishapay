@@ -4,6 +4,7 @@ import {
   Zap, Lock, Globe, Webhook, BarChart3, Smartphone, Github, Mail, ExternalLink,
   Layers, Wallet, Server, Sparkles,
 } from 'lucide-react';
+import TechBackdrop from '../components/landing/TechBackdrop';
 
 const features = [
   {
@@ -132,7 +133,8 @@ export default function Landing() {
       {/* ── Hero ────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-40 mx-auto h-[480px] max-w-5xl bg-brand/10 blur-3xl"/>
-        <div className="mx-auto max-w-4xl px-6 pt-16 pb-20 text-center">
+        <TechBackdrop />
+        <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-20 text-center">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
             PayNow Zimbabwe — middleware, done right
@@ -170,7 +172,7 @@ export default function Landing() {
         </div>
 
         {/* Stats strip */}
-        <div className="mx-auto max-w-5xl px-6 pb-16">
+        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-16">
           <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.l} className="text-center">

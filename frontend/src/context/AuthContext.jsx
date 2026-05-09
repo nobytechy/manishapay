@@ -105,19 +105,21 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
-  // Google OAuth. The marker can't be passed reliably for OAuth, so we rely
-  // on the bootstrap endpoint (called automatically by ensureProfile when
-  // the user lands back on the dashboard) to create the developer profile.
-  const signInWithGoogle = async () => {
+  // OAuth sign-in. The app marker can't be passed reliably during OAuth, so
+  // we rely on the bootstrap endpoint (called automatically by ensureProfile
+  // when the user lands back on the dashboard) to create the developer
+  // profile. This single helper backs both Google and GitHub.
+  const signInWithProvider = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: {
         redirectTo: `${window.location.origin}/app`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
       },
     });
     if (error) throw error;
   };
+  const signInWithGoogle = () => signInWithProvider('google');
+  const signInWithGithub = () => signInWithProvider('github');
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -135,6 +137,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signInWithGoogle,
+    signInWithGithub,
     signOut,
     reloadProfile: async () => {
       if (session?.user) {

@@ -4,7 +4,7 @@
  * Wired to AuthContext.signInWithGoogle in the parent. Includes the official
  * Google "G" multi-colour mark. Disabled state shows a small spinner.
  */
-export default function GoogleButton({ onClick, busy = false, label = 'Continue with Google' }) {
+export default function GoogleButton({ onClick, busy = false, label = 'Google' }) {
   return (
     <button
       type="button"

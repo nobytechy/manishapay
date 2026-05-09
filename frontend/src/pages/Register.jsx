@@ -5,15 +5,17 @@ import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import GoogleButton from '../components/auth/GoogleButton';
+import GithubButton from '../components/auth/GithubButton';
 
 export default function Register() {
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, signInWithGithub } = useAuth();
   const nav = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [githubBusy, setGithubBusy] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -37,10 +39,19 @@ export default function Register() {
     setGoogleBusy(true);
     try {
       await signInWithGoogle();
-      // OAuth redirects away; nothing else to do here.
     } catch (err) {
       toast.error(err.message || 'Google sign-in failed');
       setGoogleBusy(false);
+    }
+  };
+
+  const onGithub = async () => {
+    setGithubBusy(true);
+    try {
+      await signInWithGithub();
+    } catch (err) {
+      toast.error(err.message || 'GitHub sign-in failed');
+      setGithubBusy(false);
     }
   };
 
@@ -63,11 +74,14 @@ export default function Register() {
 
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <div className="h-px flex-1 bg-slate-800" />
-            <span>or</span>
+            <span>or sign up with</span>
             <div className="h-px flex-1 bg-slate-800" />
           </div>
 
-          <GoogleButton onClick={onGoogle} busy={googleBusy} label="Sign up with Google" />
+          <div className="grid grid-cols-2 gap-3">
+            <GoogleButton onClick={onGoogle} busy={googleBusy} />
+            <GithubButton onClick={onGithub} busy={githubBusy} />
+          </div>
 
           <p className="text-center text-xs text-slate-400">
             Already have one? <Link to="/login" className="text-brand hover:underline">Sign in</Link>

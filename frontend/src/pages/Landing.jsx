@@ -8,6 +8,8 @@ import TechBackdrop from '../components/landing/TechBackdrop';
 import FadeInOnScroll from '../components/FadeInOnScroll';
 import WhatsAppFloating from '../components/WhatsAppFloating';
 import BackToTop from '../components/BackToTop';
+import { useAuth } from '../context/AuthContext';
+import { LayoutDashboard } from 'lucide-react';
 
 const scrollToTop = () => {
   if (typeof window !== 'undefined') {
@@ -152,6 +154,7 @@ const partnerPoints = [
 ];
 
 export default function Landing() {
+  const { isAuthenticated } = useAuth();
   return (
     <div id="top" className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Page-wide animated tech backdrop — sits behind every section */}
@@ -177,12 +180,21 @@ export default function Landing() {
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
             <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
-            >
-              Log in
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
+              >
+                <LayoutDashboard size={14}/> Dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
+              >
+                Log in
+              </Link>
+            )}
           </nav>
         </div>
       </header>
@@ -511,59 +523,8 @@ export default function Landing() {
       </section>
       </FadeInOnScroll>
 
-      {/* ── Security ────────────────────────────────────────── */}
-      <FadeInOnScroll>
-      <section id="security" className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-8 md:p-12">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-300">Security</p>
-          <h2 className="mb-3 text-3xl font-semibold tracking-tight">Built like your money depends on it. Because it does.</h2>
-          <p className="mb-8 max-w-2xl text-slate-400">
-            We hold encrypted credentials, not money. Even so, we built the credential vault as if every byte
-            could leak — because that&apos;s the threat model that produces resilient systems.
-          </p>
-          <div className="grid gap-6 md:grid-cols-2">
-            {securityPoints.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex gap-4">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-gradient text-white shadow-glow">
-                  <Icon size={18}/>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-100">{title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-400">{body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      </FadeInOnScroll>
-
-      {/* ── Final CTA ───────────────────────────────────────── */}
-      <FadeInOnScroll>
-        <section className="mx-auto max-w-4xl px-6 pb-24">
-          <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-slate-900 via-slate-900 to-brand/10 p-10 text-center md:p-14">
-            <Zap size={36} className="mx-auto mb-5 text-brand"/>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">Ready to ship payments?</h2>
-            <p className="mx-auto mb-8 max-w-xl text-slate-400">
-              Free for the first 50 transactions a month. Money flows direct to your PayNow wallet — we&apos;re developer tools, not a payment processor. Sign up takes 30 seconds, and the in-dashboard Sandbox lets you complete a full lifecycle without ever touching real PayNow.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
-              >
-                Create your account <ArrowRight size={18}/>
-              </Link>
-              <Link
-                to="/docs"
-                className="rounded-lg border border-slate-700 bg-slate-900/50 px-7 py-3.5 text-slate-200 hover:bg-slate-800"
-              >
-                Read the docs
-              </Link>
-            </div>
-          </div>
-        </section>
-      </FadeInOnScroll>
+      {/* Security details moved to /docs (cleaner landing surface);
+           Final CTA removed — Pricing card already terminates the page strongly. */}
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer className="border-t border-slate-800 bg-slate-950">
@@ -591,7 +552,8 @@ export default function Landing() {
             <ul className="space-y-2 text-sm text-slate-400">
               <li><a href="#features" className="hover:text-slate-100">Features</a></li>
               <li><a href="#pricing" className="hover:text-slate-100">Pricing</a></li>
-              <li><a href="#security" className="hover:text-slate-100">Security</a></li>
+              <li><Link to="/forum-coverage" className="hover:text-slate-100">Forum coverage</Link></li>
+              <li><Link to="/docs" className="hover:text-slate-100">Docs</Link></li>
               <li><Link to="/get-started" className="hover:text-slate-100">Get started</Link></li>
             </ul>
           </div>
@@ -599,8 +561,8 @@ export default function Landing() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Company</p>
             <ul className="space-y-2 text-sm text-slate-400">
               <li><a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">About Noby <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
-              <li><a href="https://aizim.co.zw" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">aizim.co.zw <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
+              <li><a href="https://github.com/nobytechy/manishapay" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">Source on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="mailto:centuriongrill@gmail.com" className="hover:text-slate-100">Contact</a></li>
             </ul>
           </div>

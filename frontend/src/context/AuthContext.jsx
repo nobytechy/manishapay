@@ -1,9 +1,16 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 const APP_MARKER = 'manishapay';
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+// Auto-logout the user after this much idle time. Idle = no mousedown,
+// keydown, touchstart, or scroll events from the user. Standard fintech
+// session hygiene; tune via env if you ever need a different policy.
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;     // 30 minutes
+const IDLE_CHECK_MS   = 60 * 1000;          // re-check once a minute
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -126,6 +133,36 @@ export function AuthProvider({ children }) {
     setSession(null);
     setProfile(null);
   };
+
+  // ── Idle auto-logout ─────────────────────────────────────────
+  // Tracks last user activity in a ref (no re-render churn). When the
+  // session is active, a once-a-minute interval checks whether IDLE_TIMEOUT
+  // has elapsed and signs the user out if so. Toast surfaces the reason
+  // so the user knows they weren't kicked off arbitrarily.
+  const lastActivityRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!session) return;
+    lastActivityRef.current = Date.now();
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'pointermove'];
+    const onActivity = () => { lastActivityRef.current = Date.now(); };
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+
+    const interval = setInterval(async () => {
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT_MS) {
+        clearInterval(interval);
+        events.forEach((e) => window.removeEventListener(e, onActivity));
+        await signOut();
+        toast.error('Signed out — 30 minutes of inactivity', { duration: 6000 });
+      }
+    }, IDLE_CHECK_MS);
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, onActivity));
+      clearInterval(interval);
+    };
+  }, [session]);
 
   const value = {
     session,

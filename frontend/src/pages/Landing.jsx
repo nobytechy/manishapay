@@ -459,7 +459,7 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <a href="mailto:centuriongrill@gmail.com?subject=ManishaPay%20partnership"
+            <a href="mailto:nobytechy@gmail.com?subject=ManishaPay%20partnership"
                className="inline-flex items-center gap-2 rounded-lg border border-brand/40 bg-brand/10 px-5 py-2.5 font-semibold text-brand-200 transition hover:bg-brand/20">
               <Mail size={16}/> Talk to us
             </a>
@@ -542,9 +542,6 @@ export default function Landing() {
               <a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" aria-label="ManishaPay SDKs on GitHub" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">
                 <Github size={18}/>
               </a>
-              <a href="mailto:centuriongrill@gmail.com" aria-label="Email" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">
-                <Mail size={18}/>
-              </a>
             </div>
           </div>
           <div>
@@ -563,7 +560,7 @@ export default function Landing() {
               <li><a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">About Noby <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
               <li><a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">SDKs on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
-              <li><a href="mailto:centuriongrill@gmail.com" className="hover:text-slate-100">Contact</a></li>
+              <li><a href="mailto:nobytechy@gmail.com" className="hover:text-slate-100">Contact</a></li>
             </ul>
           </div>
         </div>

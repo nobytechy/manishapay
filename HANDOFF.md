@@ -192,4 +192,4 @@ If all 7 work, you can hand the URL to your dev friends.
 
 ## Contact
 
-Built by [Noby Tebulo](https://noby.aizim.co.zw) · centuriongrill@gmail.com
+Built by [Noby Tebulo](https://noby.aizim.co.zw) · nobytechy@gmail.com

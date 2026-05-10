@@ -71,7 +71,7 @@ The **Admin dashboard** at `https://pay.aizim.co.zw/admin` covers most of these 
 -- run once in Supabase Studio → SQL Editor
 update public.manishapay_developers
 set role = 'admin'
-where email = 'centuriongrill@gmail.com';
+where email = 'nobytechy@gmail.com';
 ```
 
 ---
@@ -701,4 +701,4 @@ If you can't reproduce or fix in 30 minutes:
 ## Author
 
 Operations runbook by [Noby Tebulo](https://noby.aizim.co.zw) ·
-[centuriongrill@gmail.com](mailto:centuriongrill@gmail.com)
+[nobytechy@gmail.com](mailto:nobytechy@gmail.com)

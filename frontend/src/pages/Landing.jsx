@@ -207,7 +207,7 @@ export default function Landing() {
             payment code stays five lines long.
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">
-            Built first for <span className="font-medium text-slate-300">PayNow Zimbabwe</span> — the same middleware patterns now extend to other online payment gateways. Stripe, PayStack, Flutterwave, and more, on the same dashboard, same SDK shape, same webhook contract.
+            Specialised today for <span className="font-medium text-slate-300">PayNow Zimbabwe</span>. Designed gateway-agnostic — Stripe, PayStack, Flutterwave on the roadmap.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -270,44 +270,74 @@ export default function Landing() {
         </section>
       </FadeInOnScroll>
 
-      {/* ── Multi-gateway banner ────────────────────────────── */}
+      {/* ── PayNow today + multi-gateway roadmap ───────────────
+          Two-tier layout makes the hierarchy unambiguous:
+          left side = what we do NOW (PayNow, full coverage), right side =
+          what the architecture is built to extend to. Honest about status
+          (Live / Roadmap / Evaluating) so we don't oversell. ────── */}
       <FadeInOnScroll>
-        <section className="mx-auto max-w-5xl px-6 pb-24">
-          <div className="rounded-2xl border border-slate-800/25 bg-gradient-to-br from-slate-900/30 via-slate-900/10 to-brand/5 p-8 md:p-10">
-            <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="max-w-2xl">
-                <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-300">
-                  <Globe size={11}/> Multi-gateway by design
-                </p>
-                <h3 className="text-2xl font-semibold tracking-tight text-slate-100 md:text-3xl">
-                  Built for PayNow Zimbabwe — extensible to every other gateway.
+        <section className="mx-auto max-w-6xl px-6 pb-24">
+          <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+
+            {/* PRIMARY — PayNow today */}
+            <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-brand/10 p-8 md:p-10 shadow-glow">
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/15 blur-3xl"/>
+              <div className="relative">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-200">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
+                  Today · our specialty
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight text-slate-100 md:text-3xl">
+                  PayNow Zimbabwe — every integration issue, solved.
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  The middleware shape is gateway-agnostic. Same dashboard, same SDK API, same signed webhook contract. Drop in your PayNow integration today, add Stripe / PayStack / Flutterwave / IntaSend tomorrow without changing application code. Whatever gateway you adopt next, the integration patterns ManishaPay solves don&apos;t change.
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
+                  ManishaPay was built first for PayNow. Hash mismatches, decimal-format crashes, mobile OTP failures, plugin churn, broken webhooks — every recurring thread on{' '}
+                  <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">forums.paynow.co.zw</a>{' '}
+                  is mapped to either a Direct fix, Plugin fallback, or honest "PayNow-only" notice.
                 </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link to="/forum-coverage" className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-4 py-2 text-xs font-semibold text-brand-200 hover:bg-brand/20">
+                    <MessageSquare size={13}/> See the coverage map
+                  </Link>
+                  <Link to="/register" className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 text-xs font-semibold text-white shadow-glow hover:opacity-95">
+                    Try in the Sandbox <ArrowRight size={12}/>
+                  </Link>
+                </div>
               </div>
-              <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:flex md:flex-col md:gap-1.5">
+            </div>
+
+            {/* SECONDARY — Roadmap, deliberately quieter */}
+            <div className="rounded-2xl border border-slate-800/40 bg-slate-900/30 p-7">
+              <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <Globe size={11}/> By design · extensible
+              </div>
+              <h4 className="text-lg font-semibold text-slate-100">
+                Same middleware, every gateway you'll need next.
+              </h4>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                The SDK shape, dashboard, and signed-webhook contract are gateway-agnostic. Adopt them once for PayNow today; the next gateway slots into the same patterns.
+              </p>
+
+              <ul className="mt-5 space-y-2">
                 {[
-                  'PayNow Zimbabwe',
-                  'Stripe',
-                  'PayStack',
-                  'Flutterwave',
-                  'IntaSend',
-                  '+ any gateway with a webhook',
-                ].map((g, i) => (
-                  <span
-                    key={g}
-                    className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
-                      i === 0
-                        ? 'border-brand/40 bg-brand/10 text-brand-200'
-                        : 'border-slate-800/40 bg-slate-900/30 text-slate-400'
-                    }`}
-                  >
-                    {i === 0 && <span className="h-1 w-1 animate-pulse rounded-full bg-brand-300"/>}
-                    {g}
-                  </span>
+                  { name: 'PayNow Zimbabwe', status: 'Live',       statusCls: 'border-brand/40 bg-brand/10 text-brand-200' },
+                  { name: 'Stripe',          status: 'On roadmap', statusCls: 'border-slate-700 bg-slate-900 text-slate-400' },
+                  { name: 'PayStack',        status: 'On roadmap', statusCls: 'border-slate-700 bg-slate-900 text-slate-400' },
+                  { name: 'Flutterwave',     status: 'Evaluating', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                  { name: 'IntaSend',        status: 'Evaluating', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                ].map(({ name, status, statusCls }) => (
+                  <li key={name} className="flex items-center justify-between text-sm">
+                    <span className="text-slate-200">{name}</span>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${statusCls}`}>
+                      {status}
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
+
+              <p className="mt-5 text-[11px] italic text-slate-500">
+                Want a specific gateway prioritised? <a href="mailto:nobytechy@gmail.com?subject=ManishaPay%20gateway%20request" className="text-brand-300 hover:underline">Email Noby</a>.
+              </p>
             </div>
           </div>
         </section>

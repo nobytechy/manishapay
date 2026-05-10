@@ -539,7 +539,7 @@ export default function Landing() {
               priced like one too.
             </p>
             <div className="mt-4 flex items-center gap-3 text-slate-400">
-              <a href="https://github.com/nobytechy" target="_blank" rel="noopener noreferrer" aria-label="Noby on GitHub" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">
+              <a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" aria-label="ManishaPay SDKs on GitHub" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">
                 <Github size={18}/>
               </a>
               <a href="mailto:centuriongrill@gmail.com" aria-label="Email" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">
@@ -562,6 +562,7 @@ export default function Landing() {
             <ul className="space-y-2 text-sm text-slate-400">
               <li><a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">About Noby <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
+              <li><a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">SDKs on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="mailto:centuriongrill@gmail.com" className="hover:text-slate-100">Contact</a></li>
             </ul>
           </div>

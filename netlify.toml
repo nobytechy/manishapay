@@ -1,0 +1,22 @@
+# Netlify config — deploys the ManishaPay dashboard (frontend/) as a static SPA.
+# The Node API is hosted separately (Render); the frontend talks to it via
+# VITE_API_BASE (set in Netlify → Site settings → Environment variables).
+#
+# Required env vars on Netlify (Site settings → Environment variables):
+#   VITE_SUPABASE_URL   = https://<new-project>.supabase.co
+#   VITE_SUPABASE_ANON  = <new anon public key>
+#   VITE_API_BASE       = https://<your-render-app>.onrender.com   (set AFTER the API is live)
+
+[build]
+  base = "frontend"
+  command = "npm install && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback so client-side routes resolve to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -335,6 +335,26 @@ create policy "manishapay devs update self" on public.manishapay_developers
 create policy "manishapay admin manages devs" on public.manishapay_developers
   for all using (public.manishapay_is_admin()) with check (public.manishapay_is_admin());
 
+-- Guard: a developer may edit their own profile (full_name, email) but must NOT
+-- be able to self-promote role/plan/billing via a direct PostgREST UPDATE.
+-- Privileged columns are writable only by the service role or an admin.
+create or replace function public.manishapay_guard_developer_update() returns trigger as $$
+begin
+  if auth.role() = 'authenticated' and not public.manishapay_is_admin() then
+    new.role              := old.role;
+    new.status            := old.status;
+    new.plan              := old.plan;
+    new.billing_status    := old.billing_status;
+    new.free_tier_monthly := old.free_tier_monthly;
+    new.per_txn_fee_usd   := old.per_txn_fee_usd;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+drop trigger if exists manishapay_developers_guard on public.manishapay_developers;
+create trigger manishapay_developers_guard before update on public.manishapay_developers
+  for each row execute function public.manishapay_guard_developer_update();
+
 -- projects
 create policy "manishapay owns projects" on public.manishapay_projects
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());

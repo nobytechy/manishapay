@@ -106,18 +106,26 @@ router.post('/', async (req, res) => {
     logger.error({ err: updErr, tracker }, 'webhook: txn update failed');
   }
 
-  // Fan-out to the merchant's webhook endpoints.
+  // Idempotency: PayNow re-delivers the same callback up to 10x. Only fan out
+  // to the merchant's endpoints when the status actually CHANGED, so retries
+  // never cause the merchant to process the same payment twice.
+  const statusChanged = txn.status !== newStatus;
   const target = updated || txn;
-  const { data: endpoints } = await supabase
-    .from('manishapay_webhook_endpoints')
-    .select('id, url, secret, status')
-    .eq('project_id', target.project_id)
-    .eq('status', 'active');
 
-  if (endpoints && endpoints.length > 0) {
-    Promise.all(endpoints.map((ep) => deliver(ep, target))).catch((err) => {
-      logger.error({ err }, 'webhook fan-out failed');
-    });
+  if (statusChanged) {
+    const { data: endpoints } = await supabase
+      .from('manishapay_webhook_endpoints')
+      .select('id, url, secret, status')
+      .eq('project_id', target.project_id)
+      .eq('status', 'active');
+
+    if (endpoints && endpoints.length > 0) {
+      Promise.all(endpoints.map((ep) => deliver(ep, target))).catch((err) => {
+        logger.error({ err }, 'webhook fan-out failed');
+      });
+    }
+  } else {
+    logger.info({ tracker, status: newStatus }, 'webhook: status unchanged — skipping merchant fan-out (idempotent retry)');
   }
 
   res.status(200).send('ok');

@@ -1,0 +1,46 @@
+# Render config — hosts the ManishaPay Node/Express API (backend/).
+# The dashboard is hosted separately on Netlify.
+#
+# Set the `sync: false` values in the Render dashboard (they are secrets and
+# are NOT stored in this file or in git). After the service is live, copy its
+# URL (https://<name>.onrender.com) into Netlify's VITE_API_BASE and into the
+# PayNow RESULT_URL / SIMULATOR_BASE_URL below.
+#
+# NOTE: Render's FREE plan sleeps after ~15 min idle. For reliable PayNow
+# webhooks either keep it warm with an uptime pinger hitting /health, or move
+# to the Starter plan once a real merchant goes live.
+
+services:
+  - type: web
+    name: manishapay-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PAYNOW_API_BASE
+        value: https://www.paynow.co.zw/interface
+      # ---- secrets / per-deploy (set in the Render dashboard) ----
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MANISHAPAY_MASTER_KEY
+        sync: false
+      - key: SIMULATOR_BASE_URL          # = this service's own URL
+        sync: false
+      - key: ALLOW_CORS_ORIGINS          # = your Netlify site URL
+        sync: false
+      - key: PAYNOW_RETURN_URL
+        sync: false
+      - key: PAYNOW_RESULT_URL           # = <render-url>/v1/webhook
+        sync: false

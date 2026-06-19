@@ -22,6 +22,12 @@ const schema = z.object({
   MANISHAPAY_OWN_PAYNOW_INTEGRATION_ID: z.string().optional(),
   MANISHAPAY_OWN_PAYNOW_INTEGRATION_KEY: z.string().optional(),
 
+  // Shared SANDBOX PayNow test integration. When a project has no test
+  // credentials of its own, test-mode payments fall back to THIS integration
+  // so the sandbox connects to REAL PayNow test with zero per-project setup.
+  PAYNOW_TEST_INTEGRATION_ID: z.string().optional(),
+  PAYNOW_TEST_INTEGRATION_KEY: z.string().optional(),
+
   PAYNOW_RETURN_URL: z.string().url(),
   PAYNOW_RESULT_URL: z.string().url(),
   PAYNOW_API_BASE: z.string().url().default('https://www.paynow.co.zw/interface'),
@@ -72,6 +78,8 @@ try {
       LOG_LEVEL: 'error',
       MANISHAPAY_OWN_PAYNOW_INTEGRATION_ID: undefined,
       MANISHAPAY_OWN_PAYNOW_INTEGRATION_KEY: undefined,
+      PAYNOW_TEST_INTEGRATION_ID: undefined,
+      PAYNOW_TEST_INTEGRATION_KEY: undefined,
       MANISHAPAY_MASTER_KEY:
         '0000000000000000000000000000000000000000000000000000000000000000', // 32 zero bytes for tests
       PAYNOW_RETURN_URL: 'http://localhost/return',

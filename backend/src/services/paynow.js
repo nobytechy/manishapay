@@ -119,6 +119,32 @@ function buildInitiateBody(input, creds, tracker, project) {
 }
 
 /**
+ * Maps a PayNow error message to a targeted, actionable resolution — turns the
+ * forum's recurring "PayNow rejected and I don't know why" into a clear next
+ * step. Covers the common forum threads (merchant-in-testing, hash, bad
+ * integration id, currency, amount).
+ */
+function paynowResolution(errMsg) {
+  const m = String(errMsg || '').toLowerCase();
+  if (m.includes('testing') || m.includes('test mode')) {
+    return 'This PayNow integration is still in TEST status, so it cannot take real payments. Use a ManishaPay test key (mp_test_) against the sandbox, or in PayNow open Receive Payments → your integration → Go Live, then add a live (mp_live_) credential.';
+  }
+  if (m.includes('hash')) {
+    return 'Hash mismatch on PayNow\'s side. POST the same fields to /v1/tools/hash for an expected-vs-actual diff — almost always a field-order or integration-key issue.';
+  }
+  if (m.includes('integration') && (m.includes('not') || m.includes('invalid') || m.includes('find') || m.includes('exist'))) {
+    return 'PayNow could not match this Integration ID. Re-check the Integration ID + Key (PayNow → Receive Payments → your integration) in your ManishaPay credentials.';
+  }
+  if (m.includes('currency')) {
+    return 'Currency mismatch — this PayNow integration is fixed to one currency (e.g. ZWL or USD). Send amounts in that currency, or use an integration that matches.';
+  }
+  if (m.includes('amount')) {
+    return 'PayNow rejected the amount. It must be a positive 0.00 value within the integration\'s currency/limits.';
+  }
+  return 'Re-check the reference and amount. If the message mentions hash, run /v1/tools/hash for a diff.';
+}
+
+/**
  * Initiates a payment.
  *
  * @param {object} input - merchant's request body
@@ -181,8 +207,7 @@ async function initiate(input, ctx) {
       status: 400,
       code: 'PAYNOW_REJECTED',
       message: fields.error || 'PayNow rejected the request',
-      resolution:
-        'Re-check the reference and amount in your dashboard. If the message mentions hash, run /v1/tools/hash for a diff.',
+      resolution: paynowResolution(fields.error),
       details: fields,
     });
   }

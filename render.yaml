@@ -44,3 +44,9 @@ services:
         sync: false
       - key: PAYNOW_RESULT_URL           # = <render-url>/v1/webhook
         sync: false
+      # Shared sandbox PayNow TEST integration — lets the sandbox hit real
+      # PayNow test with no per-project setup. Test account only, never live.
+      - key: PAYNOW_TEST_INTEGRATION_ID
+        sync: false
+      - key: PAYNOW_TEST_INTEGRATION_KEY
+        sync: false

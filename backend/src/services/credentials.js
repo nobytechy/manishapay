@@ -19,6 +19,7 @@
 
 const { supabase } = require('../config/supabase');
 const crypto = require('./crypto');
+const env = require('../config/env');
 const AppError = require('../errors/AppError');
 
 const TABLE = 'manishapay_paynow_credentials';
@@ -62,7 +63,23 @@ async function loadActive(projectId, mode) {
       message: `Could not load credentials: ${error.message}`,
     });
   }
-  if (!data) return null;
+  if (!data) {
+    // Sandbox fallback: in TEST mode, a project with no credentials of its own
+    // uses the platform's shared test integration (PAYNOW_TEST_*), so the
+    // sandbox connects to REAL PayNow test with zero setup. Live never falls
+    // back — it always requires the merchant's own credentials.
+    if (mode === 'test' && env.PAYNOW_TEST_INTEGRATION_ID && env.PAYNOW_TEST_INTEGRATION_KEY) {
+      return {
+        credentialId: null,
+        integrationId: String(env.PAYNOW_TEST_INTEGRATION_ID),
+        integrationKey: env.PAYNOW_TEST_INTEGRATION_KEY,
+        integrationIdLast4: String(env.PAYNOW_TEST_INTEGRATION_ID).slice(-4),
+        addedAt: null,
+        source: 'platform-sandbox',
+      };
+    }
+    return null;
+  }
 
   const decrypted = await crypto.decryptCredential(data);
 

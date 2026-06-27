@@ -77,7 +77,7 @@ async function reconcilePending(opts = {}) {
     const { data: rows, error } = await db
       .from('manishapay_transactions')
       .select(
-        'id, project_id, developer_id, tracker, merchant_reference, merchant_amount, status, status_normalized, mode, method, poll_url, created_at',
+        'id, project_id, developer_id, tracker, merchant_reference, merchant_amount, currency, status, status_normalized, mode, method, poll_url, created_at',
       )
       .neq('mode', 'simulated')
       .eq('status_normalized', 'pending')

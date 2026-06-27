@@ -557,7 +557,7 @@ export default function Landing() {
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Company</p>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li><a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">About Noby <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
+              <li><a href="https://nobie.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">About Noby <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
               <li><a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">SDKs on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="mailto:nobytechy@gmail.com" className="hover:text-slate-100">Contact</a></li>
@@ -566,7 +566,7 @@ export default function Landing() {
         </div>
         <div className="border-t border-slate-800 px-6 py-5 text-center text-xs text-slate-500">
           © {new Date().getFullYear()} ManishaPay — built by{' '}
-          <a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-brand-300">
+          <a href="https://nobie.netlify.app" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-brand-300">
             Noby Tebulo
           </a>{' '}
           for the PayNow Zimbabwe community

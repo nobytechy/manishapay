@@ -151,7 +151,7 @@ draw.text((80, 462), "Solved once at the integration layer.", fill=MUTED, font=s
 draw.line([(80, 540), (1120, 540)], fill=GRID, width=1)
 foot_font = find_font('arial', 'segoeui', size=22)
 draw.text((80, 575), "pay.aizim.co.zw", fill=DIM, font=foot_font)
-right_text = "Built by Noby Tebulo · noby.aizim.co.zw"
+right_text = "Built by Noby Tebulo · nobie.netlify.app"
 right_w = draw.textlength(right_text, font=foot_font)
 draw.text((1120 - right_w, 575), right_text, fill=DIM, font=foot_font)
 

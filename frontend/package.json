@@ -2,7 +2,7 @@
   "name": "manishapay-dashboard",
   "version": "1.0.0",
   "private": true,
-  "author": "Noby Tebulo <https://noby.aizim.co.zw>",
+  "author": "Noby Tebulo <https://nobie.netlify.app>",
   "license": "MIT",
   "type": "module",
   "scripts": {

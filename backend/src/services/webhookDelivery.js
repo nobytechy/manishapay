@@ -33,6 +33,7 @@ function buildPayload(txn) {
       reference: txn.merchant_reference,
       tracker: txn.tracker,
       amount: txn.merchant_amount,
+      currency: txn.currency || 'USD',
       status: txn.status,
       status_normalized: txn.status_normalized,
       mode: txn.mode,

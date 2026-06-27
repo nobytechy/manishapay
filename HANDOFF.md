@@ -10,13 +10,13 @@ is built. Should take **15–25 minutes** end to end.
 | Schema (`supabase/install.sql`) | ✅ written, namespaced, RLS, app marker | Apply once in Supabase Studio |
 | Backend API (Node + Express) | ✅ 21 unit tests pass, all routes wired | Set env vars, install on cPanel as Node.js app |
 | Encryption (libsodium envelope) | ✅ helper + tests | Generate `MANISHAPAY_MASTER_KEY` |
-| Frontend (React + Vite) | ✅ built, deployed to `pay.aizim.co.zw/` | Set Supabase env vars + rebuild |
+| Frontend (React + Vite) | ✅ built, deployed to `manishapay.netlify.app/` | Set Supabase env vars + rebuild |
 | SDKs | ✅ Node + PHP packages | Publish to npm/Packagist (optional) |
 | Drop-in checkout.js | ✅ deployed at `/checkout.js` | — |
 | Simulator | ✅ `/simulator/<tracker>` HTML + outcome trigger | needs API running to be reachable |
 | Webhook signing + delivery | ✅ HMAC-SHA256, t-prefixed | Production retry queue (defer to v2) |
 | Author attribution | ✅ Noby Tebulo, noby.aizim.co.zw | — |
-| Live frontend at https://pay.aizim.co.zw | ✅ shipped | — |
+| Live frontend at https://manishapay.netlify.app | ✅ shipped | — |
 
 ---
 
@@ -55,18 +55,18 @@ SUPABASE_ANON_KEY=eyJ…                  # Settings → API → anon public
 JWT_SECRET=$(openssl rand -hex 32)      # any 32+ random bytes
 
 # PayNow URLs (default for projects that don't override)
-PAYNOW_RETURN_URL=https://pay.aizim.co.zw/return
-PAYNOW_RESULT_URL=https://pay.aizim.co.zw/api/v1/webhook
+PAYNOW_RETURN_URL=https://manishapay.netlify.app/return
+PAYNOW_RESULT_URL=https://manishapay.netlify.app/api/v1/webhook
 PAYNOW_API_BASE=https://www.paynow.co.zw/interface
 
 # Simulator hosting (this server)
-SIMULATOR_BASE_URL=https://pay.aizim.co.zw
+SIMULATOR_BASE_URL=https://manishapay.netlify.app
 
 # Master key (from step 2)
 MANISHAPAY_MASTER_KEY=...
 
 # CORS — let the dashboard call the API from the same host
-ALLOW_CORS_ORIGINS=https://pay.aizim.co.zw
+ALLOW_CORS_ORIGINS=https://manishapay.netlify.app
 
 # Optional: ManishaPay's own PayNow account, used to charge developer
 # invoices via dogfood billing later. Leave blank for now.
@@ -83,7 +83,7 @@ cPanel → **Setup Node.js App** → **Create Application**:
 | Node.js version | **20.x** (or latest) |
 | Application mode | Production |
 | Application root | `manishapay-api` (cPanel will create `~/manishapay-api/`) |
-| Application URL | `pay.aizim.co.zw/api` |
+| Application URL | `manishapay.netlify.app/api` |
 | Application startup file | `server.js` |
 | Passenger log file | `~/logs/manishapay-api.log` |
 
@@ -107,7 +107,7 @@ Then back in the cPanel UI, click **Restart** on the app.
 
 Smoke test:
 ```bash
-curl https://pay.aizim.co.zw/api/health
+curl https://manishapay.netlify.app/api/health
 # → { "ok": true, "configured": true }   ← if MASTER_KEY + Supabase set, both true
 ```
 
@@ -125,7 +125,7 @@ cp .env.production.example .env.production
 
 npm run build
 
-# Push the new dist to pay.aizim.co.zw:
+# Push the new dist to manishapay.netlify.app:
 cd dist && tar -czf ../dist.tar.gz . && cd ..
 scp dist.tar.gz aizim:public_html/pay/dist.tar.gz
 ssh aizim 'cd ~/public_html/pay && tar -xzf dist.tar.gz && rm dist.tar.gz'
@@ -133,14 +133,14 @@ ssh aizim 'cd ~/public_html/pay && tar -xzf dist.tar.gz && rm dist.tar.gz'
 
 ### 6. End-to-end smoke test (5 min)
 
-1. Open https://pay.aizim.co.zw → see landing page
+1. Open https://manishapay.netlify.app → see landing page
 2. Click "Get started" → register with a real email + `app=manishapay` marker is automatically passed
 3. Confirm email if Supabase requires it; log in
 4. **Projects** → create "First Project"
 5. **API Keys** → create test key → **copy it** (shown once) → click "Use as active"
 6. From your terminal:
    ```bash
-   curl -X POST https://pay.aizim.co.zw/api/v1/pay \
+   curl -X POST https://manishapay.netlify.app/api/v1/pay \
      -H "Authorization: Bearer <PASTE_KEY>" \
      -H "Content-Type: application/json" \
      -d '{"reference":"smoke-1","amount":"1.00"}'
@@ -164,7 +164,7 @@ If all 7 work, you can hand the URL to your dev friends.
 - **BullMQ + Upstash Redis webhook retry queue** — needs a Redis account; in-process retry is fine for v1
 - **Daily billing cron + invoice generation** — no real usage to bill yet; schema is in place
 - **VitePress docs site** — the `docs/` folder + per-SDK READMEs cover v0.5; full docs site after first real users
-- **Better Uptime status page** — sign up at betteruptime.com → CNAME `status.pay.aizim.co.zw` to it
+- **Better Uptime status page** — sign up at betteruptime.com → CNAME `status.manishapay.netlify.app` to it
 - **Penetration testing / load testing** — needed before charging real money but not before friendly-dev demos
 - **PayNow ToS check** — you said there is no ToS; revisit if PayNow ever pushes back on third-party key holding
 
@@ -183,10 +183,10 @@ If all 7 work, you can hand the URL to your dev friends.
 
 ## Useful URLs
 
-- **Dashboard / Landing**: https://pay.aizim.co.zw
-- **API base** (once cPanel app is up): https://pay.aizim.co.zw/api
-- **Simulator example**: https://pay.aizim.co.zw/simulator/mp_xxxxxxxxxxxxxxxx
-- **Drop-in widget**: https://pay.aizim.co.zw/checkout.js
+- **Dashboard / Landing**: https://manishapay.netlify.app
+- **API base** (once cPanel app is up): https://manishapay.netlify.app/api
+- **Simulator example**: https://manishapay.netlify.app/simulator/mp_xxxxxxxxxxxxxxxx
+- **Drop-in widget**: https://manishapay.netlify.app/checkout.js
 - **PayNow docs**: https://developers.paynow.co.zw/docs/paynow/quickstart
 - **PayNow forum**: https://forums.paynow.co.zw/
 

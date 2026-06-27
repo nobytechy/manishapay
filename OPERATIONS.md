@@ -33,10 +33,10 @@ admin you grant the `admin` role to in `manishapay_developers.role`.
 
 | What | Where |
 |---|---|
-| Live frontend | https://pay.aizim.co.zw |
-| Live API | https://pay.aizim.co.zw/api |
-| Simulator | https://pay.aizim.co.zw/simulator/`<tracker>` |
-| Status (TBD) | https://status.pay.aizim.co.zw |
+| Live frontend | https://manishapay.netlify.app |
+| Live API | https://manishapay.netlify.app/api |
+| Simulator | https://manishapay.netlify.app/simulator/`<tracker>` |
+| Status (TBD) | https://status.manishapay.netlify.app |
 | GitHub | https://github.com/nobytechy/manishapay |
 | Supabase project | (the one shared with chikoro/church — check `backend/.env.local`) |
 | cPanel SSH alias | `aizim` |
@@ -65,7 +65,7 @@ admin you grant the `admin` role to in `manishapay_developers.role`.
 | "Bill is wrong" | `manishapay_invoices` joined to `manishapay_usage_daily` — see SQL in §11 |
 | "Site is slow" | Supabase → Database → Reports (slow query log); cPanel → Resource Usage |
 
-The **Admin dashboard** at `https://pay.aizim.co.zw/admin` covers most of these visually. To grant yourself admin access on first login:
+The **Admin dashboard** at `https://manishapay.netlify.app/admin` covers most of these visually. To grant yourself admin access on first login:
 
 ```sql
 -- run once in Supabase Studio → SQL Editor
@@ -491,7 +491,7 @@ limit 100;
 ### Apache / cPanel access logs
 
 ```
-~/access-logs/pay.aizim.co.zw      ← static SPA + /api/* through Passenger
+~/access-logs/manishapay.netlify.app      ← static SPA + /api/* through Passenger
 ```
 
 ### Supabase Postgres logs

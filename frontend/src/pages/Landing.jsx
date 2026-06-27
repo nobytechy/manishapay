@@ -51,13 +51,13 @@ const features = [
 ];
 
 const codeSample =
-`curl -X POST https://pay.aizim.co.zw/api/v1/pay \\
+`curl -X POST https://manishapay.netlify.app/api/v1/pay \\
   -H "Authorization: Bearer mp_test_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"reference":"order-123","amount":"5.00"}'
 
 # → { "tracker":     "mp_a1b2c3d4...",
-#     "browser_url": "https://pay.aizim.co.zw/simulator/mp_a1b2...",
+#     "browser_url": "https://manishapay.netlify.app/simulator/mp_a1b2...",
 #     "mode":        "simulated" }`;
 
 const stats = [

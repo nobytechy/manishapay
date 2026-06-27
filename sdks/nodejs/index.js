@@ -16,7 +16,7 @@
 
 const crypto = require('crypto');
 
-const DEFAULT_BASE = 'https://pay.aizim.co.zw/api';
+const DEFAULT_BASE = 'https://manishapay.netlify.app/api';
 
 class ManishaPayError extends Error {
   constructor({ message, code, status, requestId, details }) {
@@ -33,7 +33,7 @@ class ManishaPay {
   /**
    * @param {string} apiKey - mp_test_xxx or mp_live_xxx
    * @param {object} [options]
-   * @param {string} [options.baseUrl] - default: https://pay.aizim.co.zw/api
+   * @param {string} [options.baseUrl] - default: https://manishapay.netlify.app/api
    * @param {number} [options.timeout] - milliseconds, default 15000
    * @param {object} [options.fetch] - custom fetch implementation (for tests)
    */

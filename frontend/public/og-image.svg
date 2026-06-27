@@ -66,6 +66,6 @@
 
   <!-- footer band -->
   <line x1="80" y1="540" x2="1120" y2="540" stroke="#1e293b" stroke-width="1"/>
-  <text x="80" y="585" fill="#64748b" font-size="22" font-weight="500">pay.aizim.co.zw</text>
+  <text x="80" y="585" fill="#64748b" font-size="22" font-weight="500">manishapay.netlify.app</text>
   <text x="1120" y="585" text-anchor="end" fill="#64748b" font-size="22" font-weight="500">Built by Noby Tebulo · nobie.netlify.app</text>
 </svg>

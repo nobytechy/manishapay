@@ -2,7 +2,7 @@
  * ManishaPay drop-in checkout widget.
  *
  * Use:
- *   <script src="https://pay.aizim.co.zw/checkout.js"></script>
+ *   <script src="https://manishapay.netlify.app/checkout.js"></script>
  *   <script>
  *     ManishaPay.checkout({
  *       publicKey: 'mp_test_xxxxxxxxxxxx',
@@ -28,7 +28,7 @@
 (function (global) {
   'use strict';
 
-  var DEFAULT_BASE = 'https://pay.aizim.co.zw';
+  var DEFAULT_BASE = 'https://manishapay.netlify.app';
   var STYLE_ID = 'mp-checkout-style';
 
   function injectStyles(base) {

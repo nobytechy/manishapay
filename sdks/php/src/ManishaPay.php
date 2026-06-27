@@ -32,7 +32,7 @@ class ManishaPayError extends \Exception
 
 class ManishaPay
 {
-    public const DEFAULT_BASE = 'https://pay.aizim.co.zw/api';
+    public const DEFAULT_BASE = 'https://manishapay.netlify.app/api';
 
     private string $apiKey;
     private string $baseUrl;

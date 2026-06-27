@@ -10,7 +10,7 @@
 > phone formatting, webhook signing, and mock testing — so you ship payment
 > flows in an afternoon instead of a week.
 
-**Live:** [pay.aizim.co.zw](https://pay.aizim.co.zw) ·
+**Live:** [manishapay.netlify.app](https://manishapay.netlify.app) ·
 **Author:** [Noby Tebulo](https://noby.aizim.co.zw)
 
 📚 **Companion docs:**
@@ -33,8 +33,8 @@
 
 ## Stack
 
-- **Backend** — Node 20 + Express + Zod + Pino + libsodium-wrappers, hosted as a cPanel Node.js app at `pay.aizim.co.zw/api`
-- **Frontend** — React 18 + Vite + Tailwind 3, static SPA at `pay.aizim.co.zw`
+- **Backend** — Node 20 + Express + Zod + Pino + libsodium-wrappers, hosted as a cPanel Node.js app at `manishapay.netlify.app/api`
+- **Frontend** — React 18 + Vite + Tailwind 3, static SPA at `manishapay.netlify.app`
 - **Database** — Supabase Postgres (shared with sibling apps; tables prefixed `manishapay_`)
 - **Auth** — Supabase Auth (signup gated by `app=manishapay` user-metadata marker)
 - **Encryption** — libsodium envelope encryption for merchant PayNow credentials at rest
@@ -43,7 +43,7 @@
 
 ```
 manisha/
-├── backend/                Express API (pay.aizim.co.zw/api)
+├── backend/                Express API (manishapay.netlify.app/api)
 │   ├── src/
 │   │   ├── middleware/    auth (API key) + jwtAuth (Supabase JWT)
 │   │   ├── routes/        pay, webhooks, simulator, projects, keys, credentials, tools
@@ -52,7 +52,7 @@ manisha/
 │   │   └── seed-credentials.js   CLI to add a project's PayNow creds without the dashboard
 │   └── tests/             21 unit tests (hash, crypto, paynow normalizers)
 │
-├── frontend/               Vite + React SPA (pay.aizim.co.zw)
+├── frontend/               Vite + React SPA (manishapay.netlify.app)
 │   ├── public/            logo.svg, checkout.js (drop-in widget), .htaccess
 │   └── src/pages/{developer,admin}/   dashboard pages
 │
@@ -72,17 +72,17 @@ manisha/
 ## Quick start (developer's perspective)
 
 ```bash
-# 1. Sign up at https://pay.aizim.co.zw
+# 1. Sign up at https://manishapay.netlify.app
 # 2. Generate a test API key (Dashboard → API Keys → Create)
 # 3. Try the simulated flow — no PayNow account needed
 
-curl -X POST https://pay.aizim.co.zw/api/v1/pay \
+curl -X POST https://manishapay.netlify.app/api/v1/pay \
   -H "Authorization: Bearer mp_test_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{"reference":"order-1","amount":"5.00"}'
 
 # Response: { "data": { "tracker": "mp_a1b2…",
-#                       "browser_url": "https://pay.aizim.co.zw/simulator/mp_a1b2…",
+#                       "browser_url": "https://manishapay.netlify.app/simulator/mp_a1b2…",
 #                       "mode": "simulated", … } }
 #
 # Open browser_url, click "Mark as Paid" → a signed webhook fires to your

@@ -1,6 +1,6 @@
 # manishapay (Node.js SDK)
 
-Official Node.js client for [ManishaPay](https://pay.aizim.co.zw) — middleware for the PayNow Zimbabwe payment gateway.
+Official Node.js client for [ManishaPay](https://manishapay.netlify.app) — middleware for the PayNow Zimbabwe payment gateway.
 
 ## Install
 
@@ -69,7 +69,7 @@ app.post('/webhooks/manishapay',
 
 When you create a `mp_test_*` API key and haven't yet added PayNow credentials,
 ManishaPay runs in fully simulated mode — no real PayNow call. The
-`browser_url` it returns points to `pay.aizim.co.zw/simulator/<tracker>` where
+`browser_url` it returns points to `manishapay.netlify.app/simulator/<tracker>` where
 you can click Paid / Cancelled / Timeout buttons to fire signed webhooks
 to your endpoint.
 

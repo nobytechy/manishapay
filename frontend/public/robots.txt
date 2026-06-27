@@ -7,4 +7,4 @@ Allow: /
 Disallow: /app
 Disallow: /admin
 
-Sitemap: https://pay.aizim.co.zw/sitemap.xml
+Sitemap: https://manishapay.netlify.app/sitemap.xml

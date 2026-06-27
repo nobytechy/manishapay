@@ -50,7 +50,13 @@ Have these two secrets ready (generated for you — keep them safe):
 3. **Create** → wait for the build → note the service URL `https://<name>.onrender.com`.
 4. Smoke test: open `https://<name>.onrender.com/health` → `{ "ok": true, ... }`.
 
-> ⚠️ Render's **free plan sleeps after ~15 min idle** — fine for testing, but PayNow webhooks can be missed while asleep. Before a real merchant goes live, either keep it warm (an uptime pinger on `/health`) or move to the Starter plan.
+> ⚠️ Render's **free plan sleeps after ~15 min idle** — fine for testing, but PayNow webhooks can be missed while asleep. The reconciliation sweep (step 6) recovers those; keeping the service warm (step 6) also prevents the cold-start that drops them in the first place.
+
+### Reconciliation env (set alongside the others)
+| Key | Value |
+|---|---|
+| `CRON_SECRET` | a long random token — `openssl rand -hex 24` (used to authenticate the sweep trigger) |
+| `RECONCILE_INTERVAL_MS` | `120000` (already in `render.yaml`) — in-process sweep every 2 min while the service is awake |
 
 ---
 
@@ -93,6 +99,38 @@ Now both URLs exist — go back and fix the placeholders, then redeploy each:
 5. Open `browser_url` → **Mark as Paid** → check **Transactions** in the dashboard flips to Paid.
 
 If all five pass, hand the URL to your dev friends.
+
+---
+
+## 6. Keep-warm + reconciliation (3 min) — do this before any real money
+
+On Render free the service sleeps after ~15 min idle, so a real PayNow webhook
+can hit a cold start (or be missed). Two layers fix this:
+
+**a) Keep it warm.** Create a free monitor that GETs `https://<render-url>.onrender.com/health`
+every 5 minutes (UptimeRobot, cron-job.org, or Better Uptime). This keeps the
+process alive, so the in-process reconciliation sweep (`RECONCILE_INTERVAL_MS=120000`)
+runs every 2 minutes and the cold-start window disappears.
+
+**b) Reconciliation as the safety net.** Even with keep-warm, a deploy or a
+brief outage can drop a webhook. The sweep re-polls every pending, non-simulated
+transaction against PayNow and fires the merchant webhook if it resolved while
+we weren't listening — so a missed callback becomes "caught within minutes"
+instead of "lost". It's idempotent (a webhook fires only when a payment leaves
+the pending state), so it never double-notifies.
+
+For belt-and-braces, also schedule an external POST to the trigger every
+5–10 min — this runs the sweep even if the process restarted and the in-process
+timer hasn't fired yet:
+
+```bash
+curl -X POST https://<render-url>.onrender.com/v1/reconcile \
+  -H "Authorization: Bearer <CRON_SECRET>"
+# → { "data": { "scanned": N, "updated": N, "dispatched": N, "errors": 0 }, ... }
+```
+
+A 401 means the `CRON_SECRET` header doesn't match; a 503 means `CRON_SECRET`
+isn't set on the server (the trigger is disabled until it is).
 
 ### (Optional) test the real PayNow path
 Dashboard → **PayNow Credentials** → add your `manishapay-dev` Integration ID + Key (mode `test`) → re-run the curl: `"mode"` becomes `"test"` and `browser_url` points at paynow.co.zw. Use PayNow's test numbers (`0771111111`, …) to trigger outcomes.

@@ -56,6 +56,31 @@ const schema = z.object({
   RATE_LIMIT_ADMIN: z.coerce.number().int().positive().default(1000),
   MAX_RETRY_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
 
+  // ─── Reconciliation sweep ──────────────────────────────────────────────
+  // Safety net for missed PayNow webhooks (e.g. the API was asleep on a free
+  // host when PayNow tried to call back). The sweep re-polls every pending,
+  // non-simulated transaction against PayNow and fires the merchant webhook
+  // if the status resolved while we weren't listening.
+  //
+  // CRON_SECRET           — bearer token that guards POST /v1/reconcile so an
+  //                         external scheduler (cron-job.org, UptimeRobot Pro,
+  //                         Render Cron) can trigger the sweep. Unset = the
+  //                         HTTP trigger is disabled (503).
+  // RECONCILE_INTERVAL_MS — in-process sweep cadence. 0 disables it (rely on
+  //                         the HTTP trigger instead). Only useful when the
+  //                         process stays awake (keep-warm pinger / paid plan).
+  // RECONCILE_MIN_AGE_MINUTES — don't poll transactions younger than this; give
+  //                         the customer time to pay and the live webhook time
+  //                         to arrive first.
+  // RECONCILE_MAX_AGE_HOURS — stop polling transactions older than this; an
+  //                         abandoned checkout shouldn't be re-polled forever.
+  // RECONCILE_BATCH_SIZE  — max transactions reconciled per sweep.
+  CRON_SECRET: z.string().min(16).optional(),
+  RECONCILE_INTERVAL_MS: z.coerce.number().int().min(0).default(0),
+  RECONCILE_MIN_AGE_MINUTES: z.coerce.number().int().min(0).default(2),
+  RECONCILE_MAX_AGE_HOURS: z.coerce.number().int().min(1).default(48),
+  RECONCILE_BATCH_SIZE: z.coerce.number().int().min(1).max(500).default(50),
+
   MOCK_MODE: z
     .string()
     .optional()
@@ -95,6 +120,11 @@ try {
       RATE_LIMIT_DEV: 100,
       RATE_LIMIT_ADMIN: 1000,
       MAX_RETRY_ATTEMPTS: 3,
+      CRON_SECRET: undefined,
+      RECONCILE_INTERVAL_MS: 0,
+      RECONCILE_MIN_AGE_MINUTES: 2,
+      RECONCILE_MAX_AGE_HOURS: 48,
+      RECONCILE_BATCH_SIZE: 50,
       MOCK_MODE: true,
       ALLOW_CORS_ORIGINS: '',
     };

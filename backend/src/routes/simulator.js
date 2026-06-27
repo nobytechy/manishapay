@@ -19,11 +19,10 @@
 'use strict';
 
 const router = require('express').Router();
-const axios = require('axios');
-const nodeCrypto = require('crypto');
 const { supabase } = require('../config/supabase');
 const { logger } = require('../services/logger');
 const paynow = require('../services/paynow');
+const webhookDelivery = require('../services/webhookDelivery');
 
 // ── HTML page ───────────────────────────────────────────────────────────
 router.get('/:tracker', async (req, res) => {
@@ -116,7 +115,7 @@ router.post('/:tracker/outcome', async (req, res) => {
   if (endpoints && endpoints.length > 0 && outcome !== 'timeout') {
     Promise.all(
       endpoints.map((ep) =>
-        deliverWebhook(ep, {
+        webhookDelivery.deliverOne(ep, {
           ...txn,
           status: newStatus,
           status_normalized: newStatusNormalized,
@@ -133,60 +132,6 @@ router.post('/:tracker/outcome', async (req, res) => {
     webhooks_dispatched: outcome === 'timeout' ? 0 : (endpoints?.length || 0),
   });
 });
-
-async function deliverWebhook(endpoint, txn) {
-  const payload = JSON.stringify({
-    event: 'payment.updated',
-    data: {
-      reference: txn.merchant_reference,
-      tracker: txn.tracker,
-      amount: txn.merchant_amount,
-      status: txn.status,
-      status_normalized: txn.status_normalized,
-      mode: txn.mode,
-    },
-    timestamp: new Date().toISOString(),
-  });
-  const ts = Math.floor(Date.now() / 1000);
-  const signature = nodeCrypto
-    .createHmac('sha256', endpoint.secret || '')
-    .update(`${ts}.${payload}`)
-    .digest('hex');
-
-  const start = Date.now();
-  let status = 'delivered';
-  let httpStatus = null;
-  let errorMsg = null;
-  try {
-    const r = await axios.post(endpoint.url, payload, {
-      timeout: 8_000,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-ManishaPay-Signature': `t=${ts},v1=${signature}`,
-      },
-      validateStatus: () => true,
-    });
-    httpStatus = r.status;
-    if (r.status >= 400) {
-      status = 'failed';
-      errorMsg = `HTTP ${r.status}`;
-    }
-  } catch (err) {
-    status = 'failed';
-    errorMsg = err.message;
-  }
-
-  await supabase.from('manishapay_webhook_deliveries').insert({
-    endpoint_id: endpoint.id,
-    transaction_id: txn.id,
-    payload,
-    signature: `t=${ts},v1=${signature}`,
-    status,
-    http_status: httpStatus,
-    error: errorMsg,
-    latency_ms: Date.now() - start,
-  });
-}
 
 function publicBase(req) {
   const proto = req.header('x-forwarded-proto') || req.protocol;

@@ -491,7 +491,7 @@ export default function GetStarted() {
 
       <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} ManishaPay — built by{' '}
-        <a href="https://noby.aizim.co.zw" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-brand-300">
+        <a href="https://nobie.netlify.app" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-brand-300">
           Noby Tebulo
         </a>{' '}
         for the PayNow Zimbabwe community

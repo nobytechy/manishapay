@@ -20,6 +20,7 @@ const { z } = require('zod');
 const { authenticate } = require('../middleware/auth');
 const paynow = require('../services/paynow');
 const credentials = require('../services/credentials');
+const qr = require('../services/qr');
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
 
@@ -31,6 +32,10 @@ const initiateSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
   method: z.enum(['ecocash', 'onemoney', 'innbucks', 'omari', 'zimswitch', 'vmc']).optional(),
+  // PayNow currency is fixed by the integration (commonly USD or ZWL). We let
+  // the merchant declare it so we can store and echo it back on every response —
+  // removing the "which currency did this run in?" ambiguity from the forum.
+  currency: z.enum(['USD', 'ZWL']).optional(),
   return_url: z.string().url().optional(),
   result_url: z.string().url().optional(),
 });
@@ -78,6 +83,7 @@ router.post('/', async (req, res, next) => {
       merchant_reference: parsed.data.reference,
       merchant_amount: merchantAmount,
       customer_amount: merchantAmount, // v1: no fee pass-through
+      currency: parsed.data.currency || 'USD',
       status: result.status || 'Sent',
       status_normalized: paynow.normalizeStatus(result.status || 'Sent'),
       mode: result.mode,
@@ -97,6 +103,18 @@ router.post('/', async (req, res, next) => {
       });
     }
 
+    // Payment ticket: a scannable QR of the checkout URL. The customer scans
+    // it with their phone and lands straight on the checkout. Never let a QR
+    // failure break the payment — it's a convenience field.
+    let qrCode = null;
+    if (result.browser_url) {
+      try {
+        qrCode = await qr.toDataUrl(result.browser_url);
+      } catch (qrErr) {
+        if (req.log) req.log.warn({ err: qrErr }, 'qr generation failed; continuing');
+      }
+    }
+
     res.status(201).json({
       data: {
         reference: parsed.data.reference,
@@ -105,6 +123,8 @@ router.post('/', async (req, res, next) => {
         poll_url: result.poll_url,
         status: result.status,
         mode: result.mode,
+        currency: parsed.data.currency || 'USD',
+        qr_code: qrCode,
         instructions: result.instructions,
       },
       requestId: req.id,
@@ -120,7 +140,7 @@ router.get('/:reference/status', async (req, res, next) => {
     const { data, error } = await supabase
       .from('manishapay_transactions')
       .select(
-        'tracker, merchant_reference, merchant_amount, customer_amount, status, status_normalized, mode, method, poll_url, paynow_reference, created_at, updated_at',
+        'tracker, merchant_reference, merchant_amount, customer_amount, currency, status, status_normalized, mode, method, poll_url, paynow_reference, created_at, updated_at',
       )
       .eq('developer_id', req.developer.id)
       .eq('project_id', req.developer.projectId)
@@ -162,6 +182,7 @@ router.get('/:reference/status', async (req, res, next) => {
         reference: data.merchant_reference,
         tracker: data.tracker,
         amount: data.merchant_amount,
+        currency: data.currency,
         status: data.status,
         status_normalized: data.status_normalized,
         mode: data.mode,

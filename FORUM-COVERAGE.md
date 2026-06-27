@@ -72,33 +72,40 @@ test integration** wired (`PAYNOW_TEST_INTEGRATION_*`), a test key hits real Pay
 test with zero per-project setup; without it, the built-in **simulator** lets devs
 onboard in 30s with no PayNow account at all.
 
-## I. Currency (ZWL / USD)  🔶
+## I. Currency (ZWL / USD)  ✅
 > "Currency code rectification"
 
 PayNow currency is a property of the integration (the sandbox account is ZWL).
-**To improve:** echo the integration currency on responses and reject obvious
-mismatches with a clear message. → tracked.
+`/v1/pay` now accepts an optional `currency` (`USD` / `ZWL`), stores it on the
+transaction, and **echoes it back on every response** (initiate, status, and the
+signed merchant webhook) — so there's no ambiguity about which currency a payment
+ran in. *(Future: store currency per credential to also reject obvious mismatches
+server-side.)*
 
-## J. Payment methods — Innbucks / Omari / Zimswitch / QR  🔶
+## J. Payment methods — Innbucks / Omari / Zimswitch / QR  ✅
 > "Innbucks integration", "Qr code payment tickets"
 
 `method` enum supports `ecocash, onemoney, innbucks, omari, zimswitch, vmc`.
-⬜ QR/ticket flow not yet built.
+✅ QR / payment-ticket flow: `/v1/pay` returns a `qr_code` (scannable PNG data URL
+of the checkout URL) so a merchant can show a ticket the customer scans to pay.
 
 ## K. Platform plugins (WHMCS / WooCommerce / Shopify / Wix / EDD / Android / captive portal / Firebase / Lovable)  🔶
 > many "plugin not working" threads
 
 ManishaPay's answer is one clean REST API + SDKs (Node, PHP) + a drop-in
-`checkout.js` widget + a WordPress plugin, so any platform integrates once against
-a stable surface instead of fighting per-platform plugins. ✅ WordPress plugin
-shipped; ⬜ WHMCS / Shopify / Woo adapters are future work.
+`checkout.js` widget, so any platform integrates once against a stable surface
+instead of fighting per-platform plugins. ✅ WordPress/WooCommerce plugin shipped;
+🔶 WHMCS gateway module scaffolded (`whmcs-module/`, BETA — needs a WHMCS test
+install); ✅ Shopify integration guide (`docs/SHOPIFY.md`) — note a *native* Shopify
+Checkout gateway is gated behind Shopify Partner approval, so the widget/offsite
+flow is the supported path.
 
 ---
 
 ## Open punch-list (to fully "cover the forum")
-1. 🔶 PayNow error-string → friendly resolution mapping (merchant-in-testing, invalid id, currency). — *in progress*
-2. 🔶 Surface integration currency on `/v1/pay` responses; warn on mismatch.
-3. ⬜ QR-code / payment-ticket flow.
-4. ⬜ WHMCS + Shopify + WooCommerce adapters on top of the REST API.
+1. ✅ PayNow error-string → friendly resolution mapping (merchant-in-testing, invalid id, currency) — done in `paynow.js` (`paynowResolution`).
+2. ✅ Surface integration currency on `/v1/pay` responses (initiate + status + webhook). *(Per-credential currency + server-side mismatch rejection = future.)*
+3. ✅ QR-code / payment-ticket flow — `qr_code` on `/v1/pay`.
+4. 🔶 Platform adapters: ✅ WooCommerce (WordPress plugin) · 🔶 WHMCS (`whmcs-module/`, BETA — needs WHMCS test install) · ✅ Shopify guide (`docs/SHOPIFY.md`; native gateway gated by Shopify). Separate artifacts — not part of the Render/Netlify deploy.
 
 _Paste new forum threads here and we'll slot them into this map and close gaps._

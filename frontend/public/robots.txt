@@ -1,6 +1,6 @@
 # ManishaPay — robots.txt
 # © 2026 Noby Tebulo. All rights reserved.
-# Author: Noby Tebulo · https://noby.aizim.co.zw
+# Author: Noby Tebulo · https://nobie.netlify.app
 
 User-agent: *
 Allow: /

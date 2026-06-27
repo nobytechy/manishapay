@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
       updated_at: updatedAt,
     })
     .eq('id', txn.id)
-    .select('id, developer_id, project_id, merchant_reference, tracker, merchant_amount, status, status_normalized, mode, method')
+    .select('id, developer_id, project_id, merchant_reference, tracker, merchant_amount, currency, status, status_normalized, mode, method')
     .maybeSingle();
 
   if (updErr) {

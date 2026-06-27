@@ -25,6 +25,12 @@ services:
         value: production
       - key: PAYNOW_API_BASE
         value: https://www.paynow.co.zw/interface
+      # Reconciliation sweep — recovers transactions whose PayNow webhook was
+      # missed (e.g. this service was asleep). With a keep-warm pinger the
+      # in-process sweep runs every 2 min; an external scheduler can also hit
+      # POST /v1/reconcile (Authorization: Bearer $CRON_SECRET) as a backup.
+      - key: RECONCILE_INTERVAL_MS
+        value: "120000"
       # ---- secrets / per-deploy (set in the Render dashboard) ----
       - key: SUPABASE_URL
         sync: false
@@ -43,6 +49,8 @@ services:
       - key: PAYNOW_RETURN_URL
         sync: false
       - key: PAYNOW_RESULT_URL           # = <render-url>/v1/webhook
+        sync: false
+      - key: CRON_SECRET                 # guards POST /v1/reconcile; openssl rand -hex 24
         sync: false
       # Shared sandbox PayNow TEST integration — lets the sandbox hit real
       # PayNow test with no per-project setup. Test account only, never live.

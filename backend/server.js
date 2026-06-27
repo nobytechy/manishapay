@@ -10,6 +10,8 @@ require('dotenv').config();
 
 const { buildApp } = require('./src/app');
 const { logger } = require('./src/services/logger');
+const env = require('./src/config/env');
+const { reconcilePending } = require('./src/services/reconcile');
 
 const port = Number(process.env.PORT || 8787);
 const app = buildApp();
@@ -18,9 +20,22 @@ const server = app.listen(port, () => {
   logger.info({ port, env: process.env.NODE_ENV || 'development' }, 'ManishaPay gateway listening');
 });
 
+// ─── Reconciliation sweep (in-process) ───────────────────────────────────
+// Only useful when the process stays awake (keep-warm pinger or a paid plan).
+// On a host that sleeps, drive POST /v1/reconcile from an external scheduler
+// instead. 0 (the default) disables the in-process timer.
+let reconcileTimer = null;
+if (env.RECONCILE_INTERVAL_MS > 0) {
+  reconcileTimer = setInterval(() => {
+    reconcilePending().catch((err) => logger.error({ err }, 'reconcile: interval sweep failed'));
+  }, env.RECONCILE_INTERVAL_MS);
+  logger.info({ intervalMs: env.RECONCILE_INTERVAL_MS }, 'reconcile: in-process sweep enabled');
+}
+
 // Graceful shutdown so cPanel/PM2/systemd can recycle us cleanly.
 const shutdown = (signal) => {
   logger.info({ signal }, 'Shutting down gateway');
+  if (reconcileTimer) clearInterval(reconcileTimer);
   server.close((err) => {
     if (err) {
       logger.error({ err }, 'Error during shutdown');

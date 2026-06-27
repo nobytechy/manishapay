@@ -27,6 +27,7 @@ const projectsRouter = require('./routes/projects');
 const keysRouter = require('./routes/keys');
 const credentialsRouter = require('./routes/credentials');
 const simulatorRouter = require('./routes/simulator');
+const reconcileRouter = require('./routes/reconcile');
 
 function buildApp() {
   const app = express();
@@ -84,6 +85,7 @@ function buildApp() {
   app.use('/health', healthRouter);
   app.use('/v1/auth', authRouter);         // Bootstrap a developer profile from any Supabase session
   app.use('/v1/webhook', webhookRouter);   // PayNow → us, signature-validated inside the router
+  app.use('/v1/reconcile', reconcileRouter); // Cron-secret-guarded missed-webhook sweep
   app.use('/simulator', simulatorRouter);  // Simulated checkout pages + outcome triggers
 
   // ─── Data-plane (API key auth) ─────────────────────────

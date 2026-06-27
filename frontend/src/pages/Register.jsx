@@ -87,6 +87,9 @@ export default function Register() {
             Already have one? <Link to="/login" className="text-brand hover:underline">Sign in</Link>
           </p>
         </div>
+        <Link to="/" className="mt-6 flex items-center justify-center gap-1 text-xs text-slate-500 hover:text-slate-300">
+          <span aria-hidden="true">←</span> Back to main site
+        </Link>
       </div>
     </div>
   );

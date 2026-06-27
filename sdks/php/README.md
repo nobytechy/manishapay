@@ -1,6 +1,6 @@
 # manishapay/manishapay (PHP SDK)
 
-Official PHP client for [ManishaPay](https://pay.aizim.co.zw) — middleware for the PayNow Zimbabwe payment gateway.
+Official PHP client for [ManishaPay](https://manishapay.netlify.app) — middleware for the PayNow Zimbabwe payment gateway.
 
 PHP 7.4+. Only requires `ext-curl` and `ext-json` (both standard).
 
@@ -67,7 +67,7 @@ echo 'ok';
 ## Test mode
 
 A `mp_test_*` key without configured PayNow credentials runs in fully simulated
-mode. The `browser_url` will point to `pay.aizim.co.zw/simulator/<tracker>`
+mode. The `browser_url` will point to `manishapay.netlify.app/simulator/<tracker>`
 where you can click Paid / Cancelled / Timeout to fire signed webhooks.
 
 ## License

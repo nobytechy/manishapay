@@ -82,6 +82,9 @@ export default function Login() {
             No account? <Link to="/register" className="text-brand hover:underline">Create one</Link>
           </p>
         </div>
+        <Link to="/" className="mt-6 flex items-center justify-center gap-1 text-xs text-slate-500 hover:text-slate-300">
+          <span aria-hidden="true">←</span> Back to main site
+        </Link>
       </div>
     </div>
   );

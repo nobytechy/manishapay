@@ -41,12 +41,18 @@ Have these two secrets ready (generated for you — keep them safe):
    | `SUPABASE_ANON_KEY` | anon public key |
    | `JWT_SECRET` | (generated) |
    | `MANISHAPAY_MASTER_KEY` | (generated) |
-   | `PAYNOW_RETURN_URL` | `https://<your-netlify-site>.netlify.app/return` |
-   | `PAYNOW_RESULT_URL` | `https://<this-render-url>.onrender.com/v1/webhook` |
-   | `SIMULATOR_BASE_URL` | `https://<this-render-url>.onrender.com` |
-   | `ALLOW_CORS_ORIGINS` | `https://<your-netlify-site>.netlify.app` |
+   | `PAYNOW_RETURN_URL` | `https://manishapay.netlify.app/return` |
+   | `PAYNOW_RESULT_URL` | `https://<this-render-url>.onrender.com/v1/webhook` &nbsp;*(direct to Render — webhooks should not go through the Netlify proxy)* |
+   | `SIMULATOR_BASE_URL` | `https://manishapay.netlify.app` &nbsp;*(the Netlify domain — simulator pages are proxied to Render)* |
+   | `ALLOW_CORS_ORIGINS` | `https://manishapay.netlify.app` |
 
    You won't know the Render or Netlify URLs until each is created — set placeholders now, then come back in step 4 to fix the cross-references and redeploy.
+
+   > **Single-domain setup (Option A).** The whole app lives under one domain
+   > (`manishapay.netlify.app`); `netlify.toml` proxies `/api/*` and `/simulator/*`
+   > to the Render API. **Name the Render service `manishapay-api`** so its URL is
+   > `https://manishapay-api.onrender.com` (the proxy target in `netlify.toml`). If
+   > Render assigns a different URL, update the two `to =` lines in `netlify.toml`.
 3. **Create** → wait for the build → note the service URL `https://<name>.onrender.com`.
 4. Smoke test: open `https://<name>.onrender.com/health` → `{ "ok": true, ... }`.
 
@@ -69,8 +75,9 @@ Have these two secrets ready (generated for you — keep them safe):
    |---|---|
    | `VITE_SUPABASE_URL` | your Supabase Project URL |
    | `VITE_SUPABASE_ANON` | anon public key |
-   | `VITE_API_BASE` | `https://<your-render-url>.onrender.com` |
-3. **Deploy** → note the site URL `https://<name>.netlify.app`.
+   | `VITE_API_BASE` | `/api` &nbsp;*(same-origin — Netlify proxies it to Render; no cross-origin calls)* |
+3. **Set the site name to `manishapay`** (Site settings → Change site name) so the URL is `https://manishapay.netlify.app`.
+4. **Deploy** → confirm the site URL is `https://manishapay.netlify.app`.
 
 ---
 
@@ -78,8 +85,8 @@ Have these two secrets ready (generated for you — keep them safe):
 
 Now both URLs exist — go back and fix the placeholders, then redeploy each:
 
-- **Render** env: set `ALLOW_CORS_ORIGINS` and `PAYNOW_RETURN_URL` to the real Netlify URL; set `PAYNOW_RESULT_URL` + `SIMULATOR_BASE_URL` to the real Render URL → **Manual Deploy / Save**.
-- **Netlify** env: confirm `VITE_API_BASE` is the real Render URL → **Trigger deploy**.
+- **Render** env: `ALLOW_CORS_ORIGINS`, `PAYNOW_RETURN_URL` and `SIMULATOR_BASE_URL` → `https://manishapay.netlify.app`; `PAYNOW_RESULT_URL` → `https://<your-render>.onrender.com/v1/webhook` (direct) → **Save / Manual Deploy**.
+- **Netlify**: `VITE_API_BASE` stays `/api`. Confirm the `netlify.toml` proxy `to =` URLs match your real Render URL → **Trigger deploy**.
 
 ---
 

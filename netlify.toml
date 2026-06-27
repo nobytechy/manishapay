@@ -15,7 +15,25 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# SPA fallback so client-side routes resolve to index.html
+# Proxy the API + simulator to the Render backend, so the whole app lives under
+# one domain (e.g. https://manishapay.netlify.app). Update the Render URL below
+# to match your actual API service.
+#   /api/v1/pay   → <render>/v1/pay     (the /api prefix is stripped by :splat)
+#   /simulator/x  → <render>/simulator/x
+[[redirects]]
+  from = "/api/*"
+  to = "https://manishapay-api.onrender.com/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/simulator/*"
+  to = "https://manishapay-api.onrender.com/simulator/:splat"
+  status = 200
+  force = true
+
+# SPA fallback so client-side routes resolve to index.html.
+# MUST stay last — the proxies above take precedence.
 [[redirects]]
   from = "/*"
   to = "/index.html"

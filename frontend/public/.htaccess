@@ -3,7 +3,7 @@
 #
 # Important: paths under /api/ are NOT rewritten — those are handled by
 # the cPanel Node.js app (you'll set this up via cPanel → "Setup Node.js
-# App" → Application URL: pay.aizim.co.zw/api).
+# App" → Application URL: manishapay.netlify.app/api).
 RewriteEngine On
 RewriteBase /
 

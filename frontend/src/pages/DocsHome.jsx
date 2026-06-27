@@ -318,7 +318,7 @@ const sdkWidget = (
     <div>
       <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand-300">Hosted (recommended)</h3>
       <p className="text-sm text-slate-400">Auto-updated from our origin:</p>
-      <Code lang="html">{`<script src="https://pay.aizim.co.zw/checkout.js"
+      <Code lang="html">{`<script src="https://manishapay.netlify.app/checkout.js"
         data-public-key="mp_pk_xxxxxxxxxxxx"
         data-amount="5.00"
         data-reference="order-1234"

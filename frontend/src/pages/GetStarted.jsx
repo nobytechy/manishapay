@@ -16,7 +16,7 @@ import BackToTop from '../components/BackToTop';
 const tabs = ['curl', 'node', 'php', 'javascript'];
 
 const samples = {
-  curl: `curl -X POST https://pay.aizim.co.zw/api/v1/pay \\
+  curl: `curl -X POST https://manishapay.netlify.app/api/v1/pay \\
   -H "Authorization: Bearer mp_test_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -29,8 +29,8 @@ const samples = {
 # Response:
 # { "data": {
 #     "tracker": "mp_a1b2c3d4e5f6g7h8",
-#     "browser_url": "https://pay.aizim.co.zw/simulator/mp_a1b2c3d4e5f6g7h8",
-#     "poll_url":    "https://pay.aizim.co.zw/simulator/mp_a1b2c3d4e5f6g7h8/poll",
+#     "browser_url": "https://manishapay.netlify.app/simulator/mp_a1b2c3d4e5f6g7h8",
+#     "poll_url":    "https://manishapay.netlify.app/simulator/mp_a1b2c3d4e5f6g7h8/poll",
 #     "status":      "Sent",
 #     "mode":        "simulated"
 #   } }`,
@@ -73,7 +73,7 @@ $r = $mp->pay([
 header('Location: ' . $r['browser_url']);
 exit;`,
   javascript: `<!-- Drop-in widget — works on ANY site, no build step -->
-<script src="https://pay.aizim.co.zw/checkout.js"></script>
+<script src="https://manishapay.netlify.app/checkout.js"></script>
 
 <button id="pay">Pay $5.00</button>
 
@@ -213,7 +213,7 @@ const errors = [
   { code: 'PAYNOW_REJECTED', when: 'PayNow rejects your initiate (hash, amount, integration disabled)', fix: 'Run /v1/tools/hash for a diff. Check that your integration is set live in PayNow.' },
   { code: 'HASH_MISMATCH', when: 'PayNow callback hash doesn\'t match expected', fix: 'Either your Integration Key was rotated in PayNow, or the request was tampered with. Re-add credentials.' },
   { code: 'BILLING_DISABLED', when: 'Account disabled for unpaid invoices', fix: 'Settle outstanding invoices in Dashboard → Billing.' },
-  { code: 'ROUTE_NOT_FOUND', when: 'Wrong endpoint URL', fix: 'Base URL is https://pay.aizim.co.zw/api — note the /api prefix.' },
+  { code: 'ROUTE_NOT_FOUND', when: 'Wrong endpoint URL', fix: 'Base URL is https://manishapay.netlify.app/api — note the /api prefix.' },
 ];
 
 export default function GetStarted() {

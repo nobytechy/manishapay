@@ -24,6 +24,11 @@
 --   • UUID v4 ids (gen_random_uuid).
 --   • created_at / updated_at on every row, kept honest by trigger.
 --   • RLS enabled on every table. Service role bypasses RLS.
+--
+-- Safe to re-run (idempotent): tables/indexes use create-if-not-exists;
+-- triggers & policies are dropped-then-created; new columns are backfilled via
+-- add-column-if-not-exists (see "Schema upgrades"). Re-running adds whatever is
+-- missing and leaves existing objects and data untouched.
 -- ─────────────────────────────────────────────────────────────────────────
 
 create extension if not exists "pgcrypto";
@@ -54,6 +59,7 @@ create table if not exists public.manishapay_developers (
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
+drop trigger if exists manishapay_developers_touch on public.manishapay_developers;
 create trigger manishapay_developers_touch before update on public.manishapay_developers
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -73,6 +79,7 @@ create table if not exists public.manishapay_projects (
   updated_at      timestamptz not null default now()
 );
 create index if not exists manishapay_projects_developer_idx on public.manishapay_projects(developer_id);
+drop trigger if exists manishapay_projects_touch on public.manishapay_projects;
 create trigger manishapay_projects_touch before update on public.manishapay_projects
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -114,6 +121,7 @@ create index if not exists manishapay_paynow_credentials_project_idx
 create unique index if not exists manishapay_paynow_credentials_one_active_per_mode
   on public.manishapay_paynow_credentials(project_id, mode)
   where status = 'active';
+drop trigger if exists manishapay_paynow_credentials_touch on public.manishapay_paynow_credentials;
 create trigger manishapay_paynow_credentials_touch before update on public.manishapay_paynow_credentials
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -138,6 +146,7 @@ create table if not exists public.manishapay_api_keys (
 create index if not exists manishapay_api_keys_prefix_idx     on public.manishapay_api_keys(prefix);
 create index if not exists manishapay_api_keys_developer_idx  on public.manishapay_api_keys(developer_id);
 create index if not exists manishapay_api_keys_project_idx    on public.manishapay_api_keys(project_id);
+drop trigger if exists manishapay_api_keys_touch on public.manishapay_api_keys;
 create trigger manishapay_api_keys_touch before update on public.manishapay_api_keys
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -185,6 +194,7 @@ create unique index if not exists manishapay_transactions_dev_merchref_idx
 create index if not exists manishapay_transactions_project_idx on public.manishapay_transactions(project_id);
 create index if not exists manishapay_transactions_status_idx  on public.manishapay_transactions(status_normalized);
 create index if not exists manishapay_transactions_created_idx on public.manishapay_transactions(created_at desc);
+drop trigger if exists manishapay_transactions_touch on public.manishapay_transactions;
 create trigger manishapay_transactions_touch before update on public.manishapay_transactions
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -202,6 +212,7 @@ create table if not exists public.manishapay_webhook_endpoints (
 );
 create index if not exists manishapay_webhook_endpoints_project_idx
   on public.manishapay_webhook_endpoints(project_id);
+drop trigger if exists manishapay_webhook_endpoints_touch on public.manishapay_webhook_endpoints;
 create trigger manishapay_webhook_endpoints_touch before update on public.manishapay_webhook_endpoints
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -262,6 +273,7 @@ create table if not exists public.manishapay_invoices (
 );
 create index if not exists manishapay_invoices_developer_status_idx
   on public.manishapay_invoices(developer_id, status);
+drop trigger if exists manishapay_invoices_touch on public.manishapay_invoices;
 create trigger manishapay_invoices_touch before update on public.manishapay_invoices
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -290,6 +302,7 @@ create table if not exists public.manishapay_button_configs (
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+drop trigger if exists manishapay_button_configs_touch on public.manishapay_button_configs;
 create trigger manishapay_button_configs_touch before update on public.manishapay_button_configs
   for each row execute function public.manishapay_touch_updated_at();
 
@@ -302,6 +315,15 @@ create table if not exists public.manishapay_announcements (
   published_at  timestamptz default now(),
   created_at    timestamptz not null default now()
 );
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Schema upgrades (idempotent) — backfill columns added after the first
+-- install, so re-running this file brings an existing/older database up to
+-- date without touching data. Add new `add column if not exists` lines here
+-- as the schema evolves.
+-- ─────────────────────────────────────────────────────────────────────────
+alter table public.manishapay_transactions
+  add column if not exists currency text not null default 'USD';
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- Row Level Security
@@ -328,10 +350,13 @@ create or replace function public.manishapay_is_admin() returns boolean as $$
 $$ language sql stable security definer;
 
 -- developers
+drop policy if exists "manishapay devs read self" on public.manishapay_developers;
 create policy "manishapay devs read self" on public.manishapay_developers
   for select using (id = auth.uid() or public.manishapay_is_admin());
+drop policy if exists "manishapay devs update self" on public.manishapay_developers;
 create policy "manishapay devs update self" on public.manishapay_developers
   for update using (id = auth.uid());
+drop policy if exists "manishapay admin manages devs" on public.manishapay_developers;
 create policy "manishapay admin manages devs" on public.manishapay_developers
   for all using (public.manishapay_is_admin()) with check (public.manishapay_is_admin());
 
@@ -356,11 +381,13 @@ create trigger manishapay_developers_guard before update on public.manishapay_de
   for each row execute function public.manishapay_guard_developer_update();
 
 -- projects
+drop policy if exists "manishapay owns projects" on public.manishapay_projects;
 create policy "manishapay owns projects" on public.manishapay_projects
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
 
 -- paynow_credentials: scoped via project ownership; writes by service role
 -- only so the merchant can never read encrypted blobs back through PostgREST.
+drop policy if exists "manishapay reads own credentials" on public.manishapay_paynow_credentials;
 create policy "manishapay reads own credentials" on public.manishapay_paynow_credentials
   for select using (
     project_id in (select id from public.manishapay_projects where developer_id = auth.uid())
@@ -368,18 +395,22 @@ create policy "manishapay reads own credentials" on public.manishapay_paynow_cre
   );
 
 -- api_keys
+drop policy if exists "manishapay owns keys" on public.manishapay_api_keys;
 create policy "manishapay owns keys" on public.manishapay_api_keys
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
 
 -- transactions: read-only for the developer; writes go through service role
+drop policy if exists "manishapay reads own txns" on public.manishapay_transactions;
 create policy "manishapay reads own txns" on public.manishapay_transactions
   for select using (developer_id = auth.uid() or public.manishapay_is_admin());
 
 -- webhook endpoints
+drop policy if exists "manishapay owns endpoints" on public.manishapay_webhook_endpoints;
 create policy "manishapay owns endpoints" on public.manishapay_webhook_endpoints
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
 
 -- webhook deliveries (read via endpoint ownership)
+drop policy if exists "manishapay reads own deliveries" on public.manishapay_webhook_deliveries;
 create policy "manishapay reads own deliveries" on public.manishapay_webhook_deliveries
   for select using (
     endpoint_id in (select id from public.manishapay_webhook_endpoints where developer_id = auth.uid())
@@ -387,22 +418,28 @@ create policy "manishapay reads own deliveries" on public.manishapay_webhook_del
   );
 
 -- usage / invoices
+drop policy if exists "manishapay reads own usage" on public.manishapay_usage_daily;
 create policy "manishapay reads own usage" on public.manishapay_usage_daily
   for select using (developer_id = auth.uid() or public.manishapay_is_admin());
+drop policy if exists "manishapay reads own invoices" on public.manishapay_invoices;
 create policy "manishapay reads own invoices" on public.manishapay_invoices
   for select using (developer_id = auth.uid() or public.manishapay_is_admin());
 
 -- logs
+drop policy if exists "manishapay reads own logs" on public.manishapay_logs;
 create policy "manishapay reads own logs" on public.manishapay_logs
   for select using (developer_id = auth.uid() or public.manishapay_is_admin());
 
 -- button configs
+drop policy if exists "manishapay owns buttons" on public.manishapay_button_configs;
 create policy "manishapay owns buttons" on public.manishapay_button_configs
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
 
 -- announcements
+drop policy if exists "manishapay reads announcements" on public.manishapay_announcements;
 create policy "manishapay reads announcements" on public.manishapay_announcements
   for select using (auth.role() = 'authenticated');
+drop policy if exists "manishapay admin writes announcements" on public.manishapay_announcements;
 create policy "manishapay admin writes announcements" on public.manishapay_announcements
   for all using (public.manishapay_is_admin()) with check (public.manishapay_is_admin());
 

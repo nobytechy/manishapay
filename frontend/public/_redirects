@@ -1,1 +1,9 @@
-/*    /index.html   200
+# Proxy API + simulator to the Render backend (single-domain setup).
+# IMPORTANT: these MUST come before the SPA fallback below. Netlify processes
+# _redirects BEFORE netlify.toml, so these rules are authoritative — if the
+# Render URL changes, update it HERE.
+/api/*        https://manishapay-api-1ndn.onrender.com/:splat            200
+/simulator/*  https://manishapay-api-1ndn.onrender.com/simulator/:splat  200
+
+# SPA fallback — client-side routes resolve to index.html (must stay last).
+/*            /index.html   200

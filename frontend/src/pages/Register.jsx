@@ -13,6 +13,7 @@ export default function Register() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [githubBusy, setGithubBusy] = useState(false);
@@ -21,6 +22,10 @@ export default function Register() {
     e.preventDefault();
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
     setBusy(true);
@@ -69,6 +74,8 @@ export default function Register() {
             <Input label="Full name" value={fullName} onChange={(e)=>setFullName(e.target.value)} required/>
             <Input label="Email" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required autoComplete="email"/>
             <Input label="Password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required autoComplete="new-password" hint="Minimum 8 characters."/>
+            <Input label="Confirm password" type="password" value={confirmPassword} onChange={(e)=>setConfirmPassword(e.target.value)} required autoComplete="new-password"
+              error={confirmPassword && confirmPassword !== password ? 'Passwords do not match' : undefined}/>
             <Button type="submit" className="w-full" loading={busy}>Create account</Button>
           </form>
 

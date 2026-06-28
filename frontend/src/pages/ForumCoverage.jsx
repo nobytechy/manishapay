@@ -121,6 +121,42 @@ const overview = (
       </div>
     </div>
 
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-slate-100">Platform integrations at a glance</h3>
+      <p className="text-xs leading-relaxed text-slate-400">
+        Every platform works today via ManishaPay's REST API + drop-in{' '}
+        <code className="rounded bg-slate-800 px-1 text-brand-300">checkout.js</code> widget.
+        Dedicated plugins ship per platform.
+      </p>
+      <div className="overflow-x-auto rounded-xl border border-slate-800">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-400">
+            <tr>
+              <th className="px-4 py-2.5 font-medium">Platform</th>
+              <th className="px-4 py-2.5 font-medium">Status</th>
+              <th className="px-4 py-2.5 font-medium">Addresses</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800 text-slate-300">
+            {[
+              ['WordPress', 'Live — dedicated plugin', 'PayNow WP plugin checkout failures'],
+              ['WooCommerce', 'Live — gateway plugin', 'WC 9.x channel-selection bugs'],
+              ['Shopify', 'Supported — hosted checkout / widget', 'Order-reflection / callback issues'],
+              ['Easy Digital Downloads', 'Supported via SDK / widget · plugin on roadmap', 'EDD async-payment timing'],
+              ['Moodle', 'Supported via API / link · plugin on roadmap', 'Moodle PayNow plugin gaps'],
+              ['Gravity Forms', 'Supported via SDK / widget · add-on on roadmap', 'Gravity Forms PayNow add-on'],
+            ].map(([platform, status, addresses]) => (
+              <tr key={platform}>
+                <td className="px-4 py-2.5 font-medium text-slate-100">{platform}</td>
+                <td className="px-4 py-2.5"><span className="text-emerald-300">✓</span> {status}</td>
+                <td className="px-4 py-2.5 text-slate-400">{addresses}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <p className="text-sm leading-relaxed text-slate-400">
       Every <em>Direct fix</em> issue can be reproduced in the in-dashboard{' '}
       <Link to="/app/sandbox" className="text-brand-300 hover:underline">Sandbox</Link>{' '}

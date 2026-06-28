@@ -5,7 +5,7 @@
 # Required env vars on Netlify (Site settings → Environment variables):
 #   VITE_SUPABASE_URL   = https://<new-project>.supabase.co
 #   VITE_SUPABASE_ANON  = <new anon public key>
-#   VITE_API_BASE       = https://<your-render-app>.onrender.com   (set AFTER the API is live)
+#   VITE_API_BASE       = /api   (same-origin; the proxy below forwards to Render)
 
 [build]
   base = "frontend"
@@ -22,13 +22,13 @@
 #   /simulator/x  → <render>/simulator/x
 [[redirects]]
   from = "/api/*"
-  to = "https://manishapay-api.onrender.com/:splat"
+  to = "https://manishapay-api-1ndn.onrender.com/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/simulator/*"
-  to = "https://manishapay-api.onrender.com/simulator/:splat"
+  to = "https://manishapay-api-1ndn.onrender.com/simulator/:splat"
   status = 200
   force = true
 

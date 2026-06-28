@@ -2,9 +2,17 @@
 # The dashboard is hosted separately on Netlify.
 #
 # Set the `sync: false` values in the Render dashboard (they are secrets and
-# are NOT stored in this file or in git). After the service is live, copy its
-# URL (https://<name>.onrender.com) into Netlify's VITE_API_BASE and into the
-# PayNow RESULT_URL / SIMULATOR_BASE_URL below.
+# are NOT stored in this file or in git).
+#
+# SINGLE-DOMAIN (Option A): the app lives under https://manishapay.netlify.app
+# and netlify.toml proxies /api/* + /simulator/* to this service. So:
+#   • Name this service `manishapay-api` (→ https://manishapay-api.onrender.com,
+#     the proxy target in netlify.toml).
+#   • SIMULATOR_BASE_URL  = https://manishapay.netlify.app   (the Netlify URL)
+#   • ALLOW_CORS_ORIGINS  = https://manishapay.netlify.app
+#   • PAYNOW_RETURN_URL   = https://manishapay.netlify.app/return
+#   • PAYNOW_RESULT_URL   = https://<this-render-url>.onrender.com/v1/webhook  (DIRECT — don't proxy webhooks)
+#   • Netlify's VITE_API_BASE = /api  (NOT this service's URL)
 #
 # NOTE: Render's FREE plan sleeps after ~15 min idle. For reliable PayNow
 # webhooks either keep it warm with an uptime pinger hitting /health, or move
@@ -42,9 +50,9 @@ services:
         sync: false
       - key: MANISHAPAY_MASTER_KEY
         sync: false
-      - key: SIMULATOR_BASE_URL          # = this service's own URL
+      - key: SIMULATOR_BASE_URL          # = https://manishapay.netlify.app (Netlify URL, proxied)
         sync: false
-      - key: ALLOW_CORS_ORIGINS          # = your Netlify site URL
+      - key: ALLOW_CORS_ORIGINS          # = https://manishapay.netlify.app
         sync: false
       - key: PAYNOW_RETURN_URL
         sync: false

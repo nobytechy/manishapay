@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Input from '../components/ui/Input';
@@ -8,8 +8,24 @@ import GoogleButton from '../components/auth/GoogleButton';
 import GithubButton from '../components/auth/GithubButton';
 
 export default function Login() {
-  const { signIn, signInWithGoogle, signInWithGithub } = useAuth();
+  const { signIn, signInWithGoogle, signInWithGithub, isAuthenticated, loading } = useAuth();
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const justVerified = params.get('verified') === '1';
+
+  // After clicking "Verify" in the confirmation email, Supabase redirects here
+  // with a session in the URL. Greet the user and take them to the dashboard;
+  // if they're already signed in and land on /login, send them through too.
+  useEffect(() => {
+    if (loading) return;
+    if (isAuthenticated) {
+      if (justVerified) toast.success('Email verified — welcome to ManishaPay!', { id: 'verified' });
+      nav('/app', { replace: true });
+    } else if (justVerified) {
+      toast.success('Email verified ✓ — please sign in to continue.', { id: 'verified' });
+    }
+  }, [isAuthenticated, loading, justVerified, nav]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);

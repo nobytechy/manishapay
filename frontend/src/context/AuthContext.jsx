@@ -107,7 +107,13 @@ export function AuthProvider({ children }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName, app: APP_MARKER } },
+      options: {
+        data: { full_name: fullName, app: APP_MARKER },
+        // After the user clicks "Verify" in the email, come back to THIS app
+        // (whatever origin they signed up from) rather than Supabase's default
+        // Site URL — which otherwise sends production users to localhost.
+        emailRedirectTo: `${window.location.origin}/login?verified=1`,
+      },
     });
     if (error) throw error;
   };

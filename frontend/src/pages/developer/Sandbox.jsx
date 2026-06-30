@@ -197,6 +197,9 @@ export default function Sandbox() {
       if (email.trim())  body.email  = email.trim();
       if (phone.trim())  body.phone  = phone.trim();
       if (method.trim()) body.method = method.trim();
+      // So the web-redirect simulator returns the "customer" back to the sandbox
+      // (instead of the public landing page) after paid/cancelled.
+      body.return_url = `${window.location.origin}/app/sandbox`;
       const res = await api.pay(body);
       const payload = res?.data || res || {};
       if (!payload.tracker) {

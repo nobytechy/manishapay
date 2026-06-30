@@ -183,10 +183,15 @@ async function initiate(input, ctx) {
     }
     logger.info({ tracker, ref: input.reference }, 'simulated: no PayNow call');
     const base = env.PAYNOW_RETURN_URL.replace(/\/+$/, '').replace(/\/return.*$/, '');
+    const simBase = env.SIMULATOR_BASE_URL || base;
+    // Where the simulator returns the "customer" after an outcome — mirrors how
+    // real PayNow redirects to the merchant's return_url. Passed as a query
+    // param so the (stateless) simulator page knows where to go back to.
+    const returnUrl = input.return_url || project.return_url || env.PAYNOW_RETURN_URL;
     return {
       tracker,
-      browser_url: `${env.SIMULATOR_BASE_URL || base}/simulator/${tracker}`,
-      poll_url: `${env.SIMULATOR_BASE_URL || base}/simulator/${tracker}/poll`,
+      browser_url: `${simBase}/simulator/${tracker}?return_url=${encodeURIComponent(returnUrl)}`,
+      poll_url: `${simBase}/simulator/${tracker}/poll`,
       status: 'Sent',
       instructions: 'Simulated checkout — no real PayNow call. Click any outcome on the simulator page to fire a webhook.',
       mode: 'simulated',

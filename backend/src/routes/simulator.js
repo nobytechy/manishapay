@@ -213,6 +213,7 @@ function simulatorPage(txn) {
   </div>
   <script>
     const tracker = ${JSON.stringify(txn.tracker)};
+    const reference = ${JSON.stringify(txn.merchant_reference)};
     const result = document.getElementById('result');
     const statusEl = document.getElementById('status');
     function setBusy(on) {
@@ -236,8 +237,9 @@ function simulatorPage(txn) {
         // Notify any parent window that opened us in an iframe (the
         // drop-in checkout.js widget). Wildcard target is fine because
         // we only emit non-sensitive data.
+        var inIframe = window.parent && window.parent !== window;
         try {
-          if (window.parent && window.parent !== window) {
+          if (inIframe) {
             window.parent.postMessage({
               source: 'manishapay',
               type: outcome === 'cancelled' ? 'payment.cancelled' : 'payment.completed',
@@ -245,6 +247,16 @@ function simulatorPage(txn) {
             }, '*');
           }
         } catch (_) { /* sandboxed — ignore */ }
+        // Standalone (web-redirect) flow: return the customer to the merchant's
+        // return_url, just like real PayNow. Timeout leaves them on the page.
+        var returnUrl = new URLSearchParams(window.location.search).get('return_url');
+        if (!inIframe && returnUrl && outcome !== 'timeout') {
+          result.textContent += ' — returning you to the merchant…';
+          setTimeout(function () {
+            var sep = returnUrl.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = returnUrl + sep + 'reference=' + encodeURIComponent(reference) + '&status=' + encodeURIComponent(j.status);
+          }, 1500);
+        }
       } catch (err) {
         result.textContent = '✗ ' + (err.message || 'Failed');
         result.classList.add('show','error');

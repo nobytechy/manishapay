@@ -62,7 +62,9 @@ test('initiate falls back to simulated mode when test key has no creds', async (
   );
   assert.equal(result.mode, 'simulated');
   assert.match(result.tracker, /^mp_[0-9a-f]{16}$/);
-  assert.match(result.browser_url, /\/simulator\/mp_[0-9a-f]{16}$/);
+  // browser_url now carries the return_url so the simulator can send the
+  // "customer" back to the merchant after an outcome.
+  assert.match(result.browser_url, /\/simulator\/mp_[0-9a-f]{16}\?return_url=/);
   assert.match(result.poll_url, /\/simulator\/mp_[0-9a-f]{16}\/poll$/);
 });
 

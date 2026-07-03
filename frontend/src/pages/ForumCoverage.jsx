@@ -243,8 +243,8 @@ const credentialModel = (
     <Issue
       kind="direct"
       forumQuote={`"Paynow API Credentials for Sopraent Integration — I need an API Key, API Secret and Webhook Secret but can't find where to generate them in my merchant account" — 2026`}
-      problem="PayNow never issues an API Key, API Secret, or Webhook Secret. It only gives an Integration ID + Integration Key, and authenticates by SHA-512 hashing with that key. Billing platforms (Sopraent, WHMCS, ISP systems) expect the Stripe/OAuth credential model, so merchants get stuck with fields they can't fill — and wrongly assume account verification is the blocker."
-      fix="ManishaPay IS that missing layer: it wraps your PayNow Integration ID/Key and issues the credentials modern platforms expect — a scoped API key (mp_test_ / mp_live_) plus per-endpoint HMAC-SHA256-signed webhooks (your 'webhook secret'). Paste the ManishaPay key where the platform asks for API Key/Secret, point its webhook at your ManishaPay endpoint, and it works — no PayNow account verification required to test."
+      problem="Two things, both common. (1) Wrong gateway's fields: Sopraent bundles PayNow (Zimbabwe) AND SopraPay (Uganda) on one page — the API Key (spk_live_…), API Secret (sps_live_…) and Webhook Secret belong to SopraPay/Uganda, not PayNow, and should be left blank for PayNow (which needs only Integration ID + Key + an auto-set Result URL; no account verification to test). (2) Where a platform genuinely expects Stripe-style credentials in front of PayNow, PayNow simply doesn't issue them — it only gives an Integration ID + Key and authenticates by SHA-512 hash."
+      fix="For the Sopraent case: fill only Integration ID + Integration Key, leave API Key/Secret/Webhook Secret blank, keep the integration in Test status. For platforms that truly require the Stripe-style model (WHMCS, ISP billing), ManishaPay is that layer — it wraps your Integration ID/Key and issues a scoped API key (mp_test_/mp_live_) plus HMAC-SHA256-signed webhooks (the 'webhook secret')."
       action={TryInSandboxCTA}
     />
   </Section>

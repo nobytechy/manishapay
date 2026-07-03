@@ -74,6 +74,9 @@ async function loadActive(projectId, mode) {
         integrationId: String(env.PAYNOW_TEST_INTEGRATION_ID),
         integrationKey: env.PAYNOW_TEST_INTEGRATION_KEY,
         integrationIdLast4: String(env.PAYNOW_TEST_INTEGRATION_ID).slice(-4),
+        // Registered email of the shared test integration — lets paynow.js
+        // swap authemail in test mode so any caller email is accepted.
+        merchantEmail: env.PAYNOW_TEST_AUTHEMAIL || null,
         addedAt: null,
         source: 'platform-sandbox',
       };

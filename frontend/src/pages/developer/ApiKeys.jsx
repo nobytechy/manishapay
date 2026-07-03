@@ -62,6 +62,8 @@ export default function ApiKeys() {
       await api.revokeKey(id);
       toast.success('Key revoked');
       await refresh();
+    } catch {
+      /* rawFetch already surfaced the reason (e.g. KEY_NOT_FOUND on the wrong account) */
     } finally {
       setConfirmId(null);
     }

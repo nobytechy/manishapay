@@ -69,6 +69,24 @@ export function AuthProvider({ children }) {
     }
   }, [loadProfile]);
 
+  // Surface OAuth failures. When Google/GitHub sign-in fails (provider not
+  // enabled, redirect-URL mismatch, user cancels), Supabase redirects back
+  // with `error`/`error_description` in the URL — usually the hash fragment,
+  // sometimes the query. Without this the user just lands silently on a
+  // protected route and bounces to /login with no clue why. Read it once on
+  // mount, toast the reason, then scrub it from the address bar.
+  useEffect(() => {
+    const parse = (str) => new URLSearchParams(str.startsWith('#') || str.startsWith('?') ? str.slice(1) : str);
+    const hash = parse(window.location.hash || '');
+    const query = parse(window.location.search || '');
+    const err = hash.get('error') || query.get('error');
+    if (!err) return;
+    const desc = hash.get('error_description') || query.get('error_description') || err;
+    toast.error(decodeURIComponent(desc).replace(/\+/g, ' '), { duration: 8000 });
+    // Strip the error params so a refresh doesn't re-toast.
+    window.history.replaceState({}, '', window.location.pathname);
+  }, []);
+
   useEffect(() => {
     let active = true;
 

@@ -100,6 +100,19 @@ install); ✅ Shopify integration guide (`docs/SHOPIFY.md`) — note a *native* 
 Checkout gateway is gated behind Shopify Partner approval, so the widget/offsite
 flow is the supported path.
 
+## L. Platform wants "API Key / API Secret / Webhook Secret"  ✅
+> "Paynow API Credentials for Sopraent Integration" — need an API Key, API Secret &
+> Webhook Secret, can't find where to generate them (2026). Recurs for WHMCS, ISP
+> billing systems, and any Stripe-style platform.
+
+PayNow never issues these — it only gives an **Integration ID + Integration Key** and
+authenticates by SHA‑512 hashing with that key; account verification is **not** needed
+for test transactions. ManishaPay **is** the missing layer: it wraps the Integration
+ID/Key and issues the credential model these platforms expect — a scoped **API key**
+(`mp_test_*` / `mp_live_*`) plus per-endpoint **HMAC‑SHA256‑signed webhooks** (the
+"webhook secret"). Map: platform *API Key/Secret* → ManishaPay key; platform *Webhook
+Secret* → the endpoint's signing secret. This is ManishaPay's core positioning.
+
 ---
 
 ## Open punch-list (to fully "cover the forum")

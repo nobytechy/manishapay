@@ -14,6 +14,9 @@ import {
   Activity,
   Lock,
   FlaskConical,
+  Mail,
+  Phone,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -75,12 +78,29 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900 p-3">
-        <p className="text-xs text-slate-400">
-          Need help?{' '}
-          <a href="mailto:support@manishapay.dev" className="text-brand hover:underline">
-            support@manishapay.dev
+        <p className="mb-2 text-xs font-medium text-slate-300">Need help?</p>
+        <div className="space-y-1.5 text-xs">
+          <a
+            href="mailto:nobytechy@gmail.com"
+            className="flex items-center gap-2 text-slate-400 hover:text-brand"
+          >
+            <Mail size={13} /> nobytechy@gmail.com
           </a>
-        </p>
+          <a
+            href="tel:+263774603865"
+            className="flex items-center gap-2 text-slate-400 hover:text-brand"
+          >
+            <Phone size={13} /> +263 77 460 3865
+          </a>
+          <a
+            href="https://wa.me/263774603865"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-slate-400 hover:text-emerald-400"
+          >
+            <MessageCircle size={13} /> WhatsApp
+          </a>
+        </div>
       </div>
     </aside>
   );

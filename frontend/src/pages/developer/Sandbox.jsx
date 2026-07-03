@@ -18,8 +18,10 @@ import toast from 'react-hot-toast';
 import {
   Play, ExternalLink, CheckCircle2, XCircle, Clock, Copy, KeyRound, RefreshCw,
   FlaskConical, Lightbulb, AlertCircle,
+  ListChecks, Coins, Smartphone, ShieldCheck, Send, Database, QrCode, Sparkles,
 } from 'lucide-react';
 import { api, getActiveKey } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
@@ -90,6 +92,91 @@ const SCENARIOS = [
   },
 ];
 
+// Friendly labels for the PayNow channel codes (used in the requirements hint).
+const METHOD_LABELS = {
+  ecocash: 'EcoCash',
+  onemoney: 'OneMoney',
+  innbucks: 'InnBucks',
+  omari: 'O’mari',
+  zimswitch: 'ZimSwitch',
+  vmc: 'Visa / Mastercard',
+};
+
+// Display-only mirrors of the backend normalisers, so the animated flow can
+// show the exact "before → after" transformation ManishaPay performs.
+const to2dp = (v) => {
+  const n = Number(String(v).replace(',', '.').replace(/\s/g, ''));
+  return Number.isFinite(n) ? n.toFixed(2) : String(v);
+};
+const toMsisdn = (v) => {
+  const d = String(v || '').replace(/[^\d]/g, '');
+  if (d.startsWith('263')) return d;
+  if (d.startsWith('0') && d.length === 10) return '263' + d.slice(1);
+  if (d.startsWith('7') && d.length === 9) return '263' + d;
+  return d || '—';
+};
+
+// Icon per pipeline step.
+const STEP_ICONS = {
+  validate: ListChecks, amount: Coins, phone: Smartphone, hash: ShieldCheck,
+  route: Send, verify: ShieldCheck, persist: Database, ticket: QrCode, ready: Sparkles,
+};
+
+// Builds the "behind the scenes" pipeline for a given request. Mirrors what the
+// backend actually does in services/paynow.js + routes/pay.js, adapting to the
+// chosen method (web-redirect vs Express Checkout) so devs see the real path.
+function buildFlow({ amount, phone, method }) {
+  const steps = [
+    { key: 'validate', label: 'Validate request', detail: 'Reference, amount, method & Express-Checkout fields' },
+    { key: 'amount', label: 'Normalise amount', detail: `"${amount}" → ${to2dp(amount)} (PayNow’s 0.00 invariant)` },
+  ];
+  if (method === 'ecocash' || method === 'onemoney' || phone) {
+    steps.push({ key: 'phone', label: 'Normalise phone', detail: phone ? `${phone} → ${toMsisdn(phone)}` : 'to 263… MSISDN' });
+  }
+  steps.push({ key: 'hash', label: 'Sign request', detail: 'HMAC-SHA256 over ordered fields' });
+  steps.push({
+    key: 'route',
+    label: method ? 'Call PayNow · /remotetransaction' : 'Call PayNow · /initiatetransaction',
+    detail: 'or the built-in simulator when no test creds are set',
+  });
+  steps.push({ key: 'verify', label: 'Verify response hash', detail: 'Reject any tampered redirect URL' });
+  steps.push({ key: 'persist', label: 'Persist transaction', detail: 'Row keyed on the global tracker' });
+  steps.push({ key: 'ticket', label: 'Build QR ticket', detail: 'Scannable checkout link' });
+  steps.push({ key: 'ready', label: 'Ready', detail: 'Checkout URL returned — awaiting outcome' });
+  return steps.map((s) => ({ ...s, status: 'pending' }));
+}
+
+function FlowRow({ step, isLast }) {
+  const Icon = STEP_ICONS[step.key] || ListChecks;
+  const ring = {
+    pending: 'border-slate-700 text-slate-600 bg-slate-900',
+    active: 'border-brand text-brand bg-brand/10 shadow-glow animate-pulse',
+    done: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/10',
+    error: 'border-rose-500/60 text-rose-300 bg-rose-500/10',
+  }[step.status];
+  const textCls = {
+    pending: 'text-slate-500', active: 'text-slate-100', done: 'text-slate-200', error: 'text-rose-200',
+  }[step.status];
+  return (
+    <div className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div className={`grid h-8 w-8 place-items-center rounded-full border transition-all duration-300 ${ring}`}>
+          {step.status === 'active'
+            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand/40 border-t-brand" />
+            : step.status === 'done' ? <CheckCircle2 size={16} />
+            : step.status === 'error' ? <XCircle size={16} />
+            : <Icon size={15} />}
+        </div>
+        {!isLast && <div className={`w-px flex-1 transition-colors duration-300 ${step.status === 'done' ? 'bg-emerald-500/40' : 'bg-slate-800'}`} />}
+      </div>
+      <div className={`pb-4 transition-all duration-300 ${step.status === 'pending' ? 'opacity-50' : 'opacity-100'}`}>
+        <p className={`text-sm font-medium ${textCls}`}>{step.label}</p>
+        <p className="text-xs text-slate-500">{step.detail}</p>
+      </div>
+    </div>
+  );
+}
+
 function autoReference() {
   const now = new Date();
   const stamp = [
@@ -147,10 +234,15 @@ function CopyField({ label, value }) {
   );
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 export default function Sandbox() {
+  const { user } = useAuth();
   const [reference, setReference] = useState(autoReference());
   const [amount, setAmount] = useState('1.00');
-  const [email, setEmail] = useState('');
+  // Pre-fill the authemail with the signed-in developer's email — the sensible
+  // default (and, on a TEST integration, the value PayNow expects to match).
+  const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
   const [method, setMethod] = useState('');
   const [scenarioId, setScenarioId] = useState(null);
@@ -158,9 +250,15 @@ export default function Sandbox() {
   const [outcomeBusy, setOutcomeBusy] = useState(null);
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState([]);
+  const [flow, setFlow] = useState([]); // animated "behind the scenes" pipeline
 
   const activeKey = getActiveKey();
   const scenario = SCENARIOS.find((s) => s.id === scenarioId) || null;
+
+  // PayNow Express Checkout rules: any `method` → email (authemail) is required;
+  // mobile-money channels also require the customer phone (for the OTP push).
+  const requiresEmail = !!method;
+  const requiresPhone = method === 'ecocash' || method === 'onemoney';
 
   const loadScenario = (s) => {
     setScenarioId(s.id);
@@ -175,10 +273,40 @@ export default function Sandbox() {
   const clearScenario = () => {
     setScenarioId(null);
     setAmount('1.00');
-    setEmail('');
+    setEmail(user?.email || '');
     setPhone('');
     setMethod('');
     setReference(autoReference());
+  };
+
+  // Drives the animated pipeline. Local steps (validate → sign) tick through on
+  // a timer; the network step ('route') stays "active" until the real API call
+  // resolves — so it truthfully reflects the wait and surfaces failures there.
+  const runFlow = async (steps, apiPromise) => {
+    const routeIdx = steps.findIndex((s) => s.key === 'route');
+    for (let i = 0; i < routeIdx; i++) {
+      setFlow((f) => f.map((s, idx) => (idx === i ? { ...s, status: 'active' } : s)));
+      await sleep(340);
+      setFlow((f) => f.map((s, idx) => (idx === i ? { ...s, status: 'done' } : s)));
+    }
+    setFlow((f) => f.map((s, idx) => (idx === routeIdx ? { ...s, status: 'active' } : s)));
+    let res;
+    try {
+      res = await apiPromise;
+    } catch (err) {
+      setFlow((f) => f.map((s, idx) => (idx === routeIdx
+        ? { ...s, status: 'error', detail: err?.message || 'PayNow rejected the request' } : s)));
+      throw err;
+    }
+    const mode = res?.data?.mode || res?.mode;
+    setFlow((f) => f.map((s, idx) => (idx === routeIdx
+      ? { ...s, status: 'done', detail: mode ? `Routed via ${mode} mode` : s.detail } : s)));
+    for (let i = routeIdx + 1; i < steps.length; i++) {
+      setFlow((f) => f.map((s, idx) => (idx === i ? { ...s, status: 'active' } : s)));
+      await sleep(300);
+      setFlow((f) => f.map((s, idx) => (idx === i ? { ...s, status: 'done' } : s)));
+    }
+    return res;
   };
 
   const sendPayment = async (e) => {
@@ -191,6 +319,16 @@ export default function Sandbox() {
       toast.error('Reference and amount are required.');
       return;
     }
+    // Express Checkout guardrails — match PayNow's remote-transaction rules so
+    // the request doesn't bounce back with "authemail field is required".
+    if (requiresEmail && !email.trim()) {
+      toast.error(`${METHOD_LABELS[method] || method} is a PayNow Express Checkout method — an email (authemail) is required.`);
+      return;
+    }
+    if (requiresPhone && !phone.trim()) {
+      toast.error(`${METHOD_LABELS[method] || method} needs the customer phone so PayNow can push the OTP prompt.`);
+      return;
+    }
     setCreating(true);
     try {
       const body = { reference: reference.trim(), amount: amount.trim() };
@@ -200,7 +338,10 @@ export default function Sandbox() {
       // So the web-redirect simulator returns the "customer" back to the sandbox
       // (instead of the public landing page) after paid/cancelled.
       body.return_url = `${window.location.origin}/app/sandbox`;
-      const res = await api.pay(body);
+      // Kick off the real call, then animate the pipeline against it.
+      const steps = buildFlow({ amount: amount.trim(), phone: phone.trim(), method: method.trim() });
+      setFlow(steps);
+      const res = await runFlow(steps, api.pay(body));
       const payload = res?.data || res || {};
       if (!payload.tracker) {
         throw new Error('API did not return a tracker — check Render logs.');
@@ -465,7 +606,11 @@ export default function Sandbox() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Phone <span className="text-slate-600">(optional)</span></label>
+                <label className="mb-1 block text-xs font-medium text-slate-400">
+                  Phone {requiresPhone
+                    ? <span className="text-rose-400">(required)</span>
+                    : <span className="text-slate-600">(optional)</span>}
+                </label>
                 <input
                   className="input"
                   placeholder="0771234567"
@@ -474,7 +619,11 @@ export default function Sandbox() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Email <span className="text-slate-600">(optional)</span></label>
+                <label className="mb-1 block text-xs font-medium text-slate-400">
+                  Email {requiresEmail
+                    ? <span className="text-rose-400">(required)</span>
+                    : <span className="text-slate-600">(optional)</span>}
+                </label>
                 <input
                   className="input"
                   type="email"
@@ -484,6 +633,18 @@ export default function Sandbox() {
                 />
               </div>
             </div>
+
+            {/* Express Checkout requirements — appears the moment a method is picked. */}
+            {method && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-amber-200/90">
+                <span className="font-semibold text-amber-200">{METHOD_LABELS[method] || method}</span> uses PayNow{' '}
+                <span className="font-semibold">Express Checkout</span> (a <code className="rounded bg-slate-800 px-1">/remotetransaction</code> call). PayNow requires an{' '}
+                <span className="font-semibold">email</span> (sent as <code className="rounded bg-slate-800 px-1">authemail</code>)
+                {requiresPhone && <> and the customer’s <span className="font-semibold">phone</span> — the number it pushes the OTP prompt to</>}.
+                {' '}On a <span className="font-semibold">test</span> integration the email must match your PayNow-registered merchant email.
+                {' '}Leave <span className="font-semibold">Method</span> on “Web redirect” to use PayNow’s hosted page instead (email/phone optional).
+              </div>
+            )}
 
             <button
               type="submit"
@@ -587,6 +748,26 @@ export default function Sandbox() {
           )}
         </div>
       </div>
+
+      {/* ── Behind the scenes: animated pipeline ─────────────── */}
+      {flow.length > 0 && (
+        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="mb-5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand-300">
+              <Sparkles size={14} /> Behind the scenes
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              What ManishaPay does with your request, step by step — the same pipeline runs on every real{' '}
+              <code className="rounded bg-slate-800 px-1">/v1/pay</code> call. The network step waits on the real response, so failures surface exactly where they happen.
+            </p>
+          </div>
+          <div className="max-w-lg">
+            {flow.map((s, i) => (
+              <FlowRow key={s.key} step={s} isLast={i === flow.length - 1} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Session history ──────────────────────────────────── */}
       {history.length > 0 && (

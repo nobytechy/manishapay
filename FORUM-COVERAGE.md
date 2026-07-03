@@ -105,13 +105,21 @@ flow is the supported path.
 > Webhook Secret, can't find where to generate them (2026). Recurs for WHMCS, ISP
 > billing systems, and any Stripe-style platform.
 
-PayNow never issues these — it only gives an **Integration ID + Integration Key** and
-authenticates by SHA‑512 hashing with that key; account verification is **not** needed
-for test transactions. ManishaPay **is** the missing layer: it wraps the Integration
-ID/Key and issues the credential model these platforms expect — a scoped **API key**
-(`mp_test_*` / `mp_live_*`) plus per-endpoint **HMAC‑SHA256‑signed webhooks** (the
-"webhook secret"). Map: platform *API Key/Secret* → ManishaPay key; platform *Webhook
-Secret* → the endpoint's signing secret. This is ManishaPay's core positioning.
+Two cases, both common:
+
+1. **Wrong gateway's fields.** Inspecting Sopraent's settings page, it bundles *two*
+   processors: **PayNow (Zimbabwe)** and **SopraPay (Uganda, UGX/MTN/Airtel)**. The
+   `API Key` (`spk_live_…`), `API Secret` (`sps_live_…`) and `Webhook Secret` fields
+   belong to **SopraPay**, not PayNow. For PayNow you fill **only Integration ID +
+   Integration Key** (the Result URL auto-sets); leave the SopraPay fields blank.
+   PayNow doesn't issue them, and account verification is **not** needed to test.
+
+2. **Genuine Stripe-style expectation.** Where a platform (WHMCS, ISP billing) really
+   does require an API key/secret + webhook secret in front of PayNow, PayNow only
+   gives an **Integration ID + Key** and authenticates by SHA‑512 hash. ManishaPay
+   **is** that missing layer: it wraps the Integration ID/Key and issues a scoped
+   **API key** (`mp_test_*` / `mp_live_*`) plus **HMAC‑SHA256‑signed webhooks** (the
+   "webhook secret"). This is ManishaPay's core positioning.
 
 ---
 

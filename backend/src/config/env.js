@@ -27,6 +27,10 @@ const schema = z.object({
   // so the sandbox connects to REAL PayNow test with zero per-project setup.
   PAYNOW_TEST_INTEGRATION_ID: z.string().optional(),
   PAYNOW_TEST_INTEGRATION_KEY: z.string().optional(),
+  // The email registered to the shared test integration above. PayNow's TEST
+  // mode requires authemail to equal the merchant's registered email, so on the
+  // sandbox fallback we swap the caller's email for THIS one (forum issue #5).
+  PAYNOW_TEST_AUTHEMAIL: z.string().email().optional(),
 
   PAYNOW_RETURN_URL: z.string().url(),
   PAYNOW_RESULT_URL: z.string().url(),
@@ -105,6 +109,7 @@ try {
       MANISHAPAY_OWN_PAYNOW_INTEGRATION_KEY: undefined,
       PAYNOW_TEST_INTEGRATION_ID: undefined,
       PAYNOW_TEST_INTEGRATION_KEY: undefined,
+      PAYNOW_TEST_AUTHEMAIL: undefined,
       MANISHAPAY_MASTER_KEY:
         '0000000000000000000000000000000000000000000000000000000000000000', // 32 zero bytes for tests
       PAYNOW_RETURN_URL: 'http://localhost/return',

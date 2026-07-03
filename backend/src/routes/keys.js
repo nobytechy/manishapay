@@ -93,12 +93,26 @@ router.post('/', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const { error } = await supabase
+    // `.select()` so we know how many rows actually matched. Without this the
+    // update returns 204 even when it matched NOTHING (wrong key id, or a key
+    // owned by a different developer account) — a silent no-op that looks like
+    // success in the dashboard. We turn that into an honest 404 instead.
+    const { data, error } = await supabase
       .from('manishapay_api_keys')
       .update({ status: 'revoked' })
       .eq('id', req.params.id)
-      .eq('developer_id', req.developer.id);
+      .eq('developer_id', req.developer.id)
+      .select('id');
     if (error) throw new AppError({ status: 500, code: 'REVOKE_FAILED', message: error.message });
+    if (!data || data.length === 0) {
+      throw new AppError({
+        status: 404,
+        code: 'KEY_NOT_FOUND',
+        message: 'No such API key on this account.',
+        resolution:
+          'This key belongs to a different account (or was already removed). Sign in with the account that created it — the dashboard only lists and revokes keys owned by the signed-in developer.',
+      });
+    }
     res.status(204).end();
   } catch (err) {
     next(err);

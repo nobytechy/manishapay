@@ -119,6 +119,38 @@ function buildInitiateBody(input, creds, tracker, project) {
 }
 
 /**
+ * PayNow's Express Checkout (any `method` is set → /remotetransaction) has
+ * stricter required fields than the web-redirect flow:
+ *   • authemail is required on EVERY remote call ("The authemail field is
+ *     required for remote transactions").
+ *   • a customer phone is required for the mobile-money channels
+ *     (ecocash / onemoney) — that's the number PayNow pushes the OTP to.
+ * We assert these up front so the caller gets a clear ManishaPay error with a
+ * fix, instead of PayNow's terse rejection deep in the flow.
+ */
+function assertRemoteFields(input) {
+  if (!input.method) return; // web-redirect flow — email/phone optional
+  if (!input.email) {
+    throw new AppError({
+      status: 400,
+      code: 'REMOTE_EMAIL_REQUIRED',
+      message: `PayNow Express Checkout (${input.method}) requires an email — it is sent to PayNow as authemail.`,
+      resolution:
+        'Add an email to the request. On a TEST integration PayNow requires it to match your PayNow-registered merchant email; on a live integration it can be the customer\'s email.',
+    });
+  }
+  const mobileMoney = input.method === 'ecocash' || input.method === 'onemoney';
+  if (mobileMoney && !normalizePhone(input.phone)) {
+    throw new AppError({
+      status: 400,
+      code: 'REMOTE_PHONE_REQUIRED',
+      message: `${input.method} payments need the customer's mobile number so PayNow can push the OTP prompt.`,
+      resolution: 'Add the customer phone (e.g. 0771234567). ManishaPay normalises it to 263… before forwarding.',
+    });
+  }
+}
+
+/**
  * Maps a PayNow error message to a targeted, actionable resolution — turns the
  * forum's recurring "PayNow rejected and I don't know why" into a clear next
  * step. Covers the common forum threads (merchant-in-testing, hash, bad
@@ -126,6 +158,9 @@ function buildInitiateBody(input, creds, tracker, project) {
  */
 function paynowResolution(errMsg) {
   const m = String(errMsg || '').toLowerCase();
+  if (m.includes('authemail')) {
+    return 'This is a remote / Express Checkout transaction (a payment method was set), which requires an email — sent to PayNow as authemail. Add an email to the request; on a TEST integration it must match your PayNow-registered merchant email.';
+  }
   if (m.includes('testing') || m.includes('test mode')) {
     return 'This PayNow integration is still in TEST status, so it cannot take real payments. Use a ManishaPay test key (mp_test_) against the sandbox, or in PayNow open Receive Payments → your integration → Go Live, then add a live (mp_live_) credential.';
   }
@@ -165,6 +200,20 @@ function paynowResolution(errMsg) {
 async function initiate(input, ctx) {
   const tracker = generateTracker();
   const project = ctx.project || {};
+
+  // Forum issue #5: PayNow TEST mode rejects any authemail that isn't the
+  // integration's registered merchant email. When we know that email (the
+  // shared sandbox integration exposes it as creds.merchantEmail), swap it in
+  // automatically — the caller's email is still recorded, but never causes a
+  // test-mode rejection. Merchants using their OWN test creds must still pass a
+  // matching email (we don't know theirs).
+  if (ctx.mode === 'test' && ctx.creds && ctx.creds.merchantEmail) {
+    input = { ...input, email: ctx.creds.merchantEmail };
+  }
+
+  // Enforce Express Checkout's required fields before we branch into any mode,
+  // so the sandbox (simulated) teaches the same rule the real PayNow enforces.
+  assertRemoteFields(input);
 
   // ─── Simulated path: no PayNow call at all ────────────────────────────
   // Fires when:

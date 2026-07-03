@@ -78,3 +78,36 @@ test('initiate refuses live mode without credentials', async () => {
     (err) => err.code === 'CREDENTIALS_REQUIRED',
   );
 });
+
+test('initiate requires an email for Express Checkout (any method)', async () => {
+  await assert.rejects(
+    () =>
+      paynow.initiate(
+        { reference: 'order-3', amount: '5.00', method: 'ecocash', phone: '0771234567' },
+        { mode: 'test', creds: null, project: {} },
+      ),
+    (err) => err.code === 'REMOTE_EMAIL_REQUIRED',
+  );
+});
+
+test('initiate requires a phone for mobile-money methods', async () => {
+  await assert.rejects(
+    () =>
+      paynow.initiate(
+        { reference: 'order-4', amount: '5.00', method: 'ecocash', email: 'merchant@example.com' },
+        { mode: 'test', creds: null, project: {} },
+      ),
+    (err) => err.code === 'REMOTE_PHONE_REQUIRED',
+  );
+});
+
+test('initiate allows a complete Express Checkout request through to simulated mode', async () => {
+  process.env.MANISHAPAY_MASTER_KEY =
+    '0000000000000000000000000000000000000000000000000000000000000000';
+  process.env.SIMULATOR_BASE_URL = 'http://localhost:3000';
+  const result = await paynow.initiate(
+    { reference: 'order-5', amount: '5.00', method: 'ecocash', phone: '0771234567', email: 'merchant@example.com' },
+    { mode: 'test', creds: null, project: {} },
+  );
+  assert.equal(result.mode, 'simulated');
+});

@@ -238,6 +238,18 @@ const authEmail = (
   </Section>
 );
 
+const credentialModel = (
+  <Section title="Platform wants API Key / API Secret / Webhook Secret" lead="PayNow only issues an Integration ID + Key — third-party platforms expect Stripe-style credentials.">
+    <Issue
+      kind="direct"
+      forumQuote={`"Paynow API Credentials for Sopraent Integration — I need an API Key, API Secret and Webhook Secret but can't find where to generate them in my merchant account" — 2026`}
+      problem="PayNow never issues an API Key, API Secret, or Webhook Secret. It only gives an Integration ID + Integration Key, and authenticates by SHA-512 hashing with that key. Billing platforms (Sopraent, WHMCS, ISP systems) expect the Stripe/OAuth credential model, so merchants get stuck with fields they can't fill — and wrongly assume account verification is the blocker."
+      fix="ManishaPay IS that missing layer: it wraps your PayNow Integration ID/Key and issues the credentials modern platforms expect — a scoped API key (mp_test_ / mp_live_) plus per-endpoint HMAC-SHA256-signed webhooks (your 'webhook secret'). Paste the ManishaPay key where the platform asks for API Key/Secret, point its webhook at your ManishaPay endpoint, and it works — no PayNow account verification required to test."
+      action={TryInSandboxCTA}
+    />
+  </Section>
+);
+
 const returnUrl = (
   <Section title="ReturnUrl format errors" lead="Misconfiguration that fails at customer checkout.">
     <Issue
@@ -484,6 +496,7 @@ const groups = [
       { id: 'status-callback',        label: 'Status not reflecting',          content: statusCallback },
       { id: 'method-validation',      label: 'Method not recognized',          content: methodValidation },
       { id: 'auth-email',             label: 'Auth email mismatch (test)',     content: authEmail },
+      { id: 'credential-model',       label: 'Platform wants API key/secret',  content: credentialModel },
       { id: 'return-url',             label: 'ReturnUrl format errors',        content: returnUrl },
       { id: 'currency-code',          label: 'Currency code rectification',    content: currencyCode },
       { id: 'integration-id-invalid', label: 'Integration ID errors',          content: integrationIdInvalid },

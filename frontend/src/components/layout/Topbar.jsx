@@ -1,17 +1,11 @@
 import { useState } from 'react';
-import { LogOut, Sun, Moon, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from '../ThemeToggle';
 
 export default function Topbar() {
   const { user, profile, signOut } = useAuth();
-  const [dark, setDark] = useState(true);
   const [open, setOpen] = useState(false);
-
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle('dark', next);
-  };
 
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-800 bg-slate-950/80 px-6 backdrop-blur">
@@ -19,14 +13,7 @@ export default function Topbar() {
         Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span>
       </div>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-          aria-label="Toggle theme"
-        >
-          {dark ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+        <ThemeToggle className="rounded-md p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100" />
 
         <div className="relative">
           <button

@@ -49,6 +49,21 @@ router.post('/', async (req, res, next) => {
       throw AppError.badRequest('Invalid payment payload', { issues: parsed.error.flatten() });
     }
 
+    // Idempotency: a client that retries POST /v1/pay with the same
+    // Idempotency-Key gets the ORIGINAL response back, never a second charge.
+    const idemKey = req.header('Idempotency-Key');
+    if (idemKey) {
+      const { data: prior } = await supabase
+        .from('manishapay_idempotency')
+        .select('status_code, response')
+        .eq('developer_id', req.developer.id)
+        .eq('idem_key', idemKey)
+        .maybeSingle();
+      if (prior) {
+        return res.status(prior.status_code).json(prior.response);
+      }
+    }
+
     // Load the project (for return/result URLs and to verify it exists).
     const { data: project, error: projErr } = await supabase
       .from('manishapay_projects')
@@ -88,6 +103,7 @@ router.post('/', async (req, res, next) => {
       status_normalized: paynow.normalizeStatus(result.status || 'Sent'),
       mode: result.mode,
       method: parsed.data.method || null,
+      customer_phone: parsed.data.phone || null,
       poll_url: result.poll_url,
       browser_url: result.browser_url,
       request_id: req.id,
@@ -115,7 +131,7 @@ router.post('/', async (req, res, next) => {
       }
     }
 
-    res.status(201).json({
+    const responseBody = {
       data: {
         reference: parsed.data.reference,
         tracker: result.tracker,
@@ -128,7 +144,18 @@ router.post('/', async (req, res, next) => {
         instructions: result.instructions,
       },
       requestId: req.id,
-    });
+    };
+
+    // Store the response against the idempotency key (best-effort; the unique
+    // (developer_id, idem_key) constraint guards against concurrent retries).
+    if (idemKey) {
+      supabase
+        .from('manishapay_idempotency')
+        .insert({ developer_id: req.developer.id, idem_key: idemKey, status_code: 201, response: responseBody })
+        .then(() => {}, () => {});
+    }
+
+    res.status(201).json(responseBody);
   } catch (err) {
     next(err);
   }

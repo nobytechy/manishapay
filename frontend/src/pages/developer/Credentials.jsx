@@ -28,6 +28,7 @@ export default function Credentials() {
   const [mode, setMode] = useState('test');
   const [integrationId, setIntegrationId] = useState('');
   const [integrationKey, setIntegrationKey] = useState('');
+  const [merchantEmail, setMerchantEmail] = useState('');
 
   const refresh = async () => {
     setLoading(true);
@@ -53,10 +54,12 @@ export default function Credentials() {
         mode,
         integration_id: integrationId.trim(),
         integration_key: integrationKey.trim(),
+        merchant_email: merchantEmail.trim() || undefined,
       });
       toast.success('Credentials saved (encrypted) — switching to real PayNow mode');
       setIntegrationId('');
       setIntegrationKey('');
+      setMerchantEmail('');
       await refresh();
     } catch {
       /* toast already fired */
@@ -129,6 +132,20 @@ export default function Credentials() {
             value={integrationKey}
             onChange={(e) => setIntegrationKey(e.target.value)}
           />
+          <div className="md:col-span-2">
+            <Input
+              label="PayNow-registered email"
+              type="email"
+              placeholder="the email on your PayNow account"
+              value={merchantEmail}
+              onChange={(e) => setMerchantEmail(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Sent to PayNow as <code className="text-slate-400">authemail</code>. Required for mobile
+              (EcoCash / OneMoney) payments, and on a <b>test</b> integration it must match your
+              PayNow-registered email — we supply it automatically so customer emails are accepted.
+            </p>
+          </div>
         </div>
         <div className="mt-4 flex justify-end">
           <Button onClick={save} loading={saving}><Plus size={14} /> Save credential</Button>

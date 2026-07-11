@@ -87,4 +87,10 @@ export const api = {
   listCredentials: () => apiFetchAuthed('/v1/credentials'),
   saveCredential: (body) => apiFetchAuthed('/v1/credentials', { method: 'POST', body }),
   revokeCredential: (id) => apiFetchAuthed(`/v1/credentials/${id}`, { method: 'DELETE' }),
+
+  refund: (reference, body) => apiFetchAuthed(`/v1/transactions/${encodeURIComponent(reference)}/refund`, { method: 'POST', body: body || {} }),
+
+  adminGetSettings: () => apiFetchAuthed('/v1/admin/settings'),
+  adminSaveSettings: (body) => apiFetchAuthed('/v1/admin/settings', { method: 'PUT', body }),
+  adminWhatsappTest: (to) => apiFetchAuthed('/v1/admin/settings/whatsapp-test', { method: 'POST', body: { to } }),
 };

@@ -21,6 +21,7 @@ const hash = require('../services/hash');
 const credentials = require('../services/credentials');
 const paynow = require('../services/paynow');
 const webhookDelivery = require('../services/webhookDelivery');
+const whatsapp = require('../services/whatsapp');
 const { supabase } = require('../config/supabase');
 const { logger } = require('../services/logger');
 
@@ -122,6 +123,17 @@ router.post('/', async (req, res) => {
       Promise.all(endpoints.map((ep) => webhookDelivery.deliverOne(ep, target))).catch((err) => {
         logger.error({ err }, 'webhook fan-out failed');
       });
+    }
+
+    // Customer WhatsApp receipt — best-effort, and a safe no-op unless the
+    // super-admin has configured WhatsApp.
+    if (paynow.normalizeStatus(newStatus) === 'paid' && target.customer_phone) {
+      whatsapp
+        .sendMessage(
+          target.customer_phone,
+          `ManishaPay: your payment of ${target.currency || 'USD'} ${target.merchant_amount} for "${target.merchant_reference}" was successful. Thank you!`,
+        )
+        .catch(() => {});
     }
   } else {
     logger.info({ tracker, status: newStatus }, 'webhook: status unchanged — skipping merchant fan-out (idempotent retry)');

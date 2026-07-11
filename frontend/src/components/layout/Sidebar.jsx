@@ -18,12 +18,14 @@ import {
   Mail,
   Phone,
   MessageCircle,
+  Rocket,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 
 const developerNav = [
   { to: '/app', icon: LayoutDashboard, label: 'Overview', end: true },
+  { to: '/app/connect', icon: Rocket, label: 'Connect Your App' },
   { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/app/keys', icon: KeyRound, label: 'API Keys' },
   { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },
@@ -32,6 +34,7 @@ const developerNav = [
   { to: '/app/sandbox', icon: FlaskConical, label: 'Sandbox' },
   { to: '/app/tools', icon: Wrench, label: 'Problem solvers' },
   { to: '/app/docs', icon: BookOpen, label: 'Documentation' },
+  { to: '/app/support', icon: MessageCircle, label: 'Support' },
   { to: '/app/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -41,6 +44,8 @@ const adminNav = [
   { to: '/admin/logs', icon: ScrollText, label: 'Logs' },
   { to: '/admin/webhooks', icon: Activity, label: 'Webhook monitor' },
   { to: '/admin/audit', icon: ShieldCheck, label: 'Audit trail' },
+  { to: '/admin/support', icon: MessageCircle, label: 'Support / Queries' },
+  { to: '/admin/settings', icon: Settings, label: 'Settings' },
   { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
 ];
 

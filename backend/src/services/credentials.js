@@ -49,7 +49,7 @@ async function loadActive(projectId, mode) {
   const { data, error } = await supabase
     .from(TABLE)
     .select(
-      'id, integration_id_encrypted, integration_key_encrypted, data_key_encrypted, integration_id_last4, created_at',
+      'id, integration_id_encrypted, integration_key_encrypted, data_key_encrypted, integration_id_last4, merchant_email, created_at',
     )
     .eq('project_id', projectId)
     .eq('mode', mode)
@@ -99,6 +99,9 @@ async function loadActive(projectId, mode) {
     integrationId: decrypted.integrationId,
     integrationKey: decrypted.integrationKey,
     integrationIdLast4: data.integration_id_last4,
+    // The merchant's own registered email drives authemail; fall back to the
+    // platform-wide test email only if this credential doesn't carry one.
+    merchantEmail: data.merchant_email || env.PAYNOW_TEST_AUTHEMAIL || null,
     addedAt: data.created_at,
   };
 }
@@ -118,7 +121,7 @@ async function loadActive(projectId, mode) {
  * }} input
  * @returns {Promise<{ id: string, integrationIdLast4: string }>}
  */
-async function save({ projectId, mode, integrationId, integrationKey, addedBy = null }) {
+async function save({ projectId, mode, integrationId, integrationKey, merchantEmail = null, addedBy = null }) {
   if (!projectId) throw new Error('save: projectId is required');
   if (mode !== 'test' && mode !== 'live') throw new Error(`save: invalid mode '${mode}'`);
   if (!integrationId || !integrationKey) {
@@ -151,6 +154,7 @@ async function save({ projectId, mode, integrationId, integrationKey, addedBy = 
       integration_key_encrypted: sealed.integration_key_encrypted,
       data_key_encrypted: sealed.data_key_encrypted,
       integration_id_last4: sealed.integration_id_last4,
+      merchant_email: merchantEmail,
       added_by: addedBy,
       status: 'active',
     })

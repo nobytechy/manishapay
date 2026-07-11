@@ -202,11 +202,11 @@ async function initiate(input, ctx) {
   const project = ctx.project || {};
 
   // Forum issue #5: PayNow TEST mode rejects any authemail that isn't the
-  // integration's registered merchant email. When we know that email (the
-  // shared sandbox integration exposes it as creds.merchantEmail), swap it in
-  // automatically — the caller's email is still recorded, but never causes a
-  // test-mode rejection. Merchants using their OWN test creds must still pass a
-  // matching email (we don't know theirs).
+  // integration's registered merchant email. We now store that email per
+  // credential (collected at connect time), and the shared sandbox integration
+  // supplies its own — both exposed as creds.merchantEmail. So in test mode we
+  // swap it in automatically for every merchant: the caller's email is still
+  // recorded, but never causes a test-mode rejection.
   if (ctx.mode === 'test' && ctx.creds && ctx.creds.merchantEmail) {
     input = { ...input, email: ctx.creds.merchantEmail };
   }

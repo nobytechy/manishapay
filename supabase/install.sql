@@ -107,6 +107,11 @@ create table if not exists public.manishapay_paynow_credentials (
   -- Display-only fingerprint so the dashboard can show "ID ending in 1627"
   integration_id_last4        text,
 
+  -- PayNow-registered merchant email. Sent to PayNow as `authemail` — required
+  -- for mobile / Express-Checkout calls, and in TEST mode it must equal the
+  -- merchant's registered email. Not secret; stored plaintext.
+  merchant_email              text,
+
   added_by                    uuid references public.manishapay_developers(id) on delete set null,
   last_used_at                timestamptz,
   rotated_at                  timestamptz,

@@ -13,6 +13,7 @@ import DocsHome from './pages/DocsHome';
 import ForumCoverage from './pages/ForumCoverage';
 
 import Overview from './pages/developer/Dashboard';
+import Connect from './pages/developer/Connect';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
 import Credentials from './pages/developer/Credentials';
@@ -21,11 +22,14 @@ import Transactions from './pages/developer/Transactions';
 import Tools from './pages/developer/Tools';
 import Sandbox from './pages/developer/Sandbox';
 import Docs from './pages/developer/Docs';
+import Support from './pages/developer/Support';
 import Settings from './pages/developer/Settings';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminDevelopers from './pages/admin/Developers';
 import AdminAudit from './pages/admin/Audit';
+import AdminSupport from './pages/admin/Support';
+import AdminSettings from './pages/admin/Settings';
 import AdminLogs from './pages/admin/Logs';
 import AdminWebhooks from './pages/admin/Webhooks';
 import AdminAnnouncements from './pages/admin/Announcements';
@@ -66,6 +70,7 @@ export default function App() {
         }
       >
         <Route index element={<Overview />} />
+        <Route path="connect" element={<Connect />} />
         <Route path="projects" element={<Projects />} />
         <Route path="keys" element={<ApiKeys />} />
         <Route path="credentials" element={<Credentials />} />
@@ -74,6 +79,7 @@ export default function App() {
         <Route path="sandbox" element={<Sandbox />} />
         <Route path="tools" element={<Tools />} />
         <Route path="docs" element={<Docs />} />
+        <Route path="support" element={<Support />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
@@ -88,6 +94,8 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="developers" element={<AdminDevelopers />} />
         <Route path="audit" element={<AdminAudit />} />
+        <Route path="support" element={<AdminSupport />} />
+        <Route path="settings" element={<AdminSettings />} />
         <Route path="logs" element={<AdminLogs />} />
         <Route path="webhooks" element={<AdminWebhooks />} />
         <Route path="announcements" element={<AdminAnnouncements />} />

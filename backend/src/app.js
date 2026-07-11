@@ -28,6 +28,8 @@ const keysRouter = require('./routes/keys');
 const credentialsRouter = require('./routes/credentials');
 const simulatorRouter = require('./routes/simulator');
 const reconcileRouter = require('./routes/reconcile');
+const adminRouter = require('./routes/admin');
+const transactionsRouter = require('./routes/transactions');
 
 function buildApp() {
   const app = express();
@@ -96,6 +98,8 @@ function buildApp() {
   app.use('/v1/projects', projectsRouter);
   app.use('/v1/keys', keysRouter);
   app.use('/v1/credentials', credentialsRouter);
+  app.use('/v1/admin', adminRouter);
+  app.use('/v1/transactions', transactionsRouter);
 
   // 404 — explicit so the error handler can format it.
   app.use((req, _res, next) => {

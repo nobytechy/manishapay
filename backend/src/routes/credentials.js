@@ -24,6 +24,10 @@ const saveSchema = z.object({
   mode: z.enum(['test', 'live']),
   integration_id: z.union([z.string(), z.number()]),
   integration_key: z.string().min(8).max(64),
+  // PayNow-registered merchant email → sent as authemail. Required for mobile /
+  // Express-Checkout and (in test mode) must match the merchant's registered
+  // email. Optional here so web-redirect-only merchants aren't forced to set it.
+  merchant_email: z.string().trim().email().optional().or(z.literal('')),
 });
 
 // List metadata only — never decrypted blobs.
@@ -42,7 +46,7 @@ router.get('/', async (req, res, next) => {
 
     const { data, error } = await supabase
       .from('manishapay_paynow_credentials')
-      .select('id, project_id, mode, integration_id_last4, status, last_used_at, created_at, rotated_at')
+      .select('id, project_id, mode, integration_id_last4, merchant_email, status, last_used_at, created_at, rotated_at')
       .in('project_id', ids)
       .order('created_at', { ascending: false });
     if (error) throw new AppError({ status: 500, code: 'LIST_FAILED', message: error.message });
@@ -72,6 +76,7 @@ router.post('/', async (req, res, next) => {
       mode: parsed.mode,
       integrationId: String(parsed.integration_id),
       integrationKey: parsed.integration_key,
+      merchantEmail: parsed.merchant_email || null,
       addedBy: req.developer.id,
     });
 

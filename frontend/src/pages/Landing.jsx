@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import TechBackdrop from '../components/landing/TechBackdrop';
 import FadeInOnScroll from '../components/FadeInOnScroll';
+import ThemeToggle from '../components/ThemeToggle';
 import WhatsAppFloating from '../components/WhatsAppFloating';
 import BackToTop from '../components/BackToTop';
 import { useAuth } from '../context/AuthContext';
@@ -180,12 +181,13 @@ export default function Landing() {
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
             <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
+            <ThemeToggle className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white" />
             {isAuthenticated ? (
               <Link
-                to="/app"
+                to="/app/connect"
                 className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
               >
-                <LayoutDashboard size={14}/> Dashboard
+                <Rocket size={14}/> Connect Your App
               </Link>
             ) : (
               <Link
@@ -223,18 +225,21 @@ export default function Landing() {
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              to="/register"
+              to={isAuthenticated ? '/app/connect' : '/register'}
               className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
             >
-              Sign up free <ArrowRight size={18}/>
+              <Rocket size={18}/> Connect Your App
             </Link>
             <Link
               to="/get-started"
               className="rounded-lg border border-slate-700 bg-slate-900/50 px-7 py-3.5 text-slate-200 hover:bg-slate-800"
             >
-              Read the 10-min guide
+              New here? Start guide
             </Link>
           </div>
+          <p className="mt-4 text-xs text-slate-500">
+            No PayNow account needed to start · live in under a minute · free for your first 50 payments/month
+          </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-400">
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>50 free transactions/month</span>
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>No PayNow account needed to test</span>

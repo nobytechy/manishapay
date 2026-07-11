@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate, statusVariant } from '../../lib/utils';
 import { Search } from 'lucide-react';
@@ -12,6 +14,21 @@ export default function Transactions() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refundingRef, setRefundingRef] = useState(null);
+
+  const refund = async (t) => {
+    if (!window.confirm(`Refund ${t.currency || 'USD'} ${t.merchant_amount} for "${t.merchant_reference}"?\n\nManishaPay records the refund and notifies your webhooks; the funds movement is completed via PayNow.`)) return;
+    setRefundingRef(t.merchant_reference);
+    try {
+      await api.refund(t.merchant_reference);
+      toast.success('Refund recorded');
+      setItems((list) => list.map((x) => (x.tracker === t.tracker ? { ...x, status: 'Refunded', status_normalized: 'refunded' } : x)));
+    } catch (e) {
+      toast.error(e.message || 'Refund failed');
+    } finally {
+      setRefundingRef(null);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -20,7 +37,7 @@ export default function Transactions() {
       setLoading(true);
       let query = supabase
         .from('manishapay_transactions')
-        .select('tracker, merchant_reference, paynow_reference, merchant_amount, status, status_normalized, mode, method, created_at')
+        .select('tracker, merchant_reference, paynow_reference, merchant_amount, currency, status, status_normalized, mode, method, created_at')
         .eq('developer_id', user.id)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -59,7 +76,7 @@ export default function Transactions() {
           items.length === 0 ? <p className="text-sm text-slate-400">No transactions match.</p> :
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-slate-500">
-              <tr><th className="text-left py-2">Reference</th><th className="text-left">PayNow ref</th><th className="text-left">Amount</th><th className="text-left">Mode</th><th className="text-left">Status</th><th className="text-left">When</th></tr>
+              <tr><th className="text-left py-2">Reference</th><th className="text-left">PayNow ref</th><th className="text-left">Amount</th><th className="text-left">Mode</th><th className="text-left">Status</th><th className="text-left">When</th><th className="text-right">Actions</th></tr>
             </thead>
             <tbody>
               {items.map((t) => (
@@ -70,6 +87,17 @@ export default function Transactions() {
                   <td><span className={t.mode === 'live' ? 'badge-success' : t.mode === 'simulated' ? 'badge-warn' : 'badge-warn'}>{t.mode}</span></td>
                   <td><span className={`badge-${statusVariant(t.status)}`}>{t.status}</span></td>
                   <td className="text-slate-400">{formatDate(t.created_at)}</td>
+                  <td className="text-right">
+                    {t.status_normalized === 'paid' && (
+                      <button
+                        onClick={() => refund(t)}
+                        disabled={refundingRef === t.merchant_reference}
+                        className="text-xs text-rose-400 hover:underline disabled:opacity-50"
+                      >
+                        {refundingRef === t.merchant_reference ? 'Refunding…' : 'Refund'}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

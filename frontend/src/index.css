@@ -50,3 +50,93 @@
     @apply badge bg-rose-500/10 text-rose-400;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT THEME
+   The UI is authored dark-first (hardcoded slate). Dark is the
+   default; light mode is the ABSENCE of the `.dark` class. Here we
+   remap the slate surfaces / borders / text actually used. Button
+   text (text-slate-950) is intentionally left dark so brand buttons
+   keep dark text on green.
+   ═══════════════════════════════════════════════════════════════ */
+@layer base {
+  html:not(.dark) { color-scheme: light; }
+  html:not(.dark) body { background-color: #eef2f6; color: #0f172a; }
+}
+
+@layer utilities {
+  /* backgrounds */
+  html:not(.dark) .bg-slate-950 { background-color: #e9eef4; }
+  html:not(.dark) .bg-slate-950\/80,
+  html:not(.dark) .bg-slate-950\/60,
+  html:not(.dark) .bg-slate-950\/50,
+  html:not(.dark) .bg-slate-950\/40 { background-color: #f3f6fa; }
+  html:not(.dark) .bg-slate-900,
+  html:not(.dark) .bg-slate-900\/95,
+  html:not(.dark) .bg-slate-900\/80,
+  html:not(.dark) .bg-slate-900\/60,
+  html:not(.dark) .bg-slate-900\/50,
+  html:not(.dark) .bg-slate-900\/40 { background-color: #ffffff; }
+  html:not(.dark) .bg-slate-800,
+  html:not(.dark) .bg-slate-800\/50,
+  html:not(.dark) .bg-slate-800\/60 { background-color: #eceff4; }
+  html:not(.dark) .bg-slate-700 { background-color: #dde3ea; }
+
+  /* borders */
+  html:not(.dark) .border-slate-800 { border-color: #e4e9f0; }
+  html:not(.dark) .border-slate-700 { border-color: #cbd5e1; }
+
+  /* text (slate-950 left dark for buttons) */
+  html:not(.dark) .text-slate-100 { color: #0f172a; }
+  html:not(.dark) .text-slate-200 { color: #1e293b; }
+  html:not(.dark) .text-slate-300 { color: #334155; }
+  html:not(.dark) .text-slate-400 { color: #475569; }
+  html:not(.dark) .text-slate-500 { color: #64748b; }
+  html:not(.dark) .placeholder-slate-500::placeholder { color: #94a3b8; }
+
+  /* hover states */
+  html:not(.dark) .hover\:bg-slate-900:hover { background-color: #f1f5f9; }
+  html:not(.dark) .hover\:bg-slate-800:hover,
+  html:not(.dark) .hover\:bg-slate-800\/60:hover,
+  html:not(.dark) .hover\:bg-slate-800\/50:hover { background-color: #e5e9f0; }
+  html:not(.dark) .hover\:bg-slate-700:hover { background-color: #cbd5e1; }
+  html:not(.dark) .hover\:text-white:hover,
+  html:not(.dark) .hover\:text-slate-100:hover { color: #0f172a; }
+  html:not(.dark) .hover\:text-slate-200:hover { color: #1e293b; }
+  html:not(.dark) .hover\:text-slate-300:hover { color: #334155; }
+}
+
+@layer components {
+  html:not(.dark) .card {
+    border-color: #e4e9f0; background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  html:not(.dark) .input { border-color: #cbd5e1; background-color: #ffffff; color: #0f172a; }
+  html:not(.dark) .btn-ghost { border-color: #cbd5e1; color: #1e293b; }
+  html:not(.dark) .btn-ghost:hover { background-color: #e5e9f0; }
+  html:not(.dark) .skeleton { background-image: linear-gradient(to right, #e2e8f0, #f1f5f9, #e2e8f0); }
+}
+
+/* Accent text: the dark theme uses light "-300/-400" shades that go
+   low-contrast on white. Darken them (and the baked badge classes) so
+   every label, link and status stays readable in light mode. */
+@layer utilities {
+  html:not(.dark) .text-brand,
+  html:not(.dark) .text-brand-200,
+  html:not(.dark) .text-brand-300,
+  html:not(.dark) .text-brand-400 { color: #157a41; }
+  html:not(.dark) .text-rose-200,
+  html:not(.dark) .text-rose-300,
+  html:not(.dark) .text-rose-400 { color: #be123c; }
+  html:not(.dark) .text-amber-200,
+  html:not(.dark) .text-amber-300,
+  html:not(.dark) .text-amber-400 { color: #b45309; }
+  html:not(.dark) .text-sky-300,
+  html:not(.dark) .text-sky-400 { color: #0369a1; }
+}
+
+@layer components {
+  html:not(.dark) .badge-success { color: #157a41; }
+  html:not(.dark) .badge-warn { color: #b45309; }
+  html:not(.dark) .badge-danger { color: #be123c; }
+}

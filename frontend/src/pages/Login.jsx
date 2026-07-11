@@ -71,7 +71,7 @@ export default function Login() {
     <div className="grid min-h-screen place-items-center bg-slate-950 px-4">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2.5 hover:opacity-90">
-          <img src="/logo.svg" alt="ManishaPay" className="h-10 w-10 rounded-lg shadow-glow"/>
+          <img src="/logo.png" alt="ManishaPay" className="h-10 w-10 rounded-lg shadow-glow"/>
           <span className="text-lg font-semibold text-slate-100">ManishaPay</span>
         </Link>
         <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-card">
@@ -80,6 +80,9 @@ export default function Login() {
           <form onSubmit={submit} className="space-y-4">
             <Input label="Email" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required autoComplete="email"/>
             <Input label="Password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required autoComplete="current-password"/>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-slate-400 hover:text-brand">Forgot password?</Link>
+            </div>
             <Button type="submit" className="w-full" loading={busy}>Sign in</Button>
           </form>
 

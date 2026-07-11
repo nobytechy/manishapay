@@ -31,7 +31,7 @@ function Code({ children, lang = 'bash' }) {
           type="button"
           className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
         >
-          {copied ? <CheckCircle2 size={12} className="text-emerald-400"/> : <Copy size={12}/>}
+          {copied ? <CheckCircle2 size={12} className="text-brand-400"/> : <Copy size={12}/>}
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
@@ -430,8 +430,8 @@ const welcome = (
       </Link>
     </div>
 
-    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-sm leading-relaxed text-slate-300">
-      <p className="flex items-center gap-2 font-medium text-emerald-300"><CheckCircle2 size={14}/> Free for the first 50 transactions / month, forever</p>
+    <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 p-5 text-sm leading-relaxed text-slate-300">
+      <p className="flex items-center gap-2 font-medium text-brand-300"><CheckCircle2 size={14}/> Free for the first 50 transactions / month, forever</p>
       <p className="mt-1 text-slate-400">Money flows directly into your PayNow wallet — we never custody funds. <Link to="/#pricing" className="text-brand-300 hover:underline">Pricing →</Link></p>
     </div>
   </div>
@@ -505,10 +505,10 @@ const groups = [
             Detailed coverage on the marketing site at <Link to="/#security" className="text-brand-300 hover:underline">/#security</Link>. Quick summary:
           </p>
           <ul className="space-y-2 text-sm text-slate-300">
-            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-emerald-300"/>Encrypted credentials at rest (libsodium envelope encryption)</li>
-            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-emerald-300"/>HMAC-SHA256 signed webhooks with timestamp</li>
-            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-emerald-300"/>We never custody funds — direct customer → PayNow → your wallet</li>
-            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-emerald-300"/>Per-developer API keys with revoke + rotate</li>
+            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-brand-300"/>Encrypted credentials at rest (libsodium envelope encryption)</li>
+            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-brand-300"/>HMAC-SHA256 signed webhooks with timestamp</li>
+            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-brand-300"/>We never custody funds — direct customer → PayNow → your wallet</li>
+            <li className="flex gap-2"><CheckCircle2 size={14} className="mt-1 shrink-0 text-brand-300"/>Per-developer API keys with revoke + rotate</li>
           </ul>
         </div>
       ) },

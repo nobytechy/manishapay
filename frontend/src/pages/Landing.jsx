@@ -165,7 +165,7 @@ export default function Landing() {
       <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
+            <img src="/logo.png" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
             <span className="text-lg font-semibold tracking-tight">ManishaPay</span>
           </Link>
           <nav className="flex items-center gap-1 text-sm md:gap-3">
@@ -393,7 +393,7 @@ export default function Landing() {
                     <p className="mt-0.5 text-slate-400">{problem}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-300">With ManishaPay</p>
                     <p className="mt-0.5 text-slate-300">{fix}</p>
                   </div>
                 </div>
@@ -531,7 +531,7 @@ export default function Landing() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.svg" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
+              <img src="/logo.png" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
               <span className="text-lg font-semibold tracking-tight">ManishaPay</span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-slate-400">
@@ -561,6 +561,7 @@ export default function Landing() {
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
               <li><a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">SDKs on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="mailto:nobytechy@gmail.com" className="hover:text-slate-100">Contact</a></li>
+              <li><a href="/admin/login" className="hover:text-slate-100">Admin Login</a></li>
             </ul>
           </div>
         </div>

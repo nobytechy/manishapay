@@ -32,7 +32,7 @@ export default function PhoneFormatter() {
       {out && (
         <div className="mt-4 flex items-center gap-2 text-sm">
           {out.valid ? (
-            <CheckCircle2 size={16} className="text-emerald-400" />
+            <CheckCircle2 size={16} className="text-brand-400" />
           ) : (
             <XCircle size={16} className="text-rose-400" />
           )}

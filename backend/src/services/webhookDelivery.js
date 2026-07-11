@@ -18,8 +18,12 @@ const axios = require('axios');
 const nodeCrypto = require('crypto');
 const { supabase: defaultSupabase } = require('../config/supabase');
 const { logger: defaultLogger } = require('./logger');
+const { withRetry } = require('./retry');
 
 const DELIVERY_TIMEOUT_MS = 8_000;
+// HTTP statuses worth retrying — transient server-side failures. A 4xx is the
+// merchant's decision (bad payload, auth) and must NOT be retried.
+const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
 
 /**
  * Builds the canonical JSON body merchants receive. The signature is
@@ -63,19 +67,37 @@ async function deliverOne(endpoint, txn, deps = {}) {
     .digest('hex');
   const sigHeader = `t=${ts},v1=${signature}`;
 
+  // Poster is injectable so the retry path is unit-testable without a network.
+  const httpPost = deps.post || axios.post;
   const start = Date.now();
   let status = 'delivered';
   let httpStatus = null;
   let errorMsg = null;
   try {
-    const r = await axios.post(endpoint.url, payload, {
-      timeout: DELIVERY_TIMEOUT_MS,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-ManishaPay-Signature': sigHeader,
+    // Retry-with-backoff on transient failures (network errors + 5xx). Safe to
+    // block here: all callers dispatch this off the response path (the PayNow
+    // webhook acks first, then fans out), so retries never delay an ack.
+    const r = await withRetry(
+      async () => {
+        const resp = await httpPost(endpoint.url, payload, {
+          timeout: DELIVERY_TIMEOUT_MS,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-ManishaPay-Signature': sigHeader,
+          },
+          validateStatus: () => true,
+        });
+        // Surface a retryable 5xx as a throw so withRetry backs off; 4xx pass
+        // through as a normal (final) response.
+        if (RETRYABLE_STATUS.has(resp.status)) {
+          const e = new Error(`HTTP ${resp.status}`);
+          e.response = { status: resp.status };
+          throw e;
+        }
+        return resp;
       },
-      validateStatus: () => true,
-    });
+      { attempts: deps.attempts, baseDelay: deps.baseDelay ?? 500, label: 'webhook.deliver' },
+    );
     httpStatus = r.status;
     if (r.status >= 400) {
       status = 'failed';
@@ -83,6 +105,7 @@ async function deliverOne(endpoint, txn, deps = {}) {
     }
   } catch (err) {
     status = 'failed';
+    httpStatus = err.response?.status ?? null;
     errorMsg = err.message;
   }
 

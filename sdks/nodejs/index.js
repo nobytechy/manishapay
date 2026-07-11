@@ -1,6 +1,10 @@
 /**
  * ManishaPay — official Node.js SDK.
  *
+ * @author  Noby Tebulo <https://nobie.netlify.app>
+ * @license MIT — © 2026 Noby Tebulo. All rights reserved.
+ * @see     https://manishapay.netlify.app
+ *
  * Usage:
  *   const ManishaPay = require('manishapay');
  *   const mp = new ManishaPay('mp_test_xxxxxxxxxxxx');

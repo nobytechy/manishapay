@@ -73,6 +73,10 @@ ManishaPay runs in fully simulated mode — no real PayNow call. The
 you can click Paid / Cancelled / Timeout buttons to fire signed webhooks
 to your endpoint.
 
+## Author
+
+Built by **Noby Tebulo** — [nobie.netlify.app](https://nobie.netlify.app) · nobytechy@gmail.com
+
 ## License
 
-MIT
+MIT © 2026 Noby Tebulo

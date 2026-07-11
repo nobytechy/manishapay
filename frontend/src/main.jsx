@@ -4,13 +4,24 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import InstallBanner from './components/InstallBanner';
 import './index.css';
+
+// Register the PWA service worker (installability + offline shell).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Non-fatal: the app works fine without the SW; it just isn't installable.
+    });
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <App />
+        <InstallBanner />
         <Toaster
           position="top-right"
           toastOptions={{

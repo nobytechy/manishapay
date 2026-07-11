@@ -34,7 +34,7 @@ export default function Settings() {
         </div>
       </Card>
       <Card title="Plan">
-        <p className="text-sm text-slate-400">You are on the <span className="text-emerald-400 font-medium">{profile?.plan || 'free'}</span> plan.</p>
+        <p className="text-sm text-slate-400">You are on the <span className="text-brand-400 font-medium">{profile?.plan || 'free'}</span> plan.</p>
       </Card>
     </div>
   );

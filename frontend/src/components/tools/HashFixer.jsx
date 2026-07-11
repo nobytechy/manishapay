@@ -70,7 +70,7 @@ export default function HashFixer() {
                 <ClipboardCopy size={12}/> Copy
               </button>
             </div>
-            <code className="block break-all rounded bg-slate-900 p-2 font-mono text-[10px] text-emerald-300">{result.expected}</code>
+            <code className="block break-all rounded bg-slate-900 p-2 font-mono text-[10px] text-brand-300">{result.expected}</code>
           </div>
           {result.received && (
             <div>

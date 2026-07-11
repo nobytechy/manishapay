@@ -54,7 +54,7 @@ export default function WebhookTester() {
       </div>
       {response && (
         <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950 p-3">
-          <div className="text-xs text-slate-400">Status: <span className={response.ok ? 'text-emerald-400' : 'text-rose-400'}>{response.status}</span></div>
+          <div className="text-xs text-slate-400">Status: <span className={response.ok ? 'text-brand-400' : 'text-rose-400'}>{response.status}</span></div>
           <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-slate-300">{response.body}</pre>
         </div>
       )}

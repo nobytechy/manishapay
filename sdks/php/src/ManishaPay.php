@@ -5,6 +5,10 @@
  * PHP 7.4+, only requires php-curl and php-json (both standard).
  * Composer-installable as `manishapay/manishapay` from Packagist.
  *
+ * @author  Noby Tebulo <https://nobie.netlify.app>
+ * @license MIT — © 2026 Noby Tebulo. All rights reserved.
+ * @see     https://manishapay.netlify.app
+ *
  * Usage:
  *   $mp = new ManishaPay\ManishaPay(getenv('MANISHAPAY_API_KEY'));
  *   $r = $mp->pay(['reference' => 'order-1', 'amount' => '5.00']);

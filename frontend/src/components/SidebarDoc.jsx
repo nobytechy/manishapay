@@ -64,7 +64,7 @@ export default function SidebarDoc({
             </Link>
             <span className="text-slate-700">|</span>
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.svg" alt="ManishaPay" className="h-7 w-7 rounded-md"/>
+              <img src="/logo.png" alt="ManishaPay" className="h-7 w-7 rounded-md"/>
               <span className="text-sm font-semibold tracking-tight">ManishaPay</span>
             </Link>
           </div>

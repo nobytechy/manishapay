@@ -4,7 +4,10 @@ import DashboardLayout from './components/layout/DashboardLayout';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import GetStarted from './pages/GetStarted';
 import DocsHome from './pages/DocsHome';
 import ForumCoverage from './pages/ForumCoverage';
@@ -22,6 +25,7 @@ import Settings from './pages/developer/Settings';
 
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminDevelopers from './pages/admin/Developers';
+import AdminAudit from './pages/admin/Audit';
 import AdminLogs from './pages/admin/Logs';
 import AdminWebhooks from './pages/admin/Webhooks';
 import AdminAnnouncements from './pages/admin/Announcements';
@@ -48,7 +52,10 @@ export default function App() {
       <Route path="/docs" element={<DocsHome />} />
       <Route path="/forum-coverage" element={<ForumCoverage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/app"
@@ -80,6 +87,7 @@ export default function App() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="developers" element={<AdminDevelopers />} />
+        <Route path="audit" element={<AdminAudit />} />
         <Route path="logs" element={<AdminLogs />} />
         <Route path="webhooks" element={<AdminWebhooks />} />
         <Route path="announcements" element={<AdminAnnouncements />} />

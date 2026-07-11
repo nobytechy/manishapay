@@ -110,14 +110,14 @@ export default function ApiKeys() {
           </div>
         </div>
         {revealed && (
-          <div className="mt-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">Copy this — you won't see it again</p>
+          <div className="mt-4 rounded-lg border border-brand-500/40 bg-brand-500/10 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-400">Copy this — you won't see it again</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 break-all rounded bg-slate-950 p-2 font-mono text-xs text-emerald-300">{revealed}</code>
-              <button onClick={()=>{copyToClipboard(revealed); toast.success('Copied');}} className="rounded-md p-2 hover:bg-emerald-500/20" title="Copy">
+              <code className="flex-1 break-all rounded bg-slate-950 p-2 font-mono text-xs text-brand-300">{revealed}</code>
+              <button onClick={()=>{copyToClipboard(revealed); toast.success('Copied');}} className="rounded-md p-2 hover:bg-brand-500/20" title="Copy">
                 <ClipboardCopy size={14}/>
               </button>
-              <button onClick={()=>{setActiveKey(revealed); setActivePrefix(revealed.slice(0,12)); toast.success('Set as active key');}} className="rounded-md bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/30">
+              <button onClick={()=>{setActiveKey(revealed); setActivePrefix(revealed.slice(0,12)); toast.success('Set as active key');}} className="rounded-md bg-brand-500/20 px-3 py-2 text-xs font-medium text-brand-300 hover:bg-brand-500/30">
                 Use as active
               </button>
             </div>
@@ -144,7 +144,7 @@ export default function ApiKeys() {
                   <td><span className={k.status === 'active' ? 'badge-success' : 'badge-danger'}>{k.status}</span></td>
                   <td className="text-slate-400">{formatDate(k.last_used_at)}</td>
                   <td className="text-right">
-                    {activePrefix === k.prefix && <CheckCircle2 size={14} className="mr-2 inline text-emerald-400" title="Active in dashboard tools"/>}
+                    {activePrefix === k.prefix && <CheckCircle2 size={14} className="mr-2 inline text-brand-400" title="Active in dashboard tools"/>}
                     <button onClick={useThis} className="mr-2 text-xs text-brand hover:underline">Use</button>
                     {k.status === 'active' && (
                       <button onClick={()=>setConfirmId(k.id)} className="text-rose-400 hover:text-rose-300" title="Revoke"><Trash2 size={14}/></button>

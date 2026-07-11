@@ -6,5 +6,7 @@ User-agent: *
 Allow: /
 Disallow: /app
 Disallow: /admin
+Disallow: /forgot-password
+Disallow: /reset-password
 
 Sitemap: https://manishapay.netlify.app/sitemap.xml

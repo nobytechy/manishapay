@@ -12,6 +12,7 @@ import {
   ScrollText,
   Megaphone,
   Activity,
+  ShieldCheck,
   Lock,
   FlaskConical,
   Mail,
@@ -39,6 +40,7 @@ const adminNav = [
   { to: '/admin/developers', icon: Users, label: 'Developers' },
   { to: '/admin/logs', icon: ScrollText, label: 'Logs' },
   { to: '/admin/webhooks', icon: Activity, label: 'Webhook monitor' },
+  { to: '/admin/audit', icon: ShieldCheck, label: 'Audit trail' },
   { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
 ];
 
@@ -49,7 +51,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900/40 px-4 py-6 md:flex">
       <div className="mb-8 flex items-center gap-2.5 px-2">
-        <img src="/logo.svg" alt="ManishaPay" className="h-8 w-8 rounded-lg" />
+        <img src="/logo.png" alt="ManishaPay" className="h-8 w-8 rounded-lg" />
         <div>
           <p className="text-sm font-semibold text-slate-100">ManishaPay</p>
           <p className="text-[10px] uppercase tracking-wider text-slate-500">PayNow Bridge</p>
@@ -96,7 +98,7 @@ export default function Sidebar() {
             href="https://wa.me/263774603865"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-slate-400 hover:text-emerald-400"
+            className="flex items-center gap-2 text-slate-400 hover:text-brand-400"
           >
             <MessageCircle size={13} /> WhatsApp
           </a>

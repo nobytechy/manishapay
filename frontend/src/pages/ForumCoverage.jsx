@@ -20,7 +20,7 @@ import SidebarDoc from '../components/SidebarDoc';
 
 function CoverageBadge({ kind }) {
   const map = {
-    direct: { cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', icon: CheckCircle2, label: 'Direct fix' },
+    direct: { cls: 'bg-brand-500/10 text-brand-300 border-brand-500/30', icon: CheckCircle2, label: 'Direct fix' },
     plugin: { cls: 'bg-amber-500/10 text-amber-300 border-amber-500/30',       icon: AlertTriangle, label: 'Plugin fallback' },
     account:{ cls: 'bg-rose-500/10 text-rose-300 border-rose-500/30',           icon: ShieldAlert,  label: 'Account-level (PayNow)' },
     out:    { cls: 'bg-slate-500/10 text-slate-300 border-slate-500/30',        icon: Info,         label: 'Out of domain' },
@@ -61,7 +61,7 @@ function Issue({ kind, forumQuote, problem, fix, action }) {
           <p className="mt-1 text-sm leading-relaxed text-slate-300">{problem}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">How ManishaPay handles it</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300">How ManishaPay handles it</p>
           <p className="mt-1 text-sm leading-relaxed text-slate-300">{fix}</p>
         </div>
         {action && (
@@ -103,8 +103,8 @@ const overview = (
     lead="What ManishaPay actually covers from forums.paynow.co.zw — and what it doesn't. We sort every recurring thread into one of four buckets so you can see at a glance whether ManishaPay solves your specific issue, helps work around it, or whether it's something only PayNow can fix."
   >
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-        <div className="mb-2 flex items-center gap-2"><CheckCircle2 size={16} className="text-emerald-300"/><span className="text-sm font-semibold text-slate-100">Direct fix</span></div>
+      <div className="rounded-xl border border-brand-500/20 bg-brand-500/5 p-4">
+        <div className="mb-2 flex items-center gap-2"><CheckCircle2 size={16} className="text-brand-300"/><span className="text-sm font-semibold text-slate-100">Direct fix</span></div>
         <p className="text-xs leading-relaxed text-slate-400">Protocol-level integration errors — hash mismatches, phone formats, status callbacks, decimal formatting. Fixed by ManishaPay's middleware so your code never sees them.</p>
       </div>
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
@@ -148,7 +148,7 @@ const overview = (
             ].map(([platform, status, addresses]) => (
               <tr key={platform}>
                 <td className="px-4 py-2.5 font-medium text-slate-100">{platform}</td>
-                <td className="px-4 py-2.5"><span className="text-emerald-300">✓</span> {status}</td>
+                <td className="px-4 py-2.5"><span className="text-brand-300">✓</span> {status}</td>
                 <td className="px-4 py-2.5 text-slate-400">{addresses}</td>
               </tr>
             ))}

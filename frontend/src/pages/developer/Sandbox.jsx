@@ -151,7 +151,7 @@ function FlowRow({ step, isLast }) {
   const ring = {
     pending: 'border-slate-700 text-slate-600 bg-slate-900',
     active: 'border-brand text-brand bg-brand/10 shadow-glow animate-pulse',
-    done: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/10',
+    done: 'border-brand-500/50 text-brand-300 bg-brand-500/10',
     error: 'border-rose-500/60 text-rose-300 bg-rose-500/10',
   }[step.status];
   const textCls = {
@@ -167,7 +167,7 @@ function FlowRow({ step, isLast }) {
             : step.status === 'error' ? <XCircle size={16} />
             : <Icon size={15} />}
         </div>
-        {!isLast && <div className={`w-px flex-1 transition-colors duration-300 ${step.status === 'done' ? 'bg-emerald-500/40' : 'bg-slate-800'}`} />}
+        {!isLast && <div className={`w-px flex-1 transition-colors duration-300 ${step.status === 'done' ? 'bg-brand-500/40' : 'bg-slate-800'}`} />}
       </div>
       <div className={`pb-4 transition-all duration-300 ${step.status === 'pending' ? 'opacity-50' : 'opacity-100'}`}>
         <p className={`text-sm font-medium ${textCls}`}>{step.label}</p>
@@ -194,7 +194,7 @@ function autoReference() {
 function StatusPill({ status }) {
   const map = {
     pending:   { cls: 'bg-amber-500/10 text-amber-300 border-amber-500/30',     icon: Clock,        label: 'Pending' },
-    paid:      { cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30', icon: CheckCircle2, label: 'Paid' },
+    paid:      { cls: 'bg-brand-500/10 text-brand-300 border-brand-500/30', icon: CheckCircle2, label: 'Paid' },
     cancelled: { cls: 'bg-rose-500/10 text-rose-300 border-rose-500/30',         icon: XCircle,      label: 'Cancelled' },
     timeout:   { cls: 'bg-slate-500/10 text-slate-300 border-slate-500/30',      icon: Clock,        label: 'Timeout (no webhook)' },
   };
@@ -227,7 +227,7 @@ function CopyField({ label, value }) {
           aria-label="Copy"
           type="button"
         >
-          {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
+          {copied ? <CheckCircle2 size={14} className="text-brand-400" /> : <Copy size={14} />}
         </button>
       </div>
     </div>
@@ -544,7 +544,7 @@ export default function Sandbox() {
                   <p className="text-sm text-slate-300">{scenario.explanation}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">With ManishaPay</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-300">With ManishaPay</p>
                   <p className="text-sm text-slate-300">{scenario.fix}</p>
                 </div>
               </div>
@@ -702,10 +702,10 @@ export default function Sandbox() {
                   type="button"
                   disabled={!!outcomeBusy || current.status !== 'pending'}
                   onClick={() => triggerOutcome('paid')}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/30 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-500/15 px-3 py-2 text-xs font-medium text-brand-300 ring-1 ring-brand-500/30 transition hover:bg-brand-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {outcomeBusy === 'paid'
-                    ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-300/40 border-t-emerald-300" />
+                    ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand-300/40 border-t-brand-300" />
                     : <CheckCircle2 size={13} />}
                   Mark Paid
                 </button>

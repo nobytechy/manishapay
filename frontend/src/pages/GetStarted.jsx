@@ -222,7 +222,7 @@ export default function GetStarted() {
       {/* Header */}
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
+          <img src="/logo.png" alt="ManishaPay" className="h-9 w-9 rounded-lg"/>
           <span className="text-lg font-semibold tracking-tight">ManishaPay</span>
         </Link>
         <nav className="flex items-center gap-3 text-sm">

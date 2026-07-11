@@ -33,7 +33,7 @@ export default function DecimalNormalizer() {
         <p className="mt-4 text-sm">
           <span className="text-slate-400">Input:</span> <code className="text-slate-300">{out.input}</code>
           <span className="mx-2 text-slate-500">→</span>
-          <span className="text-slate-400">Normalized:</span> <code className="font-mono text-emerald-300">{out.normalized}</code>
+          <span className="text-slate-400">Normalized:</span> <code className="font-mono text-brand-300">{out.normalized}</code>
         </p>
       )}
     </Card>

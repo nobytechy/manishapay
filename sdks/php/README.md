@@ -70,6 +70,10 @@ A `mp_test_*` key without configured PayNow credentials runs in fully simulated
 mode. The `browser_url` will point to `manishapay.netlify.app/simulator/<tracker>`
 where you can click Paid / Cancelled / Timeout to fire signed webhooks.
 
+## Author
+
+Built by **Noby Tebulo** — [nobie.netlify.app](https://nobie.netlify.app) · nobytechy@gmail.com
+
 ## License
 
-MIT
+MIT © 2026 Noby Tebulo

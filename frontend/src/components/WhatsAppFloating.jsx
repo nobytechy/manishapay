@@ -16,7 +16,7 @@ export default function WhatsAppFloating() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Noby on WhatsApp"
-      className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-2xl shadow-emerald-900/40 transition-transform hover:scale-110 active:scale-95"
+      className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-2xl shadow-brand-900/40 transition-transform hover:scale-110 active:scale-95"
     >
       {/* Pulsing halo */}
       <span

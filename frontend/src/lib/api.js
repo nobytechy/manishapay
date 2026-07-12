@@ -26,11 +26,27 @@ export function setActiveKey(key) {
 }
 
 async function rawFetch(path, headers, { method, body, silent }) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // Abort a stalled request (extension interference, dead network) after 20s
+  // so the UI shows an error instead of spinning forever.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  let res;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    const msg = e.name === 'AbortError'
+      ? 'Request timed out — a browser extension or your network may be blocking it. Try a private window.'
+      : e.message || 'Network error';
+    if (!silent) toast.error(msg);
+    throw Object.assign(new Error(msg), { code: 'NETWORK' });
+  }
+  clearTimeout(timer);
   let json = null;
   try {
     json = res.status === 204 ? null : await res.json();

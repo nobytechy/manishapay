@@ -6,6 +6,15 @@ const AuthContext = createContext(null);
 const APP_MARKER = 'manishapay';
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
+// Reject if an auth call stalls (browser extension / dead network) so the
+// login / register button never spins forever.
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+}
+
 // Auto-logout the user after this much idle time. Idle = no mousedown,
 // keydown, touchstart, or scroll events from the user. Standard fintech
 // session hygiene; tune via env if you ever need a different policy.
@@ -112,7 +121,11 @@ export function AuthProvider({ children }) {
   }, [ensureProfile]);
 
   const signIn = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await withTimeout(
+      supabase.auth.signInWithPassword({ email, password }),
+      20000,
+      'Sign-in timed out — a browser extension or your network may be blocking it. Try a private window.',
+    );
     if (error) throw error;
   };
 
@@ -122,7 +135,7 @@ export function AuthProvider({ children }) {
   // but no app-side profile is created (intentional — chikoro/church
   // signups don't trip this trigger either).
   const signUp = async (email, password, fullName) => {
-    const { error } = await supabase.auth.signUp({
+    const { error } = await withTimeout(supabase.auth.signUp({
       email,
       password,
       options: {
@@ -132,7 +145,7 @@ export function AuthProvider({ children }) {
         // Site URL — which otherwise sends production users to localhost.
         emailRedirectTo: `${window.location.origin}/login?verified=1`,
       },
-    });
+    }), 20000, 'Sign-up timed out — a browser extension or your network may be blocking it. Try a private window.');
     if (error) throw error;
   };
 

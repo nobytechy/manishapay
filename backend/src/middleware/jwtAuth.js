@@ -53,16 +53,62 @@ async function jwtAuthenticate(req, _res, next) {
       throw new AppError({ status: 403, code: 'DEVELOPER_SUSPENDED', message: `Account ${dev.status}` });
     }
 
+    // ── Workspace resolution (flat teams) ────────────────────────────────
+    // X-Account-Id lets a teammate operate a different account they belong to.
+    // We validate active membership, then scope ALL data ops to that account by
+    // setting req.developer.id — and record the caller's team role for
+    // capability checks. Owner (own account) has the full role set.
+    const realUserId = dev.id;
+    let accountId = realUserId;
+    let teamRole = 'owner';
+    const requested = req.header('X-Account-Id');
+    if (requested && requested !== realUserId) {
+      const { data: membership } = await supabase
+        .from('manishapay_team_members')
+        .select('role')
+        .eq('owner_id', requested)
+        .eq('member_id', realUserId)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (!membership) {
+        throw new AppError({ status: 403, code: 'NOT_A_TEAMMATE', message: 'You are not a member of that account.' });
+      }
+      accountId = requested;
+      teamRole = membership.role; // 'admin' | 'member' | 'viewer'
+    }
+
     req.developer = {
-      id: dev.id,
+      id: accountId,          // data operations scope to this account
+      realUserId,             // the actual signed-in user
       email: dev.email,
-      role: dev.role,
+      role: dev.role,         // platform role (super-admin gate)
+      teamRole,               // owner | admin | member | viewer
       billingStatus: dev.billing_status,
     };
     next();
   } catch (err) {
     next(err);
   }
+}
+
+// Capabilities per team role. Owner/admin can do everything in the account;
+// member can build (payments + manage resources) but not manage team/billing;
+// viewer is read-only.
+const ROLE_CAPS = {
+  owner:  ['read', 'payments', 'manage', 'team', 'billing'],
+  admin:  ['read', 'payments', 'manage', 'team', 'billing'],
+  member: ['read', 'payments', 'manage'],
+  viewer: ['read'],
+};
+
+function requireCapability(cap) {
+  return (req, _res, next) => {
+    const role = req.developer?.teamRole || 'owner';
+    if (!(ROLE_CAPS[role] || []).includes(cap)) {
+      return next(new AppError({ status: 403, code: 'FORBIDDEN_ROLE', message: `Your role (${role}) is not allowed to ${cap === 'payments' ? 'take payments/refunds' : cap === 'manage' ? 'manage projects & keys' : cap} in this account.` }));
+    }
+    next();
+  };
 }
 
 function requireAdmin(req, _res, next) {
@@ -73,4 +119,4 @@ function requireAdmin(req, _res, next) {
   next();
 }
 
-module.exports = { jwtAuthenticate, requireAdmin };
+module.exports = { jwtAuthenticate, requireAdmin, requireCapability, ROLE_CAPS };

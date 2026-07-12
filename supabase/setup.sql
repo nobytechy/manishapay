@@ -210,6 +210,9 @@ create table if not exists public.manishapay_team_members (
   unique (owner_id, member_email)
 );
 create index if not exists manishapay_team_owner_idx on public.manishapay_team_members(owner_id);
+-- widen roles to include 'viewer' (idempotent: drop + re-add)
+alter table public.manishapay_team_members drop constraint if exists manishapay_team_members_role_check;
+alter table public.manishapay_team_members add constraint manishapay_team_members_role_check check (role in ('member','admin','viewer'));
 alter table public.manishapay_team_members enable row level security;
 
 drop policy if exists manishapay_team_owner on public.manishapay_team_members;

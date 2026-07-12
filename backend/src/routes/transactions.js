@@ -10,7 +10,7 @@
 
 const router = require('express').Router();
 const { z } = require('zod');
-const { jwtAuthenticate } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const paynow = require('../services/paynow');
 const webhookDelivery = require('../services/webhookDelivery');
@@ -23,7 +23,7 @@ const refundSchema = z.object({
   reason: z.string().max(255).optional(),
 });
 
-router.post('/:reference/refund', async (req, res, next) => {
+router.post('/:reference/refund', requireCapability('payments'), async (req, res, next) => {
   try {
     const parsed = refundSchema.parse(req.body || {});
     const reference = req.params.reference;

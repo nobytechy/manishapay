@@ -10,7 +10,7 @@
 
 const router = require('express').Router();
 const { z } = require('zod');
-const { jwtAuthenticate } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
 
@@ -38,7 +38,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = projectSchema.parse(req.body);
     const { data, error } = await supabase
@@ -53,7 +53,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = projectSchema.partial().parse(req.body);
     const { data, error } = await supabase
@@ -71,7 +71,7 @@ router.patch('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireCapability('manage'), async (req, res, next) => {
   try {
     const { error } = await supabase
       .from('manishapay_projects')

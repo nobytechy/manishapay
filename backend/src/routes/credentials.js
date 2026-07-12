@@ -12,7 +12,7 @@
 
 const router = require('express').Router();
 const { z } = require('zod');
-const { jwtAuthenticate } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const credentials = require('../services/credentials');
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
@@ -57,7 +57,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = saveSchema.parse(req.body);
 
@@ -94,7 +94,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireCapability('manage'), async (req, res, next) => {
   try {
     // Confirm the credential belongs to a project this developer owns.
     const { data: cred, error: credErr } = await supabase

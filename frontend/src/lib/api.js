@@ -90,6 +90,10 @@ export const api = {
 
   refund: (reference, body) => apiFetchAuthed(`/v1/transactions/${encodeURIComponent(reference)}/refund`, { method: 'POST', body: body || {} }),
 
+  getBilling: () => apiFetchAuthed('/v1/billing'),
+  createSubscription: (body) => apiFetchAuthed('/v1/subscriptions', { method: 'POST', body }),
+  chargeSubscription: (id) => apiFetchAuthed(`/v1/subscriptions/${id}/charge`, { method: 'POST' }),
+
   createLink: (body) => apiFetchAuthed('/v1/links', { method: 'POST', body }),
   getLink: (slug) => apiFetch(`/v1/links/${encodeURIComponent(slug)}`),
   payLink: (slug, body) => apiFetch(`/v1/links/${encodeURIComponent(slug)}/pay`, { method: 'POST', body: body || {} }),

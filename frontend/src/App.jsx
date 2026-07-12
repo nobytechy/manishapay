@@ -16,6 +16,11 @@ import Overview from './pages/developer/Dashboard';
 import Connect from './pages/developer/Connect';
 import PaymentLinks from './pages/developer/PaymentLinks';
 import PayLink from './pages/PayLink';
+import Status from './pages/Status';
+import Health from './pages/developer/Health';
+import Billing from './pages/developer/Billing';
+import Subscriptions from './pages/developer/Subscriptions';
+import Team from './pages/developer/Team';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
 import Credentials from './pages/developer/Credentials';
@@ -63,6 +68,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pay/:slug" element={<PayLink />} />
+      <Route path="/status" element={<Status />} />
 
       <Route
         path="/app"
@@ -80,6 +86,10 @@ export default function App() {
         <Route path="credentials" element={<Credentials />} />
         <Route path="webhooks" element={<Webhooks />} />
         <Route path="transactions" element={<Transactions />} />
+        <Route path="health" element={<Health />} />
+        <Route path="billing" element={<Billing />} />
+        <Route path="subscriptions" element={<Subscriptions />} />
+        <Route path="team" element={<Team />} />
         <Route path="sandbox" element={<Sandbox />} />
         <Route path="tools" element={<Tools />} />
         <Route path="docs" element={<Docs />} />

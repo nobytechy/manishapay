@@ -162,6 +162,55 @@ drop policy if exists manishapay_links_owner on public.manishapay_payment_links;
 create policy manishapay_links_owner on public.manishapay_payment_links
   for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
 
+
+-- ── 10. Subscriptions (recurring billing) ─────────────────────────────────
+create table if not exists public.manishapay_subscriptions (
+  id             uuid primary key default gen_random_uuid(),
+  developer_id   uuid not null references public.manishapay_developers(id) on delete cascade,
+  project_id     uuid not null references public.manishapay_projects(id) on delete cascade,
+  title          text not null,
+  amount         numeric(12,2) not null,
+  currency       text not null default 'USD',
+  billing_interval text not null default 'monthly' check (billing_interval in ('weekly','monthly','yearly')),
+  customer_email text,
+  customer_phone text,
+  status         text not null default 'active' check (status in ('active','paused','cancelled')),
+  next_charge_at timestamptz,
+  last_charge_at timestamptz,
+  created_at     timestamptz not null default now()
+);
+create index if not exists manishapay_subs_dev_idx on public.manishapay_subscriptions(developer_id);
+alter table public.manishapay_subscriptions enable row level security;
+
+drop policy if exists manishapay_subs_owner on public.manishapay_subscriptions;
+create policy manishapay_subs_owner on public.manishapay_subscriptions
+  for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
+
+
+-- ── 11. Team / organisation members ───────────────────────────────────────
+-- An account owner can invite teammates (by email) with a role. Lightweight
+-- membership record; the owner remains the data owner.
+create table if not exists public.manishapay_team_members (
+  id            uuid primary key default gen_random_uuid(),
+  owner_id      uuid not null references public.manishapay_developers(id) on delete cascade,
+  member_email  text not null,
+  member_id     uuid references public.manishapay_developers(id) on delete set null,
+  role          text not null default 'member' check (role in ('member','admin')),
+  status        text not null default 'invited' check (status in ('invited','active','removed')),
+  created_at    timestamptz not null default now(),
+  unique (owner_id, member_email)
+);
+create index if not exists manishapay_team_owner_idx on public.manishapay_team_members(owner_id);
+alter table public.manishapay_team_members enable row level security;
+
+drop policy if exists manishapay_team_owner on public.manishapay_team_members;
+create policy manishapay_team_owner on public.manishapay_team_members
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+-- A member can see rows where they are the member.
+drop policy if exists manishapay_team_member_read on public.manishapay_team_members;
+create policy manishapay_team_member_read on public.manishapay_team_members
+  for select using (member_id = auth.uid());
+
 -- ════════════════════════════════════════════════════════════════════════
 --  Done. After this runs: PayNow merchant email, admin audit trail, support
 --  desk, idempotency keys, dynamic WhatsApp settings, and customer-phone

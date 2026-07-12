@@ -20,6 +20,8 @@ import {
   MessageCircle,
   Rocket,
   Link2,
+  CreditCard,
+  Repeat,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -33,6 +35,10 @@ const developerNav = [
   { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },
   { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
   { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
+  { to: '/app/health', icon: Activity, label: 'Health' },
+  { to: '/app/billing', icon: CreditCard, label: 'Billing' },
+  { to: '/app/subscriptions', icon: Repeat, label: 'Subscriptions' },
+  { to: '/app/team', icon: Users, label: 'Team' },
   { to: '/app/sandbox', icon: FlaskConical, label: 'Sandbox' },
   { to: '/app/tools', icon: Wrench, label: 'Problem solvers' },
   { to: '/app/docs', icon: BookOpen, label: 'Documentation' },

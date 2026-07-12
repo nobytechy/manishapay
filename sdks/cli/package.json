@@ -1,0 +1,13 @@
+{
+  "name": "manishapay-cli",
+  "version": "1.0.0",
+  "description": "ManishaPay CLI — forward live payment webhook events to your localhost while developing.",
+  "bin": { "manishapay": "index.js" },
+  "type": "commonjs",
+  "files": ["index.js", "README.md", "LICENSE"],
+  "keywords": ["manishapay", "paynow", "webhooks", "cli"],
+  "author": "Noby Tebulo <https://nobie.netlify.app>",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "homepage": "https://manishapay.netlify.app"
+}

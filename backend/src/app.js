@@ -31,6 +31,9 @@ const reconcileRouter = require('./routes/reconcile');
 const adminRouter = require('./routes/admin');
 const transactionsRouter = require('./routes/transactions');
 const paymentLinksRouter = require('./routes/paymentlinks');
+const billingRouter = require('./routes/billing');
+const subscriptionsRouter = require('./routes/subscriptions');
+const cliRouter = require('./routes/cli');
 
 function buildApp() {
   const app = express();
@@ -102,6 +105,9 @@ function buildApp() {
   app.use('/v1/admin', adminRouter);
   app.use('/v1/transactions', transactionsRouter);
   app.use('/v1/links', devRateLimiter, paymentLinksRouter);
+  app.use('/v1/billing', billingRouter);
+  app.use('/v1/subscriptions', subscriptionsRouter);
+  app.use('/v1/cli', devRateLimiter, cliRouter);
 
   // 404 — explicit so the error handler can format it.
   app.use((req, _res, next) => {

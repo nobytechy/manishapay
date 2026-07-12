@@ -35,6 +35,7 @@ const developerNav = [
   { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },
   { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
   { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
+  { to: '/app/fiscalise', icon: ScrollText, label: 'Fiscalisation' },
   { to: '/app/health', icon: Activity, label: 'Health' },
   { to: '/app/billing', icon: CreditCard, label: 'Billing' },
   { to: '/app/subscriptions', icon: Repeat, label: 'Subscriptions' },

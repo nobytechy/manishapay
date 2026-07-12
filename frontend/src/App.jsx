@@ -21,6 +21,7 @@ import Health from './pages/developer/Health';
 import Billing from './pages/developer/Billing';
 import Subscriptions from './pages/developer/Subscriptions';
 import Team from './pages/developer/Team';
+import Fiscalise from './pages/developer/Fiscalise';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
 import Credentials from './pages/developer/Credentials';
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="billing" element={<Billing />} />
         <Route path="subscriptions" element={<Subscriptions />} />
         <Route path="team" element={<Team />} />
+        <Route path="fiscalise" element={<Fiscalise />} />
         <Route path="sandbox" element={<Sandbox />} />
         <Route path="tools" element={<Tools />} />
         <Route path="docs" element={<Docs />} />

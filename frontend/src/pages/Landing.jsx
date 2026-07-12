@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, ShieldCheck, Workflow, Code2, Rocket, CheckCircle2, Terminal,
   Zap, Lock, Globe, Webhook, BarChart3, Smartphone, Github, Mail, ExternalLink,
-  Layers, Wallet, Server, Sparkles, FlaskConical, MessageSquare,
+  Layers, Wallet, Server, Sparkles, FlaskConical, MessageSquare, ScrollText, Receipt,
 } from 'lucide-react';
 import TechBackdrop from '../components/landing/TechBackdrop';
+import FiscalReceiptCard from '../components/FiscalReceiptCard';
 import FadeInOnScroll from '../components/FadeInOnScroll';
 import ThemeToggle from '../components/ThemeToggle';
 import WhatsAppFloating from '../components/WhatsAppFloating';
@@ -533,6 +534,49 @@ export default function Landing() {
       </section>
       </FadeInOnScroll>
 
+      {/* ── Sibling app: zimFDMS (fiscalisation) ─────────────── */}
+      <FadeInOnScroll>
+      <section id="partners" className="mx-auto max-w-6xl px-6 py-16">
+        <div className="overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/60 to-brandblue/5 p-8 md:p-10">
+          <div className="grid items-center gap-8 md:grid-cols-2">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-brandblue/40 bg-brandblue/10 px-3 py-1 text-xs font-semibold text-brandblue-300">
+                <Layers size={13} /> The complete Zimbabwe stack
+              </span>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight md:text-3xl">
+                Get paid, then stay ZIMRA-compliant
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+                ManishaPay collects the payment. Its sibling <b className="text-slate-200">zimFDMS</b> shows how the
+                sale gets fiscalised — a ZIMRA fiscal tax invoice with QR &amp; signature. Two bridges, one mission:
+                make ZIMRA-mandated infrastructure trivial to integrate.{' '}
+                <span className="text-slate-500">(zimFDMS is in interactive sandbox preview.)</span>
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-brand/30 bg-brand/10 px-3 py-1.5 text-sm text-slate-200">
+                  <Wallet size={15} className="text-brand" /> ManishaPay · Payments
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm text-slate-300">
+                  <Receipt size={15} /> zimFDMS · Fiscalisation
+                </div>
+              </div>
+              <a
+                href="https://zimrafdms.netlify.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-slate-950 transition-colors hover:bg-brand-dark hover:text-white"
+              >
+                Explore zimFDMS <ArrowRight size={14} />
+              </a>
+            </div>
+            <div className="flex justify-center">
+              <FiscalReceiptCard />
+            </div>
+          </div>
+        </div>
+      </section>
+      </FadeInOnScroll>
+
       {/* Security details moved to /docs (cleaner landing surface);
            Final CTA removed — Pricing card already terminates the page strongly. */}
 
@@ -562,6 +606,7 @@ export default function Landing() {
               <li><Link to="/forum-coverage" className="hover:text-slate-100">Forum coverage</Link></li>
               <li><Link to="/docs" className="hover:text-slate-100">Docs</Link></li>
               <li><Link to="/get-started" className="hover:text-slate-100">Get started</Link></li>
+              <li><a href="https://zimrafdms.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">Fiscalisation · zimFDMS <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
             </ul>
           </div>
           <div>

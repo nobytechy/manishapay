@@ -7,9 +7,17 @@
 --  (provides manishapay_is_admin() and manishapay_touch_updated_at()).
 --
 --  Covers:
---    1. Per-credential PayNow merchant email (authemail)
---    2. Admin action audit trail
---    3. Developer support tickets / queries
+--    1.  Per-credential PayNow merchant email (authemail)
+--    2.  Admin action audit trail
+--    3.  Developer support tickets / queries
+--    4.  Idempotency keys (no duplicate charges on retry)
+--    5.  Platform settings (dynamic WhatsApp / UltraMsg)
+--    6.  Customer phone on transactions (WhatsApp receipts)
+--    7.  Refund tracking on transactions (bridge)
+--    8.  Restricted / scoped API keys (scopes, expiry, IP allowlist)
+--    9.  No-code payment links (hosted checkout)
+--    10. Subscriptions (recurring billing)
+--    11. Team / organisation members
 -- ════════════════════════════════════════════════════════════════════════
 
 

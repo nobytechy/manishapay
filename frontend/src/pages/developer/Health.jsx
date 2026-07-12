@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
 import Card from '../../components/ui/Card';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
+import { useAccount } from '../../context/AccountContext';
 
 /* Per-merchant observability — payment success rate, volume, webhook health. */
 export default function Health() {
-  const { user } = useAuth();
+  const { accountId } = useAccount();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!accountId) return;
     let cancel = false;
     (async () => {
       const cnt = (b) => b.then((r) => r.count || 0);
-      const T = () => supabase.from('manishapay_transactions').select('*', { count: 'exact', head: true }).eq('developer_id', user.id);
+      const T = () => supabase.from('manishapay_transactions').select('*', { count: 'exact', head: true }).eq('developer_id', accountId);
       const [total, paid, failed, pending, refunded] = await Promise.all([
         cnt(T()),
         cnt(T().eq('status_normalized', 'paid')),
@@ -38,7 +38,7 @@ export default function Health() {
       });
     })();
     return () => { cancel = true; };
-  }, [user]);
+  }, [accountId]);
 
   const tiles = stats ? [
     ['Success rate', stats.successRate == null ? '—' : `${stats.successRate}%`, 'text-brand-400'],

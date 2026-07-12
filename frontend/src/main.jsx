@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { AccountProvider } from './context/AccountContext';
 import InstallBanner from './components/InstallBanner';
 import './index.css';
 
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <AccountProvider>
         <App />
         <InstallBanner />
         <Toaster
@@ -30,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             error: { iconTheme: { primary: '#e43d5e', secondary: '#0b1220' } },
           }}
         />
+        </AccountProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

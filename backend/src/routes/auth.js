@@ -66,6 +66,17 @@ router.post('/bootstrap', async (req, res, next) => {
       });
     }
 
+    // Accept any pending team invites addressed to this email — link the
+    // membership to this user and activate it. Best-effort.
+    if (user.email) {
+      await supabase
+        .from('manishapay_team_members')
+        .update({ member_id: user.id, status: 'active' })
+        .eq('member_email', user.email.toLowerCase())
+        .eq('status', 'invited')
+        .then(() => {}, () => {});
+    }
+
     // Stamp the app marker so AuthContext / future trigger-based flows recognise this user.
     // Do this in a separate step so a metadata failure doesn't roll back the developer row.
     if (meta.app !== 'manishapay') {

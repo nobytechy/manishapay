@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAccount } from '../../context/AccountContext';
 import ThemeToggle from '../ThemeToggle';
 
 export default function Topbar() {
   const { user, profile, signOut } = useAuth();
+  const { accountId, accounts, setAccountId } = useAccount();
   const [open, setOpen] = useState(false);
 
   return (
@@ -13,6 +15,16 @@ export default function Topbar() {
         Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span>
       </div>
       <div className="flex items-center gap-2">
+        {accounts.length > 1 && (
+          <select
+            value={accountId || ''}
+            onChange={(e) => setAccountId(e.target.value)}
+            title="Switch account / workspace"
+            className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200"
+          >
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.isOwn ? a.label : `${a.label} (team)`}</option>)}
+          </select>
+        )}
         <ThemeToggle className="rounded-md p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100" />
 
         <div className="relative">

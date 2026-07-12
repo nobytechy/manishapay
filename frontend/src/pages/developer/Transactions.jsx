@@ -5,11 +5,13 @@ import Input from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { useAccount } from '../../context/AccountContext';
 import { formatDate, statusVariant } from '../../lib/utils';
 import { Search } from 'lucide-react';
 
 export default function Transactions() {
   const { user } = useAuth();
+  const { accountId } = useAccount();
   const [items, setItems] = useState([]);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
@@ -31,14 +33,14 @@ export default function Transactions() {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!accountId) return;
     let cancel = false;
     (async () => {
       setLoading(true);
       let query = supabase
         .from('manishapay_transactions')
         .select('tracker, merchant_reference, paynow_reference, merchant_amount, currency, status, status_normalized, mode, method, created_at')
-        .eq('developer_id', user.id)
+        .eq('developer_id', accountId)
         .order('created_at', { ascending: false })
         .limit(100);
       if (status) query = query.eq('status', status);
@@ -47,7 +49,7 @@ export default function Transactions() {
       if (!cancel) { setItems(data || []); setLoading(false); }
     })();
     return () => { cancel = true; };
-  }, [user, q, status]);
+  }, [accountId, q, status]);
 
   return (
     <div className="space-y-6">

@@ -155,7 +155,7 @@ const partnerPoints = [
 ];
 
 export default function Landing() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   return (
     <div id="top" className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Page-wide animated tech backdrop — sits behind every section */}
@@ -183,12 +183,17 @@ export default function Landing() {
             <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
             <ThemeToggle className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white" />
             {isAuthenticated ? (
-              <Link
-                to="/app/connect"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
-              >
-                <Rocket size={14}/> Connect Your App
-              </Link>
+              <>
+                {isAdmin && (
+                  <Link to="/admin" className="hidden md:inline rounded px-3 py-1.5 text-sky-300 hover:bg-slate-800 hover:text-white">Admin</Link>
+                )}
+                <Link
+                  to="/app"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 font-medium text-white shadow-glow transition hover:opacity-95"
+                >
+                  <LayoutDashboard size={14}/> Dashboard
+                </Link>
+              </>
             ) : (
               <Link
                 to="/login"
@@ -566,7 +571,10 @@ export default function Landing() {
               <li><a href="#partners" className="hover:text-slate-100">Partners</a></li>
               <li><a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">SDKs on GitHub <ExternalLink size={11} className="ml-0.5 inline"/></a></li>
               <li><a href="mailto:nobytechy@gmail.com" className="hover:text-slate-100">Contact</a></li>
-              <li><a href="/admin/login" className="hover:text-slate-100">Admin Login</a></li>
+              {isAuthenticated && <li><Link to="/app" className="hover:text-slate-100">Dashboard</Link></li>}
+              {isAuthenticated
+                ? (isAdmin && <li><Link to="/admin" className="hover:text-slate-100">Admin console</Link></li>)
+                : <li><Link to="/admin/login" className="hover:text-slate-100">Admin login</Link></li>}
             </ul>
           </div>
         </div>

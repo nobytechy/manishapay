@@ -61,6 +61,9 @@ export async function apiFetchAuthed(path, { method = 'GET', body, silent = fals
   const token = data.session?.access_token;
   const headers = { 'Content-Type': 'application/json', 'X-Request-Id': genRequestId() };
   if (token) headers.Authorization = `Bearer ${token}`;
+  // Workspace: operate the selected account (own or a team you belong to).
+  const acct = localStorage.getItem('manishapay_account');
+  if (acct) headers['X-Account-Id'] = acct;
   return rawFetch(path, headers, { method, body, silent });
 }
 
@@ -89,6 +92,11 @@ export const api = {
   revokeCredential: (id) => apiFetchAuthed(`/v1/credentials/${id}`, { method: 'DELETE' }),
 
   refund: (reference, body) => apiFetchAuthed(`/v1/transactions/${encodeURIComponent(reference)}/refund`, { method: 'POST', body: body || {} }),
+
+  listTeam: () => apiFetchAuthed('/v1/team'),
+  inviteTeam: (body) => apiFetchAuthed('/v1/team', { method: 'POST', body }),
+  setTeamRole: (id, role) => apiFetchAuthed(`/v1/team/${id}`, { method: 'PATCH', body: { role } }),
+  removeTeam: (id) => apiFetchAuthed(`/v1/team/${id}`, { method: 'DELETE' }),
 
   getBilling: () => apiFetchAuthed('/v1/billing'),
   createSubscription: (body) => apiFetchAuthed('/v1/subscriptions', { method: 'POST', body }),

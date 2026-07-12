@@ -34,6 +34,7 @@ const paymentLinksRouter = require('./routes/paymentlinks');
 const billingRouter = require('./routes/billing');
 const subscriptionsRouter = require('./routes/subscriptions');
 const cliRouter = require('./routes/cli');
+const teamRouter = require('./routes/team');
 
 function buildApp() {
   const app = express();
@@ -108,6 +109,7 @@ function buildApp() {
   app.use('/v1/billing', billingRouter);
   app.use('/v1/subscriptions', subscriptionsRouter);
   app.use('/v1/cli', devRateLimiter, cliRouter);
+  app.use('/v1/team', teamRouter);
 
   // 404 — explicit so the error handler can format it.
   app.use((req, _res, next) => {

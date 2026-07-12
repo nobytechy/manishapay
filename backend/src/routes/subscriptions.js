@@ -14,7 +14,7 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const nodeCrypto = require('crypto');
-const { jwtAuthenticate } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const credentials = require('../services/credentials');
 const paynow = require('../services/paynow');
@@ -34,7 +34,7 @@ const createSchema = z.object({
   customer_phone: z.string().optional(),
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireCapability('payments'), async (req, res, next) => {
   try {
     const p = createSchema.parse(req.body);
     const { data: proj } = await supabase
@@ -67,7 +67,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.post('/:id/charge', async (req, res, next) => {
+router.post('/:id/charge', requireCapability('payments'), async (req, res, next) => {
   try {
     const { data: sub, error } = await supabase
       .from('manishapay_subscriptions').select('*')

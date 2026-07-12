@@ -12,7 +12,7 @@ const router = require('express').Router();
 const { z } = require('zod');
 const bcrypt = require('bcryptjs');
 const nodeCrypto = require('crypto');
-const { jwtAuthenticate } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
 
@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = createSchema.parse(req.body);
 
@@ -97,7 +97,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireCapability('manage'), async (req, res, next) => {
   try {
     // `.select()` so we know how many rows actually matched. Without this the
     // update returns 204 even when it matched NOTHING (wrong key id, or a key

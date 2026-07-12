@@ -18,6 +18,7 @@
 --    9.  No-code payment links (hosted checkout)
 --    10. Subscriptions (recurring billing)
 --    11. Team / organisation members
+--    12. Flat-team shared access (teammate RLS + is_teammate function)
 -- ════════════════════════════════════════════════════════════════════════
 
 
@@ -218,6 +219,61 @@ create policy manishapay_team_owner on public.manishapay_team_members
 drop policy if exists manishapay_team_member_read on public.manishapay_team_members;
 create policy manishapay_team_member_read on public.manishapay_team_members
   for select using (member_id = auth.uid());
+
+
+-- ── 12. Flat-team shared access ───────────────────────────────────────────
+-- An ACTIVE teammate of an owner can access that owner's account data. These
+-- policies are additive (RLS is permissive) — a stranger still sees nothing.
+create or replace function public.manishapay_is_teammate(owner uuid)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.manishapay_team_members tm
+    where tm.owner_id = owner and tm.member_id = auth.uid() and tm.status = 'active'
+  );
+$$;
+
+drop policy if exists manishapay_team_dev_read on public.manishapay_developers;
+create policy manishapay_team_dev_read on public.manishapay_developers
+  for select using (public.manishapay_is_teammate(id));
+
+drop policy if exists manishapay_team_projects on public.manishapay_projects;
+create policy manishapay_team_projects on public.manishapay_projects
+  for all using (public.manishapay_is_teammate(developer_id)) with check (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_keys on public.manishapay_api_keys;
+create policy manishapay_team_keys on public.manishapay_api_keys
+  for all using (public.manishapay_is_teammate(developer_id)) with check (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_endpoints on public.manishapay_webhook_endpoints;
+create policy manishapay_team_endpoints on public.manishapay_webhook_endpoints
+  for all using (public.manishapay_is_teammate(developer_id)) with check (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_links on public.manishapay_payment_links;
+create policy manishapay_team_links on public.manishapay_payment_links
+  for all using (public.manishapay_is_teammate(developer_id)) with check (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_subs on public.manishapay_subscriptions;
+create policy manishapay_team_subs on public.manishapay_subscriptions
+  for all using (public.manishapay_is_teammate(developer_id)) with check (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_txns on public.manishapay_transactions;
+create policy manishapay_team_txns on public.manishapay_transactions
+  for select using (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_invoices on public.manishapay_invoices;
+create policy manishapay_team_invoices on public.manishapay_invoices
+  for select using (public.manishapay_is_teammate(developer_id));
+
+drop policy if exists manishapay_team_creds on public.manishapay_paynow_credentials;
+create policy manishapay_team_creds on public.manishapay_paynow_credentials
+  for select using (public.manishapay_is_teammate(
+    (select p.developer_id from public.manishapay_projects p where p.id = project_id)));
+
+drop policy if exists manishapay_team_deliveries on public.manishapay_webhook_deliveries;
+create policy manishapay_team_deliveries on public.manishapay_webhook_deliveries
+  for select using (public.manishapay_is_teammate(
+    (select e.developer_id from public.manishapay_webhook_endpoints e where e.id = endpoint_id)));
 
 -- ════════════════════════════════════════════════════════════════════════
 --  Done. After this runs: PayNow merchant email, admin audit trail, support

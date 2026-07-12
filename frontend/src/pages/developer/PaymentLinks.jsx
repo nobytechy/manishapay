@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { useAccount } from '../../context/AccountContext';
 
 /*
  * No-code payment links. A merchant creates a link (title + amount), gets a
@@ -14,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
  */
 export default function PaymentLinks() {
   const { user } = useAuth();
+  const { accountId } = useAccount();
   const [links, setLinks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function PaymentLinks() {
   const refresh = async () => {
     setLoading(true);
     const [{ data: l }, p] = await Promise.all([
-      supabase.from('manishapay_payment_links').select('*').eq('developer_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('manishapay_payment_links').select('*').eq('developer_id', accountId).order('created_at', { ascending: false }),
       api.listProjects(),
     ]);
     setLinks(l || []);
@@ -36,7 +38,7 @@ export default function PaymentLinks() {
     if (!projectId && p.data?.length) setProjectId(p.data[0].id);
     setLoading(false);
   };
-  useEffect(() => { if (user) refresh(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => { if (accountId) refresh(); /* eslint-disable-next-line */ }, [accountId]);
 
   const create = async () => {
     if (!projectId) return toast.error('Create a project first');

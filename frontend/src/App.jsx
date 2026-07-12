@@ -14,6 +14,8 @@ import ForumCoverage from './pages/ForumCoverage';
 
 import Overview from './pages/developer/Dashboard';
 import Connect from './pages/developer/Connect';
+import PaymentLinks from './pages/developer/PaymentLinks';
+import PayLink from './pages/PayLink';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
 import Credentials from './pages/developer/Credentials';
@@ -60,6 +62,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/pay/:slug" element={<PayLink />} />
 
       <Route
         path="/app"
@@ -71,6 +74,7 @@ export default function App() {
       >
         <Route index element={<Overview />} />
         <Route path="connect" element={<Connect />} />
+        <Route path="links" element={<PaymentLinks />} />
         <Route path="projects" element={<Projects />} />
         <Route path="keys" element={<ApiKeys />} />
         <Route path="credentials" element={<Credentials />} />

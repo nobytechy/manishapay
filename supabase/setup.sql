@@ -129,6 +129,39 @@ alter table public.manishapay_transactions
 alter table public.manishapay_transactions
   add column if not exists refunded_at    timestamptz;
 
+-- ── 8. Restricted / scoped API keys ───────────────────────────────────────
+-- scopes: 'pay' (create payments/refunds) and 'read' (status/lookups). A key
+-- without 'pay' is read-only. expires_at expires the key. ip_allowlist, when
+-- set, restricts the key to those source IPs.
+alter table public.manishapay_api_keys
+  add column if not exists scopes       text[] not null default array['pay','read']::text[];
+alter table public.manishapay_api_keys
+  add column if not exists expires_at   timestamptz;
+alter table public.manishapay_api_keys
+  add column if not exists ip_allowlist text[];
+
+
+-- ── 9. No-code payment links (hosted checkout) ────────────────────────────
+create table if not exists public.manishapay_payment_links (
+  id           uuid primary key default gen_random_uuid(),
+  developer_id uuid not null references public.manishapay_developers(id) on delete cascade,
+  project_id   uuid not null references public.manishapay_projects(id) on delete cascade,
+  slug         text not null unique,
+  title        text not null,
+  amount       numeric(12,2) not null,
+  currency     text not null default 'USD',
+  description  text,
+  active       boolean not null default true,
+  created_at   timestamptz not null default now()
+);
+create index if not exists manishapay_payment_links_dev_idx
+  on public.manishapay_payment_links(developer_id);
+alter table public.manishapay_payment_links enable row level security;
+
+drop policy if exists manishapay_links_owner on public.manishapay_payment_links;
+create policy manishapay_links_owner on public.manishapay_payment_links
+  for all using (developer_id = auth.uid()) with check (developer_id = auth.uid());
+
 -- ════════════════════════════════════════════════════════════════════════
 --  Done. After this runs: PayNow merchant email, admin audit trail, support
 --  desk, idempotency keys, dynamic WhatsApp settings, and customer-phone

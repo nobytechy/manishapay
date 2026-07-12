@@ -30,6 +30,7 @@ const simulatorRouter = require('./routes/simulator');
 const reconcileRouter = require('./routes/reconcile');
 const adminRouter = require('./routes/admin');
 const transactionsRouter = require('./routes/transactions');
+const paymentLinksRouter = require('./routes/paymentlinks');
 
 function buildApp() {
   const app = express();
@@ -100,6 +101,7 @@ function buildApp() {
   app.use('/v1/credentials', credentialsRouter);
   app.use('/v1/admin', adminRouter);
   app.use('/v1/transactions', transactionsRouter);
+  app.use('/v1/links', devRateLimiter, paymentLinksRouter);
 
   // 404 — explicit so the error handler can format it.
   app.use((req, _res, next) => {

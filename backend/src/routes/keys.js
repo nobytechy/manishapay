@@ -32,6 +32,9 @@ const createSchema = z.object({
   project_id: z.string().uuid(),
   mode: z.enum(['test', 'live']),
   label: z.string().max(80).optional(),
+  scopes: z.array(z.enum(['pay', 'read'])).min(1).optional(),
+  expires_at: z.string().datetime().optional(),
+  ip_allowlist: z.array(z.string().max(64)).max(20).optional(),
 });
 
 router.get('/', async (req, res, next) => {
@@ -75,8 +78,11 @@ router.post('/', async (req, res, next) => {
         mode: parsed.mode,
         status: 'active',
         plan: 'free',
+        scopes: parsed.scopes && parsed.scopes.length ? parsed.scopes : ['pay', 'read'],
+        expires_at: parsed.expires_at || null,
+        ip_allowlist: parsed.ip_allowlist || null,
       })
-      .select('id, project_id, prefix, label, mode, status, created_at')
+      .select('id, project_id, prefix, label, mode, status, scopes, expires_at, created_at')
       .single();
     if (error) throw new AppError({ status: 500, code: 'CREATE_FAILED', message: error.message });
 

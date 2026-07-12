@@ -23,6 +23,8 @@ export default function ApiKeys() {
   const [label, setLabel] = useState('');
   const [mode, setMode] = useState('test');
   const [projectId, setProjectId] = useState('');
+  const [readOnly, setReadOnly] = useState(false);
+  const [expiresAt, setExpiresAt] = useState('');
   const [revealed, setRevealed] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
   const [activePrefix, setActivePrefix] = useState(getActiveKey().slice(0, 12));
@@ -45,9 +47,17 @@ export default function ApiKeys() {
     if (!projectId) return toast.error('Create a project first');
     setCreating(true);
     try {
-      const r = await api.createKey({ project_id: projectId, mode, label });
+      const r = await api.createKey({
+        project_id: projectId,
+        mode,
+        label,
+        scopes: readOnly ? ['read'] : ['pay', 'read'],
+        expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : undefined,
+      });
       setRevealed(r.data.key);
       setLabel('');
+      setReadOnly(false);
+      setExpiresAt('');
       toast.success('Key created — copy it now, you won\'t see it again');
       await refresh();
     } catch {
@@ -108,6 +118,16 @@ export default function ApiKeys() {
           <div className="flex items-end">
             <Button onClick={create} loading={creating} className="w-full"><Plus size={14}/> Create key</Button>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-5 text-sm text-slate-300">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={readOnly} onChange={(e)=>setReadOnly(e.target.checked)} className="h-4 w-4 accent-emerald-500"/>
+            Read-only key <span className="text-slate-500">(status / lookups only — no payments)</span>
+          </label>
+          <label className="flex items-center gap-2">
+            Expires
+            <input type="date" value={expiresAt} onChange={(e)=>setExpiresAt(e.target.value)} className="input max-w-[170px] py-1"/>
+          </label>
         </div>
         {revealed && (
           <div className="mt-4 rounded-lg border border-brand-500/40 bg-brand-500/10 p-3">

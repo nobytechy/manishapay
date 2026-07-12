@@ -1,0 +1,145 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ManishaPay API",
+    "description": "Middleware for PayNow Zimbabwe. One clean REST API for payments, status and refunds. Built by Noby Tebulo. Import this spec into Postman, Insomnia or Swagger UI to explore.",
+    "version": "1.0.0",
+    "contact": { "name": "Noby Tebulo", "url": "https://manishapay.netlify.app", "email": "nobytechy@gmail.com" },
+    "license": { "name": "Proprietary" }
+  },
+  "servers": [{ "url": "https://manishapay.netlify.app/api", "description": "Production" }],
+  "security": [{ "ApiKey": [] }],
+  "tags": [
+    { "name": "Payments", "description": "Create payments and check status" },
+    { "name": "Refunds", "description": "Record refunds (funds moved by PayNow)" }
+  ],
+  "paths": {
+    "/v1/pay": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Initiate a payment",
+        "description": "Creates a payment and returns a browser_url to send the customer to. Send an Idempotency-Key header to make retries safe (a repeat with the same key returns the original response, never a second charge).",
+        "parameters": [
+          { "name": "Idempotency-Key", "in": "header", "required": false, "schema": { "type": "string" }, "description": "Unique key per payment attempt to prevent duplicate charges on retry." }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PayRequest" },
+              "example": { "reference": "order-123", "amount": "5.00", "email": "customer@example.com", "phone": "0771234567", "method": "ecocash" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Payment created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PayResponse" } } } },
+          "400": { "description": "Invalid payload", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Missing/invalid or expired API key" },
+          "402": { "description": "Billing disabled / read-only" },
+          "403": { "description": "Developer suspended, IP not allowed, or read-only key" }
+        }
+      }
+    },
+    "/v1/pay/{reference}/status": {
+      "get": {
+        "tags": ["Payments"],
+        "summary": "Get payment status",
+        "description": "Returns the current status of a payment by your merchant reference. Polls PayNow live where possible.",
+        "parameters": [{ "name": "reference", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Status", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusResponse" } } } },
+          "404": { "description": "Transaction not found" }
+        }
+      }
+    },
+    "/v1/transactions/{reference}/refund": {
+      "post": {
+        "tags": ["Refunds"],
+        "summary": "Record a refund",
+        "description": "Marks a paid transaction as refunded and notifies your webhooks. ManishaPay is a bridge — the actual funds movement is completed by PayNow under your PayNow account.",
+        "security": [{ "BearerJWT": [] }],
+        "parameters": [{ "name": "reference", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "amount": { "type": "string", "description": "Partial refund amount; defaults to full." }, "reason": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Refund recorded" },
+          "400": { "description": "Transaction is not in a refundable (paid) state" },
+          "404": { "description": "Transaction not found" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKey": { "type": "http", "scheme": "bearer", "bearerFormat": "mp_test_… / mp_live_…", "description": "Your ManishaPay API key as a Bearer token." },
+      "BearerJWT": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT", "description": "Dashboard session token (for management endpoints)." }
+    },
+    "schemas": {
+      "PayRequest": {
+        "type": "object",
+        "required": ["reference", "amount"],
+        "properties": {
+          "reference": { "type": "string", "maxLength": 64, "description": "Your unique order reference." },
+          "amount": { "type": "string", "description": "Amount; normalised to two decimals server-side." },
+          "currency": { "type": "string", "default": "USD", "enum": ["USD", "ZWL"] },
+          "description": { "type": "string" },
+          "email": { "type": "string", "format": "email", "description": "Customer email (used as authemail for Express Checkout)." },
+          "phone": { "type": "string", "description": "Customer mobile; normalised to +263 form so OTPs fire." },
+          "method": { "type": "string", "enum": ["ecocash", "onemoney", "innbucks", "zimswitch"], "description": "Set for Express Checkout (mobile/card). Omit for web redirect." },
+          "return_url": { "type": "string", "format": "uri" },
+          "result_url": { "type": "string", "format": "uri" }
+        }
+      },
+      "PayResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "tracker": { "type": "string" },
+              "browser_url": { "type": "string", "description": "Send the customer here to pay." },
+              "poll_url": { "type": "string" },
+              "status": { "type": "string" },
+              "mode": { "type": "string", "enum": ["live", "test", "simulated"] },
+              "currency": { "type": "string" },
+              "qr_code": { "type": "string", "description": "Data-URI QR of the checkout URL." }
+            }
+          },
+          "requestId": { "type": "string" }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "status": { "type": "string" },
+              "status_normalized": { "type": "string", "enum": ["paid", "pending", "failed", "disputed", "refunded"] },
+              "amount": { "type": "string" },
+              "currency": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "resolution": { "type": "string", "description": "A human, actionable explanation of how to fix it." }
+            }
+          },
+          "requestId": { "type": "string" }
+        }
+      }
+    }
+  }
+}

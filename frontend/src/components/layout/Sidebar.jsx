@@ -19,6 +19,7 @@ import {
   Phone,
   MessageCircle,
   Rocket,
+  Link2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +27,7 @@ import { useAuth } from '../../context/AuthContext';
 const developerNav = [
   { to: '/app', icon: LayoutDashboard, label: 'Overview', end: true },
   { to: '/app/connect', icon: Rocket, label: 'Connect Your App' },
+  { to: '/app/links', icon: Link2, label: 'Payment Links' },
   { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/app/keys', icon: KeyRound, label: 'API Keys' },
   { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },

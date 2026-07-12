@@ -36,6 +36,7 @@ async function authenticate(req, _res, next) {
       .select(
         `
         id, developer_id, project_id, key_hash, mode, status, plan, last_used_at,
+        scopes, expires_at, ip_allowlist,
         manishapay_developers ( billing_status, status )
         `,
       )
@@ -84,6 +85,21 @@ async function authenticate(req, _res, next) {
       });
     }
 
+    // ── Restricted / scoped key enforcement ──────────────────────────────
+    if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
+      throw new AppError({ status: 401, code: 'KEY_EXPIRED', message: 'This API key has expired.' });
+    }
+    if (Array.isArray(data.ip_allowlist) && data.ip_allowlist.length > 0) {
+      const ip = String(req.ip || '').replace('::ffff:', '');
+      if (!data.ip_allowlist.includes(ip)) {
+        throw new AppError({ status: 403, code: 'IP_NOT_ALLOWED', message: `Request IP ${ip} is not in this key's allowlist.` });
+      }
+    }
+    const scopes = Array.isArray(data.scopes) && data.scopes.length ? data.scopes : ['pay', 'read'];
+    if (WRITE_METHODS.has(req.method) && !scopes.includes('pay')) {
+      throw new AppError({ status: 403, code: 'SCOPE_READ_ONLY', message: 'This API key is read-only — it is missing the "pay" scope.' });
+    }
+
     req.developer = {
       id: data.developer_id,
       projectId: data.project_id,
@@ -91,6 +107,7 @@ async function authenticate(req, _res, next) {
       plan: data.plan || 'free',
       keyId: data.id,
       billingStatus,
+      scopes,
     };
 
     // Best-effort touch — we don't await it on the hot path.

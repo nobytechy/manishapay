@@ -22,6 +22,13 @@
 -- ════════════════════════════════════════════════════════════════════════
 
 
+-- Fail fast on lock contention instead of deadlocking. The live app may be
+-- querying these tables; if a statement can't get its lock within 5s it errors
+-- cleanly — just re-run the script (it's idempotent). For the smoothest run,
+-- apply this when traffic is low (or right after a fresh reset, before use).
+set lock_timeout = '5s';
+
+
 -- ── 1. Per-credential PayNow merchant email ───────────────────────────────
 -- Sent to PayNow as `authemail`. Required for mobile / Express-Checkout, and
 -- in TEST mode must equal the merchant's registered email. Previously a single

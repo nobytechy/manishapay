@@ -10,17 +10,21 @@
 --  (the tables still exist — only their rows are cleared).
 -- ════════════════════════════════════════════════════════════════════════
 
+-- Clears all developer / transaction / project DATA. Does NOT clear
+-- manishapay_platform_settings (your own WhatsApp + bank/PayNow billing config) —
+-- that is platform configuration, not app data. See the optional block at the end
+-- if you truly want to wipe that too.
 truncate table
   public.manishapay_admin_audit,
   public.manishapay_announcements,
   public.manishapay_api_keys,
   public.manishapay_button_configs,
+  public.manishapay_gateway_credentials,
   public.manishapay_idempotency,
   public.manishapay_invoices,
   public.manishapay_logs,
   public.manishapay_payment_links,
   public.manishapay_paynow_credentials,
-  public.manishapay_platform_settings,
   public.manishapay_projects,
   public.manishapay_subscriptions,
   public.manishapay_support_tickets,
@@ -42,3 +46,11 @@ restart identity cascade;
 --
 -- (auth.users is untouched by the wipe, so if you already signed up you can
 --  just run that update — no need to re-register.)
+
+
+-- ── OPTIONAL: also wipe your platform config ──────────────────────────────
+-- Only uncomment if you want to clear your OWN WhatsApp/UltraMsg config AND the
+-- bank + PayNow billing details you set in Admin → Platform Settings. Leaving
+-- this commented keeps that config across a data reset.
+--
+--    truncate table public.manishapay_platform_settings restart identity;

@@ -36,10 +36,83 @@ export default function Settings() {
 
       <MfaSection />
 
+      <PinSection />
+
       <Card title="Plan">
         <p className="text-sm text-slate-400">You are on the <span className="text-brand-400 font-medium">{profile?.plan || 'free'}</span> plan.</p>
       </Card>
     </div>
+  );
+}
+
+/*
+ * PIN "easy login" — device-local convenience unlock. Opt-in, per device.
+ * The PIN encrypts this device's session locally; it never leaves the browser
+ * and is not an account credential. Only offered once the email is verified.
+ */
+function PinSection() {
+  const { user, enablePinLogin, disablePinLogin, hasPin } = useAuth();
+  const emailVerified = !!(user?.email_confirmed_at || user?.confirmed_at);
+  const [enabled, setEnabled] = useState(hasPin());
+  const [setting, setSetting] = useState(false);
+  const [pin, setPin] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    const a = pin.replace(/\D/g, '');
+    if (a.length < 4 || a.length > 8) { toast.error('Choose a 4–8 digit PIN'); return; }
+    if (a !== confirm.replace(/\D/g, '')) { toast.error('PINs do not match'); return; }
+    setBusy(true);
+    try {
+      await enablePinLogin(a);
+      toast.success('PIN login enabled on this device');
+      setEnabled(true); setSetting(false); setPin(''); setConfirm('');
+    } catch (e) {
+      toast.error(e.message || 'Could not enable PIN login');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const turnOff = () => {
+    if (!window.confirm('Turn off PIN login on this device?')) return;
+    disablePinLogin();
+    setEnabled(false);
+    toast.success('PIN login turned off');
+  };
+
+  return (
+    <Card title="Easy login (PIN)" description="Unlock ManishaPay on this device with a PIN instead of typing your password each time. Convenience only — your password still protects the account.">
+      {!emailVerified ? (
+        <p className="text-sm text-slate-400">Verify your email first, then you can turn on PIN login.</p>
+      ) : enabled ? (
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-brand-400">✓ PIN login is ON for this device</p>
+          <Button onClick={turnOff}>Turn off</Button>
+        </div>
+      ) : setting ? (
+        <div className="max-w-md space-y-3">
+          <p className="text-xs text-slate-500">
+            Choose a 4–8 digit PIN. It stays on this device (encrypted) and is never sent to our servers.
+            After 5 wrong tries it clears and you'll use your password.
+          </p>
+          <div className="flex gap-2">
+            <Input type="password" inputMode="numeric" placeholder="PIN" value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))} className="max-w-[140px]" />
+            <Input type="password" inputMode="numeric" placeholder="Confirm PIN" value={confirm}
+              onChange={(e) => setConfirm(e.target.value.replace(/\D/g, '').slice(0, 8))} className="max-w-[160px]" />
+            <Button onClick={save} loading={busy}>Enable</Button>
+          </div>
+          <button type="button" onClick={() => { setSetting(false); setPin(''); setConfirm(''); }} className="text-xs text-slate-400 hover:text-slate-200">Cancel</button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-400">PIN login is off on this device.</p>
+          <Button onClick={() => setSetting(true)}>Set up PIN</Button>
+        </div>
+      )}
+    </Card>
   );
 }
 

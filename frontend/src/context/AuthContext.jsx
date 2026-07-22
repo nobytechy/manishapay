@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import * as pinAuth from '../lib/pinAuth';
 
 const AuthContext = createContext(null);
 const APP_MARKER = 'manishapay';
@@ -149,6 +150,47 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
+  // Verify the 6-digit code from the confirmation email (alternative to clicking
+  // the link — better on mobile / across devices). On success Supabase returns a
+  // session and onAuthStateChange lands the user in the app.
+  const verifyEmailOtp = async (email, token) => {
+    const { error } = await withTimeout(
+      supabase.auth.verifyOtp({ email, token: String(token).trim(), type: 'signup' }),
+      20000,
+      'Verification timed out — check your connection and try again.',
+    );
+    if (error) throw error;
+  };
+
+  // Re-send the verification email (code + link). Rate-limited by Supabase.
+  const resendVerification = async (email) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/login?verified=1` },
+    });
+    if (error) throw error;
+  };
+
+  // ── PIN "easy login" (device-local convenience) ──────────────────
+  // Enable: seal the CURRENT session under a PIN-derived key on this device.
+  const enablePinLogin = async (pin) => {
+    const { data } = await supabase.auth.getSession();
+    const s = data.session;
+    if (!s?.user) throw new Error('You must be signed in to set up a PIN.');
+    if (!s.user.email_confirmed_at && !s.user.confirmed_at) {
+      throw new Error('Verify your email first, then you can enable PIN login.');
+    }
+    await pinAuth.enablePin(pin, s.user.email, s);
+  };
+  // Unlock: decrypt the stored session with the PIN and restore it.
+  const unlockWithPin = async (pin) => {
+    const tokens = await pinAuth.unlockPin(pin);
+    const { error } = await supabase.auth.setSession(tokens);
+    if (error) { pinAuth.disablePin(); throw new Error('Stored session expired — sign in with your password.'); }
+  };
+  const disablePinLogin = () => pinAuth.disablePin();
+
   // OAuth sign-in. The app marker can't be passed reliably during OAuth, so
   // we rely on the bootstrap endpoint (called automatically by ensureProfile
   // when the user lands back on the dashboard) to create the developer
@@ -210,9 +252,17 @@ export function AuthProvider({ children }) {
     loading,
     signIn,
     signUp,
+    verifyEmailOtp,
+    resendVerification,
     signInWithGoogle,
     signInWithGithub,
     signOut,
+    // PIN easy-login (device-local)
+    enablePinLogin,
+    unlockWithPin,
+    disablePinLogin,
+    hasPin: pinAuth.hasPin,
+    pinEmail: pinAuth.pinEmail,
     reloadProfile: async () => {
       if (session?.user) {
         setProfile(await ensureProfile(session.user.id));

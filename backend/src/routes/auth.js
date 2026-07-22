@@ -28,6 +28,16 @@ const router = require('express').Router();
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
 const { logger } = require('../services/logger');
+const env = require('../config/env');
+
+// Emails that are automatically super-admins (config-driven, survives resets).
+const SUPERADMIN_EMAILS = new Set(
+  (env.SUPERADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+const isSuperadmin = (email) => !!email && SUPERADMIN_EMAILS.has(email.toLowerCase());
 
 router.post('/bootstrap', async (req, res, next) => {
   try {
@@ -48,16 +58,20 @@ router.post('/bootstrap', async (req, res, next) => {
     const fullName = meta.full_name || meta.name || null;
 
     // Idempotent upsert keyed on the auth.users id (PK + FK on developers).
+    // A configured super-admin email is force-promoted on every bootstrap, so
+    // the owner is admin again immediately after any data reset — no manual SQL.
+    const row = {
+      id: user.id,
+      email: user.email,
+      full_name: fullName,
+    };
+    if (isSuperadmin(user.email)) {
+      row.role = 'admin';
+      row.status = 'active';
+    }
     const { error: upsertErr } = await supabase
       .from('manishapay_developers')
-      .upsert(
-        {
-          id: user.id,
-          email: user.email,
-          full_name: fullName,
-        },
-        { onConflict: 'id', ignoreDuplicates: false }
-      );
+      .upsert(row, { onConflict: 'id', ignoreDuplicates: false });
     if (upsertErr) {
       throw new AppError({
         status: 500,

@@ -111,3 +111,16 @@ test('initiate allows a complete Express Checkout request through to simulated m
   );
   assert.equal(result.mode, 'simulated');
 });
+
+test('pollStatus rejects a poll_url whose host is not paynow.co.zw (SSRF guard)', async () => {
+  await assert.rejects(
+    () => paynow.pollStatus('https://evil.example.com/interface/pollstatus', { integrationKey: 'k' }),
+    /host not allowed/,
+  );
+});
+
+test('pollStatus short-circuits a simulator poll_url with no network call', async () => {
+  const r = await paynow.pollStatus('https://manishapay.netlify.app/simulator/mp_abc/poll', { integrationKey: 'k' });
+  assert.equal(r.simulated, true);
+  assert.equal(r.status, 'Sent');
+});

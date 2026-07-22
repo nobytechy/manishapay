@@ -18,6 +18,7 @@ const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const credentials = require('../services/credentials');
 const paynow = require('../services/paynow');
+const { getProvider } = require('../providers');
 const AppError = require('../errors/AppError');
 
 router.use(jwtAuthenticate);
@@ -26,6 +27,10 @@ const MS = { weekly: 7 * 864e5, monthly: 30 * 864e5, yearly: 365 * 864e5 };
 
 const createSchema = z.object({
   project_id: z.string().uuid(),
+  // Which gateway bills this subscription. Optional — defaults to PayNow so all
+  // existing subscriptions keep working. Unknown/not-yet-live gateways are
+  // rejected by the registry at charge time.
+  provider: z.string().min(1).max(32).optional(),
   title: z.string().min(1).max(120),
   amount: z.union([z.string(), z.number()]),
   currency: z.enum(['USD', 'ZWL']).optional(),
@@ -50,6 +55,7 @@ router.post('/', requireCapability('payments'), async (req, res, next) => {
       .insert({
         developer_id: req.developer.id,
         project_id: p.project_id,
+        provider: p.provider || 'paynow',
         title: p.title,
         amount: paynow.normalizeAmount(p.amount),
         currency: p.currency || 'USD',
@@ -80,12 +86,19 @@ router.post('/:id/charge', requireCapability('payments'), async (req, res, next)
       .from('manishapay_projects').select('id, return_url, result_url, default_mode')
       .eq('id', sub.project_id).maybeSingle();
 
+    // Resolve the gateway via the registry — never call a provider directly.
+    // Defaults to PayNow; an unknown/not-yet-live gateway throws a clean error.
+    const providerId = sub.provider || 'paynow';
+    const provider = getProvider(providerId);
+
+    // Prefer the merchant's live credentials for THIS gateway; fall back to
+    // test/sandbox. loadActive is provider-aware.
     let mode = 'live';
-    let creds = await credentials.loadActive(sub.project_id, 'live');
-    if (!creds) { mode = 'test'; creds = await credentials.loadActive(sub.project_id, 'test'); }
+    let creds = await credentials.loadActive(sub.project_id, providerId, 'live');
+    if (!creds) { mode = 'test'; creds = await credentials.loadActive(sub.project_id, providerId, 'test'); }
 
     const reference = `sub-${sub.id.slice(0, 8)}-${nodeCrypto.randomBytes(3).toString('hex')}`;
-    const result = await paynow.initiate(
+    const result = await provider.initiate(
       { reference, amount: String(sub.amount), description: sub.title, email: sub.customer_email, phone: sub.customer_phone, currency: sub.currency },
       { mode, creds, project },
     );
@@ -93,17 +106,18 @@ router.post('/:id/charge', requireCapability('payments'), async (req, res, next)
     await supabase.from('manishapay_transactions').insert({
       developer_id: sub.developer_id,
       project_id: sub.project_id,
-      tracker: result.tracker,
+      provider: providerId,
+      tracker: result.providerRef,
       merchant_reference: reference,
       merchant_amount: paynow.normalizeAmount(sub.amount),
       customer_amount: paynow.normalizeAmount(sub.amount),
       currency: sub.currency,
-      status: result.status || 'Sent',
-      status_normalized: paynow.normalizeStatus(result.status || 'Sent'),
+      status: result.rawStatus || 'Sent',
+      status_normalized: result.status || paynow.normalizeStatus('Sent'),
       mode: result.mode,
       customer_phone: sub.customer_phone || null,
-      poll_url: result.poll_url,
-      browser_url: result.browser_url,
+      poll_url: result.pollUrl,
+      browser_url: result.checkoutUrl,
       billable: result.mode !== 'simulated',
     });
 
@@ -112,7 +126,7 @@ router.post('/:id/charge', requireCapability('payments'), async (req, res, next)
       next_charge_at: new Date(Date.now() + MS[sub.billing_interval]).toISOString(),
     }).eq('id', sub.id);
 
-    res.json({ data: { reference, tracker: result.tracker, browser_url: result.browser_url, status: result.status } });
+    res.json({ data: { provider: providerId, reference, tracker: result.providerRef, browser_url: result.checkoutUrl, status: result.rawStatus } });
   } catch (err) {
     next(err);
   }

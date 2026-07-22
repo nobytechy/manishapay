@@ -186,7 +186,7 @@ If all 7 work, you can hand the URL to your dev friends.
 | Phase 3 (simulator) | `/simulator/<tracker>` HTML page with Paid/Cancelled/Timeout buttons firing signed webhooks + postMessage to drop-in widget |
 | Phase 5 (rebrand) | Tailwind emerald gradient; SVG logo; landing page rewrite; sidebar logo |
 | Phase 6 (drop-in widget) | `frontend/public/checkout.js` — 7 KB no-deps modal-iframe widget |
-| Phase 7 (SDKs) | `sdks/nodejs/` (npm package) + `sdks/php/` (Composer package) with webhook verify helpers |
+| Phase 7 (SDKs) | Moved to their own repo: [github.com/nobytechy/manishapay-sdks](https://github.com/nobytechy/manishapay-sdks) — `manishapay` (npm) + `manishapay/manishapay` (Packagist), with webhook verify helpers |
 | Tests | 187/187 pass — includes byte-for-byte hash match against PayNow's own published example |
 
 ## Useful URLs

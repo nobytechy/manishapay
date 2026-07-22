@@ -34,29 +34,5 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run build
 
-  sdk-node:
-    name: Node SDK tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: sdks/nodejs
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm test
-
-  sdk-php:
-    name: PHP SDK tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: sdks/php
-    steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: curl, json
-      - run: php test.php
+  # The Node + PHP SDKs live in their own repo (github.com/nobytechy/manishapay-sdks)
+  # and are tested by that repo's own CI. They are no longer part of this monorepo.

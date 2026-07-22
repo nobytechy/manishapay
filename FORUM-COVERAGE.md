@@ -85,7 +85,7 @@ server-side.)*
 ## J. Payment methods — Innbucks / Omari / Zimswitch / QR  ✅
 > "Innbucks integration", "Qr code payment tickets"
 
-`method` enum supports `ecocash, onemoney, innbucks, omari, zimswitch, vmc`.
+`method` enum supports `ecocash, onemoney, innbucks, omari, zimswitch, card`.
 ✅ QR / payment-ticket flow: `/v1/pay` returns a `qr_code` (scannable PNG data URL
 of the checkout URL) so a merchant can show a ticket the customer scans to pay.
 
@@ -130,3 +130,17 @@ Two cases, both common:
 4. 🔶 Platform adapters: ✅ WooCommerce (WordPress plugin) · 🔶 WHMCS (`whmcs-module/`, BETA — needs WHMCS test install) · ✅ Shopify guide (`docs/SHOPIFY.md`; native gateway gated by Shopify). Separate artifacts — not part of the Render/Netlify deploy.
 
 _Paste new forum threads here and we'll slot them into this map and close gaps._
+
+## Mobile payment `response.success` is always `false` (Express Checkout)  ✅
+> "Response.success is always false" — `send_mobile(..., "ecocash")` keeps returning false
+
+Three things make PayNow reject a mobile (Express Checkout) payment; ManishaPay handles all three:
+- **Wrong test numbers.** PayNow needs its own EcoCash test MSISDNs in test mode
+  (`0771111111` success · `0772222222` delayed · `0773333333` cancelled · `0774444444` insufficient).
+  ManishaPay surfaces these in the **Sandbox** page and the Get-Started guide.
+- **Test-mode `authemail` must equal the merchant's registered email.** ManishaPay stores that email
+  per credential and **swaps it in automatically in test mode** (`services/paynow.js`, "Forum issue #5"),
+  so any caller email is accepted.
+- **Wrong Integration ID / Key** (the poster's actual bug). Instead of PayNow's opaque `success = false`,
+  ManishaPay returns a targeted resolution — *"PayNow could not match this Integration ID. Re-check the
+  Integration ID + Key…"* — plus `/v1/tools/hash` for a signature diff.

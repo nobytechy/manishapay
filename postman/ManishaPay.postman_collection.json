@@ -8,6 +8,9 @@
   "variable": [
     { "key": "api_base", "value": "http://localhost:8787" },
     { "key": "api_key", "value": "mp_test_REPLACE_ME" },
+    { "key": "jwt", "value": "PASTE_DASHBOARD_JWT" },
+    { "key": "project_id", "value": "PASTE_PROJECT_UUID" },
+    { "key": "slug", "value": "PASTE_LINK_SLUG" },
     { "key": "reference", "value": "INV-001" }
   ],
   "auth": {
@@ -31,14 +34,26 @@
       }
     },
     {
-      "name": "Pay — initiate",
+      "name": "Pay — initiate (PayNow, default provider)",
       "request": {
         "method": "POST",
         "header": [{ "key": "Content-Type", "value": "application/json" }],
         "url": { "raw": "{{api_base}}/v1/pay", "host": ["{{api_base}}"], "path": ["v1", "pay"] },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"reference\": \"{{reference}}\",\n  \"amount\": \"10.00\",\n  \"description\": \"Pro plan\",\n  \"email\": \"buyer@test.com\"\n}"
+          "raw": "{\n  \"provider\": \"paynow\",\n  \"reference\": \"{{reference}}\",\n  \"amount\": \"10.00\",\n  \"description\": \"Pro plan\",\n  \"email\": \"buyer@test.com\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Pay — initiate (Stripe)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{api_base}}/v1/pay", "host": ["{{api_base}}"], "path": ["v1", "pay"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"provider\": \"stripe\",\n  \"reference\": \"order-1\",\n  \"amount\": \"5.00\",\n  \"currency\": \"USD\"\n}"
         }
       }
     },
@@ -64,6 +79,46 @@
           "path": ["v1", "pay", "{{reference}}", "status"]
         }
       }
+    },
+    {
+      "name": "Checkout",
+      "description": "No-code hosted checkout links with multi-method routing. Create needs a dashboard JWT; the get + pay endpoints are public (no auth).",
+      "item": [
+        {
+          "name": "Create link (JWT)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{jwt}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{api_base}}/v1/links", "host": ["{{api_base}}"], "path": ["v1", "links"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"provider\": \"paynow\",\n  \"title\": \"Consulting session\",\n  \"amount\": \"20.00\",\n  \"currency\": \"USD\",\n  \"enabled_methods\": [\"ecocash\", \"onemoney\", \"card\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get checkout + method chooser (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{api_base}}/v1/links/{{slug}}", "host": ["{{api_base}}"], "path": ["v1", "links", "{{slug}}"] }
+          }
+        },
+        {
+          "name": "Pay checkout (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{api_base}}/v1/links/{{slug}}/pay", "host": ["{{api_base}}"], "path": ["v1", "links", "{{slug}}", "pay"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"ecocash\",\n  \"phone\": \"0771234567\",\n  \"email\": \"buyer@test.com\"\n}"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "Tools — hash",

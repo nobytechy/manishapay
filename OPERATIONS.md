@@ -38,7 +38,7 @@ admin you grant the `admin` role to in `manishapay_developers.role`.
 | Simulator | https://manishapay.netlify.app/simulator/`<tracker>` |
 | Status (TBD) | https://status.manishapay.netlify.app |
 | GitHub | https://github.com/nobytechy/manishapay |
-| Supabase project | (the one shared with chikoro/church — check `backend/.env.local`) |
+| Supabase project | ManishaPay's dedicated project `ywfuydrreunrgfnyjzlv` (see `backend/.env.local`) |
 | cPanel SSH alias | `aizim` |
 | API app folder on server | `~/manishapay-api/` |
 | Frontend folder on server | `~/public_html/pay/` |

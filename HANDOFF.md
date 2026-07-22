@@ -8,7 +8,7 @@ is built. Should take **15–25 minutes** end to end.
 | Area | Done | What's left |
 |---|---|---|
 | Schema (`supabase/install.sql`) | ✅ written, namespaced, RLS, app marker | Apply once in Supabase Studio |
-| Backend API (Node + Express) | ✅ 21 unit tests pass, all routes wired | Set env vars, install on cPanel as Node.js app |
+| Backend API (Node + Express) | ✅ 187 unit tests pass, all routes wired | Set env vars, deploy to Render (see `DEPLOY-CLOUD.md`) |
 | Encryption (libsodium envelope) | ✅ helper + tests | Generate `MANISHAPAY_MASTER_KEY` |
 | Frontend (React + Vite) | ✅ built, deployed to `manishapay.netlify.app/` | Set Supabase env vars + rebuild |
 | SDKs | ✅ Node + PHP packages | Publish to npm/Packagist (optional) |
@@ -24,13 +24,15 @@ is built. Should take **15–25 minutes** end to end.
 
 ### 1. Apply the schema (5 min)
 
-Open Supabase Studio (the one shared with chikoro/church) → SQL Editor → paste the contents of `supabase/install.sql` → **Run**.
+Open Supabase Studio for ManishaPay's dedicated project (`ywfuydrreunrgfnyjzlv` — its own project, not shared with any sibling app) → SQL Editor → paste the contents of `supabase/install.sql` → **Run**.
 
-It's idempotent (`create if not exists`) so re-running is safe. It adds 12 tables prefixed `manishapay_` plus three helper functions and a trigger that filters by `raw_user_meta_data.app = 'manishapay'` — chikoro/church flows are untouched.
+It's idempotent (`create if not exists`) so re-running is safe. It adds 12 tables prefixed `manishapay_` plus three helper functions and a trigger that filters by `raw_user_meta_data.app = 'manishapay'`.
 
-After it runs, verify in Studio's Table Editor that you can see:
+**Then run `supabase/setup.sql` the same way** (SQL Editor → paste → Run). This adds the multi-gateway pieces the current release depends on: the `provider` column on `manishapay_transactions` and the `manishapay_gateway_credentials` table. Skipping it breaks `/v1/pay`.
+
+After both run, verify in Studio's Table Editor that you can see:
 - `manishapay_developers`, `manishapay_projects`, `manishapay_api_keys`
-- `manishapay_paynow_credentials`, `manishapay_transactions`, `manishapay_webhook_endpoints`, `manishapay_webhook_deliveries`
+- `manishapay_paynow_credentials`, `manishapay_gateway_credentials`, `manishapay_transactions`, `manishapay_webhook_endpoints`, `manishapay_webhook_deliveries`
 - `manishapay_usage_daily`, `manishapay_invoices`, `manishapay_logs`, `manishapay_button_configs`, `manishapay_announcements`
 
 ### 2. Generate the master encryption key (1 min)
@@ -46,8 +48,8 @@ echo "MANISHAPAY_MASTER_KEY=$(openssl rand -hex 32)" >> .env.local
 ### 3. Fill in the rest of `backend/.env.local` (5 min)
 
 ```bash
-# Supabase (the shared project, same one chikoro/church use):
-SUPABASE_URL=https://xxxxxxxx.supabase.co
+# Supabase (ManishaPay's dedicated project ywfuydrreunrgfnyjzlv):
+SUPABASE_URL=https://ywfuydrreunrgfnyjzlv.supabase.co
 SUPABASE_SERVICE_ROLE=eyJ…              # Settings → API → service_role (secret!)
 SUPABASE_ANON_KEY=eyJ…                  # Settings → API → anon public
 
@@ -75,6 +77,12 @@ ALLOW_CORS_ORIGINS=https://manishapay.netlify.app
 ```
 
 ### 4. Set up the Node API on cPanel (5–10 min, UI-only — I can't automate this)
+
+> **⚠️ Superseded — the current hosting model is Render + Netlify, not cPanel.**
+> Follow **`DEPLOY-CLOUD.md`** instead: the backend deploys to **Render**
+> (`manishapay-api-1ndn.onrender.com`) via `render.yaml`, and Netlify proxies
+> `/api/*` to it through `frontend/public/_redirects`. The cPanel steps below are
+> kept only as a fallback reference for a single-host PHP-style deploy.
 
 cPanel → **Setup Node.js App** → **Create Application**:
 
@@ -179,12 +187,12 @@ If all 7 work, you can hand the URL to your dev friends.
 | Phase 5 (rebrand) | Tailwind emerald gradient; SVG logo; landing page rewrite; sidebar logo |
 | Phase 6 (drop-in widget) | `frontend/public/checkout.js` — 7 KB no-deps modal-iframe widget |
 | Phase 7 (SDKs) | `sdks/nodejs/` (npm package) + `sdks/php/` (Composer package) with webhook verify helpers |
-| Tests | 21/21 pass — includes byte-for-byte hash match against PayNow's own published example |
+| Tests | 187/187 pass — includes byte-for-byte hash match against PayNow's own published example |
 
 ## Useful URLs
 
 - **Dashboard / Landing**: https://manishapay.netlify.app
-- **API base** (once cPanel app is up): https://manishapay.netlify.app/api
+- **API base** (Netlify proxies `/api` to Render): https://manishapay.netlify.app/api
 - **Simulator example**: https://manishapay.netlify.app/simulator/mp_xxxxxxxxxxxxxxxx
 - **Drop-in widget**: https://manishapay.netlify.app/checkout.js
 - **PayNow docs**: https://developers.paynow.co.zw/docs/paynow/quickstart

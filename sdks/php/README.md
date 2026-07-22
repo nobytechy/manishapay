@@ -1,6 +1,6 @@
 # manishapay/manishapay (PHP SDK)
 
-Official PHP client for [ManishaPay](https://manishapay.netlify.app) — middleware for the PayNow Zimbabwe payment gateway.
+Official PHP client for [ManishaPay](https://manishapay.netlify.app) — one API for many payment gateways (PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa, PayFast and more). Pick the gateway per call with a `provider` field; your code stays the same.
 
 PHP 7.4+. Only requires `ext-curl` and `ext-json` (both standard).
 
@@ -32,6 +32,21 @@ header('Location: ' . $r['browser_url']);
 exit;
 ```
 
+### Choosing a gateway (`provider`)
+
+`provider` is optional and defaults to `'paynow'`. Set it to route the same call
+through any live gateway — the request and response shape don't change:
+
+```php
+$r = $mp->pay([
+  'provider'  => 'stripe',   // paynow (default) | stripe | paystack | flutterwave | paypal | mpesa | payfast
+  'reference' => 'order-1234',
+  'amount'    => '5.00',
+  'currency'  => 'USD',
+  'email'     => 'buyer@example.com',
+]);
+```
+
 ### Express checkout (mobile money)
 
 ```php
@@ -42,6 +57,32 @@ $r = $mp->pay([
   'phone'     => '0772123456',      // any format — auto-normalised
 ]);
 ```
+
+### Hosted checkout (method routing)
+
+A **payment link** is a no-code hosted checkout at `/pay/<slug>`. It offers the
+customer a set of methods (EcoCash, Card, …) and routes each to whichever gateway
+you've connected that serves it. Just share the hosted page — or build your own
+checkout UI with these two public endpoints (no API key required):
+
+```php
+// 1. Fetch the checkout + the methods the customer can pay with right now
+$checkout = $mp->getCheckout('ab12cd34ef56');
+// $checkout['methods'] → [['method'=>..., 'label'=>..., 'needsPhone'=>..., 'kind'=>..., 'provider'=>..., 'mode'=>...], …]
+
+// 2. The customer picks a method; start the payment (phone needed when needsPhone)
+$r = $mp->payCheckout('ab12cd34ef56', [
+  'method' => 'ecocash',
+  'phone'  => '0771234567',
+]);
+
+if (!empty($r['browser_url'])) { header('Location: ' . $r['browser_url']); exit; }
+// else: a phone push (EcoCash / M-Pesa STK) is already on the customer's device
+```
+
+Links are created from the dashboard (**Payment Links**), or via `POST /v1/links`
+with your dashboard session — set `enabled_methods` to choose which methods a link
+offers. Prefer a fully custom flow with no link? `pay()` already takes `method`.
 
 ### Webhook verification
 

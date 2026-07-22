@@ -1,9 +1,9 @@
 {
   "name": "manishapay/manishapay",
-  "description": "Official PHP SDK for ManishaPay — PayNow Zimbabwe middleware",
+  "description": "Official PHP SDK for ManishaPay — a multi-gateway payments API (PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa, PayFast and more)",
   "type": "library",
   "license": "MIT",
-  "keywords": ["paynow", "zimbabwe", "ecocash", "payments", "manishapay"],
+  "keywords": ["payments", "payment-gateway", "orchestration", "manishapay", "paynow", "stripe", "paystack", "flutterwave", "paypal", "mpesa", "payfast", "zimbabwe", "ecocash"],
   "authors": [
     { "name": "Noby Tebulo", "email": "nobytechy@gmail.com", "homepage": "https://nobie.netlify.app", "role": "Author" }
   ],

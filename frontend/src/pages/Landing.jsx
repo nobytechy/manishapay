@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
-  ArrowRight, ShieldCheck, Workflow, Code2, Rocket, CheckCircle2, Terminal,
-  Zap, Lock, Globe, Webhook, BarChart3, Smartphone, Github, Mail, ExternalLink,
+  ArrowRight, ShieldCheck, Code2, Rocket, CheckCircle2, Terminal,
+  Zap, Lock, Globe, Webhook, BarChart3, Github, Mail, ExternalLink,
   Layers, Wallet, Server, Sparkles, FlaskConical, MessageSquare, ScrollText, Receipt,
 } from 'lucide-react';
 import TechBackdrop from '../components/landing/TechBackdrop';
@@ -21,29 +21,29 @@ const scrollToTop = () => {
 
 const features = [
   {
+    icon: Layers,
+    title: 'One API, many gateways',
+    body: 'Integrate once, then accept payments across PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa and PayFast — the same request shape and webhook contract for every gateway.',
+  },
+  {
     icon: Rocket,
-    title: 'Onboard in 30 seconds',
-    body: 'Your test API key works the moment you sign up — no PayNow account required. Click any outcome on the simulator to fire a real signed webhook to your URL.',
+    title: 'Zero-setup sandbox',
+    body: 'Your test API key works the moment you sign up — no gateway account required. Click any outcome on the simulator to fire a real signed webhook to your URL.',
   },
   {
     icon: ShieldCheck,
-    title: 'Hash math, solved',
-    body: 'SHA-512 done server-side, validated against PayNow\'s own worked example. Forget HashMismatchException ever existed.',
+    title: 'PayNow pain, solved',
+    body: 'Hash math, decimal formats, mobile OTP, broken webhooks — every PayNow integration headache handled server-side, validated against PayNow\'s own worked examples.',
   },
   {
-    icon: Workflow,
-    title: 'Webhooks that retry',
-    body: 'Failed deliveries replay with exponential backoff. Manual replay, signed payloads, full delivery log per project.',
+    icon: Lock,
+    title: 'Secure by default',
+    body: 'Encrypted credentials at rest, HMAC-signed webhooks with timestamp replay protection, and idempotency keys so retries never double-charge.',
   },
   {
     icon: Code2,
-    title: 'Drop-in checkout',
-    body: 'A 3-line JS snippet renders a checkout button on any site. PHP and Node SDKs, both production-grade.',
-  },
-  {
-    icon: Smartphone,
-    title: 'Mobile money first',
-    body: 'EcoCash, OneMoney, Zimswitch, and card via Visa/Mastercard. Phone format auto-normalised so OTPs always fire.',
+    title: 'Checkout & payment links',
+    body: 'A 3-line drop-in widget, hosted checkout, and shareable payment links. Production-grade PHP and Node SDKs on npm + Packagist.',
   },
   {
     icon: BarChart3,
@@ -63,10 +63,10 @@ const codeSample =
 #     "mode":        "simulated" }`;
 
 const stats = [
+  { v: '1 API',   l: 'For many gateways' },
   { v: '<10 min', l: 'Time to first webhook' },
-  { v: 'SHA-512', l: 'Verified against PayNow docs' },
-  { v: '50/mo', l: 'Free transactions, forever' },
-  { v: '$0',     l: 'We hold of your money' },
+  { v: '50/mo',   l: 'Free transactions, forever' },
+  { v: '$0',      l: 'Of your money we ever hold' },
 ];
 
 const securityPoints = [
@@ -213,21 +213,21 @@ export default function Landing() {
         <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-20 text-center">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-brand-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
-            PayNow Zimbabwe-first · extensible to any payment gateway
+            One payments API · many gateways · PayNow live in production
           </p>
           <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            Payment integrations,<br/>
+            One payments API for<br/>
             <span className="bg-gradient-to-r from-brand-300 via-brand to-brand-700 bg-clip-text text-transparent">
-              without the headaches.
+              Africa and beyond.
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">
-            Hash mismatches. Decimal-format crashes. Phone prompts that never fire. Webhooks
-            you can&apos;t see. ManishaPay solves all of them at the middleware layer so your
-            payment code stays five lines long.
+            Integrate once, accept payments across many gateways. One request shape and one
+            signed-webhook contract for <span className="font-medium text-slate-300">PayNow, Stripe,
+            Paystack, Flutterwave, PayPal, M-Pesa</span> and more.
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">
-            Specialised today for <span className="font-medium text-slate-300">PayNow Zimbabwe</span>. Designed gateway-agnostic — Stripe, PayStack, Flutterwave on the roadmap.
+            <span className="font-medium text-slate-300">PayNow Zimbabwe is live in production</span> — and every one of its notorious integration headaches (hash, decimals, mobile OTP, broken webhooks) is already solved at the middleware layer.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -243,12 +243,9 @@ export default function Landing() {
               New here? Start guide
             </Link>
           </div>
-          <p className="mt-4 text-xs text-slate-500">
-            No PayNow account needed to start · live in under a minute · free for your first 50 payments/month
-          </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-400">
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>50 free transactions/month</span>
-            <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>No PayNow account needed to test</span>
+            <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>No gateway account needed to test</span>
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>Money flows direct to your wallet</span>
           </div>
         </div>
@@ -273,7 +270,7 @@ export default function Landing() {
             What you get
           </h2>
           <p className="mb-10 text-center text-3xl font-semibold tracking-tight md:text-4xl">
-            Real solutions to real PayNow forum threads.
+            One integration. Every gateway you&apos;ll need.
           </p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {features.map(({ icon: Icon, title, body }, i) => (
@@ -293,30 +290,29 @@ export default function Landing() {
         </section>
       </FadeInOnScroll>
 
-      {/* ── PayNow today + multi-gateway roadmap ───────────────
-          Two-tier layout makes the hierarchy unambiguous:
-          left side = what we do NOW (PayNow, full coverage), right side =
-          what the architecture is built to extend to. Honest about status
-          (Live / Roadmap / Evaluating) so we don't oversell. ────── */}
+      {/* ── The gateway lineup ─────────────────────────────────
+          Two-tier layout: left = PayNow (live in production, our
+          Zimbabwe strength), right = the full gateway lineup with
+          honest status labels (Production / Live / Coming soon). ── */}
       <FadeInOnScroll>
         <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
 
-            {/* PRIMARY — PayNow today */}
+            {/* PRIMARY — PayNow, live in production */}
             <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-brand/10 p-8 md:p-10 shadow-glow">
               <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/15 blur-3xl"/>
               <div className="relative">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand/40 bg-brand/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-200">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-300"/>
-                  Today · our specialty
+                  Live in production · Zimbabwe
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-slate-100 md:text-3xl">
                   PayNow Zimbabwe — every integration issue, solved.
                 </h3>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-                  ManishaPay was built first for PayNow. Hash mismatches, decimal-format crashes, mobile OTP failures, plugin churn, broken webhooks — every recurring thread on{' '}
+                  PayNow is our deepest, production-ready gateway. Hash mismatches, decimal-format crashes, mobile OTP failures, plugin churn, broken webhooks — every recurring thread on{' '}
                   <a href="https://forums.paynow.co.zw/" target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">forums.paynow.co.zw</a>{' '}
-                  is mapped to either a Direct fix, Plugin fallback, or honest "PayNow-only" notice.
+                  is mapped to a Direct fix, Plugin fallback, or honest "PayNow-only" notice — and the same API works for every other gateway.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Link to="/forum-coverage" className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-4 py-2 text-xs font-semibold text-brand-200 hover:bg-brand/20">
@@ -329,25 +325,31 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* SECONDARY — Roadmap, deliberately quieter */}
+            {/* SECONDARY — the full gateway lineup */}
             <div className="rounded-2xl border border-slate-800/40 bg-slate-900/30 p-7">
               <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <Globe size={11}/> By design · extensible
+                <Globe size={11}/> One integration · many gateways
               </div>
               <h4 className="text-lg font-semibold text-slate-100">
-                Same middleware, every gateway you'll need next.
+                The gateway lineup.
               </h4>
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                The SDK shape, dashboard, and signed-webhook contract are gateway-agnostic. Adopt them once for PayNow today; the next gateway slots into the same patterns.
+                Same SDK, dashboard, and signed-webhook contract for all of them. Adopt it once — switching or adding a gateway needs no rewrite.
               </p>
 
               <ul className="mt-5 space-y-2">
                 {[
-                  { name: 'PayNow Zimbabwe', status: 'Live',       statusCls: 'border-brand/40 bg-brand/10 text-brand-200' },
-                  { name: 'Stripe',          status: 'On roadmap', statusCls: 'border-slate-700 bg-slate-900 text-slate-400' },
-                  { name: 'PayStack',        status: 'On roadmap', statusCls: 'border-slate-700 bg-slate-900 text-slate-400' },
-                  { name: 'Flutterwave',     status: 'Evaluating', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
-                  { name: 'IntaSend',        status: 'Evaluating', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                  { name: 'PayNow (Zimbabwe)', status: 'Production',  statusCls: 'border-brand/40 bg-brand/10 text-brand-200' },
+                  { name: 'Stripe',            status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'Paystack',          status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'Flutterwave',       status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'PayPal',            status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'M-Pesa (Daraja)',   status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'PayFast',           status: 'Live',        statusCls: 'border-slate-700 bg-slate-900 text-slate-300' },
+                  { name: 'Yoco',              status: 'Coming soon', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                  { name: 'Pesepay',           status: 'Coming soon', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                  { name: 'Ozow',              status: 'Coming soon', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
+                  { name: 'DPO Pay',           status: 'Coming soon', statusCls: 'border-slate-800 bg-slate-900/60 text-slate-500' },
                 ].map(({ name, status, statusCls }) => (
                   <li key={name} className="flex items-center justify-between text-sm">
                     <span className="text-slate-200">{name}</span>
@@ -439,10 +441,10 @@ export default function Landing() {
             <h3 className="mb-4 text-2xl font-semibold tracking-tight">Ship payments today, not next sprint.</h3>
             <ul className="mb-6 space-y-2.5 text-sm text-slate-300">
               {[
+                'One API for many gateways — write your checkout once',
                 'Working code in 4 languages (curl, Node, PHP, drop-in JS)',
-                'Server-side hash compute — never see HashMismatch again',
-                'Phone normaliser, decimal normaliser, idempotency keys',
-                'Test mode without a PayNow account (simulator fires real webhooks)',
+                'Server-side hash, decimal & phone normalising, idempotency keys',
+                'Zero-setup sandbox — no gateway account to fire real webhooks',
                 'Open-source SDKs on npm + Packagist',
               ].map((p) => (
                 <li key={p} className="flex gap-2.5"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-brand"/>{p}</li>
@@ -513,7 +515,7 @@ export default function Landing() {
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Unlimited transactions</li>
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Email support</li>
               <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Tokenised recurring payments</li>
-              <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Monthly invoice via PayNow</li>
+              <li className="flex gap-2"><CheckCircle2 size={14} className="mt-0.5 text-brand"/>Simple monthly invoice</li>
             </ul>
           </div>
           <div className="rounded-2xl border border-slate-800/25 bg-slate-900/20 p-6">
@@ -529,14 +531,14 @@ export default function Landing() {
           </div>
         </div>
         <p className="mt-8 text-center text-sm text-slate-500">
-          Money flows directly customer → PayNow → your wallet. We never custody funds; we only charge for the developer tools.
+          Money flows directly customer → gateway → your wallet. We never custody funds; we only charge for the developer tools.
         </p>
       </section>
       </FadeInOnScroll>
 
       {/* ── Sibling app: zimFDMS (fiscalisation) ─────────────── */}
       <FadeInOnScroll>
-      <section id="partners" className="mx-auto max-w-6xl px-6 py-16">
+      <section id="fiscalisation" className="mx-auto max-w-6xl px-6 py-16">
         <div className="overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/60 to-brandblue/5 p-8 md:p-10">
           <div className="grid items-center gap-8 md:grid-cols-2">
             <div>
@@ -589,8 +591,8 @@ export default function Landing() {
               <span className="text-lg font-semibold tracking-tight">ManishaPay</span>
             </div>
             <p className="mt-3 max-w-xs text-sm text-slate-400">
-              PayNow Zimbabwe middleware that fixes the integration headaches. Built for developers,
-              priced like one too.
+              One payments API for many gateways — PayNow, Stripe, Paystack, Flutterwave and more.
+              Built for developers, priced like one too.
             </p>
             <div className="mt-4 flex items-center gap-3 text-slate-400">
               <a href="https://github.com/nobytechy/manishapay-sdks" target="_blank" rel="noopener noreferrer" aria-label="ManishaPay SDKs on GitHub" className="rounded p-1.5 hover:bg-slate-800 hover:text-white">

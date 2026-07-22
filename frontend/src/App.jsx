@@ -25,6 +25,7 @@ import Fiscalise from './pages/developer/Fiscalise';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
 import Credentials from './pages/developer/Credentials';
+import Gateways from './pages/developer/Gateways';
 import Webhooks from './pages/developer/Webhooks';
 import Transactions from './pages/developer/Transactions';
 import Tools from './pages/developer/Tools';
@@ -84,6 +85,7 @@ export default function App() {
         <Route path="links" element={<PaymentLinks />} />
         <Route path="projects" element={<Projects />} />
         <Route path="keys" element={<ApiKeys />} />
+        <Route path="gateways" element={<Gateways />} />
         <Route path="credentials" element={<Credentials />} />
         <Route path="webhooks" element={<Webhooks />} />
         <Route path="transactions" element={<Transactions />} />

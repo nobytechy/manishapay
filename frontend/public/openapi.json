@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ManishaPay API",
-    "description": "Middleware for PayNow Zimbabwe. One clean REST API for payments, status and refunds. Built by Noby Tebulo. Import this spec into Postman, Insomnia or Swagger UI to explore.",
+    "description": "One payments API for many gateways. Integrate once with ManishaPay and accept payments across PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa (Daraja), PayFast and more — pick the gateway with the `provider` field; the response shape is the same for all. Built by Noby Tebulo. Import this spec into Postman, Insomnia or Swagger UI to explore.",
     "version": "1.0.0",
     "contact": { "name": "Noby Tebulo", "url": "https://manishapay.netlify.app", "email": "nobytechy@gmail.com" },
     "license": { "name": "Proprietary" }
@@ -11,14 +11,15 @@
   "security": [{ "ApiKey": [] }],
   "tags": [
     { "name": "Payments", "description": "Create payments and check status" },
-    { "name": "Refunds", "description": "Record refunds (funds moved by PayNow)" }
+    { "name": "Checkout", "description": "No-code hosted checkout links with multi-method routing" },
+    { "name": "Refunds", "description": "Record refunds (funds moved by the underlying gateway)" }
   ],
   "paths": {
     "/v1/pay": {
       "post": {
         "tags": ["Payments"],
         "summary": "Initiate a payment",
-        "description": "Creates a payment and returns a browser_url to send the customer to. Send an Idempotency-Key header to make retries safe (a repeat with the same key returns the original response, never a second charge).",
+        "description": "Creates a payment on the chosen gateway (set `provider`, defaults to PayNow) and returns a browser_url to send the customer to. The response shape is identical across gateways. Send an Idempotency-Key header to make retries safe (a repeat with the same key returns the original response, never a second charge).",
         "parameters": [
           { "name": "Idempotency-Key", "in": "header", "required": false, "schema": { "type": "string" }, "description": "Unique key per payment attempt to prevent duplicate charges on retry." }
         ],
@@ -27,7 +28,7 @@
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/PayRequest" },
-              "example": { "reference": "order-123", "amount": "5.00", "email": "customer@example.com", "phone": "0771234567", "method": "ecocash" }
+              "example": { "provider": "paynow", "reference": "order-123", "amount": "5.00", "currency": "USD", "email": "customer@example.com", "phone": "0771234567", "method": "ecocash" }
             }
           }
         },
@@ -44,7 +45,7 @@
       "get": {
         "tags": ["Payments"],
         "summary": "Get payment status",
-        "description": "Returns the current status of a payment by your merchant reference. Polls PayNow live where possible.",
+        "description": "Returns the current status of a payment by your merchant reference. Polls the gateway live where possible.",
         "parameters": [{ "name": "reference", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
           "200": { "description": "Status", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusResponse" } } } },
@@ -56,7 +57,7 @@
       "post": {
         "tags": ["Refunds"],
         "summary": "Record a refund",
-        "description": "Marks a paid transaction as refunded and notifies your webhooks. ManishaPay is a bridge — the actual funds movement is completed by PayNow under your PayNow account.",
+        "description": "Marks a paid transaction as refunded and notifies your webhooks. ManishaPay orchestrates — the actual funds movement is completed by the underlying gateway under your own gateway account.",
         "security": [{ "BearerJWT": [] }],
         "parameters": [{ "name": "reference", "in": "path", "required": true, "schema": { "type": "string" } }],
         "requestBody": {
@@ -67,6 +68,59 @@
           "200": { "description": "Refund recorded" },
           "400": { "description": "Transaction is not in a refundable (paid) state" },
           "404": { "description": "Transaction not found" }
+        }
+      }
+    },
+    "/v1/links": {
+      "post": {
+        "tags": ["Checkout"],
+        "summary": "Create a hosted-checkout link",
+        "description": "Creates a shareable no-code checkout at /pay/{slug}. Set `enabled_methods` to offer the customer a multi-method chooser — each method they pick is routed to a gateway you've connected (explicit override → primary provider → catalog order). Omit it to offer the primary provider's own methods. Uses your dashboard session (JWT).",
+        "security": [{ "BearerJWT": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": {
+            "schema": { "$ref": "#/components/schemas/LinkCreateRequest" },
+            "example": { "project_id": "3f1c…uuid", "title": "Consulting session", "amount": "20.00", "currency": "USD", "enabled_methods": ["ecocash", "onemoney", "card"] }
+          } }
+        },
+        "responses": {
+          "201": { "description": "Link created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LinkCreated" } } } },
+          "400": { "description": "Invalid payload or unknown method name", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/links/{slug}": {
+      "get": {
+        "tags": ["Checkout"],
+        "summary": "Get checkout details + method chooser",
+        "description": "Public — no API key. Returns the link's amount and the methods the customer can pay with right now (offered methods that have a connected gateway to fulfil them). Use it to build your own checkout UI, or just send the customer to the hosted page at /pay/{slug}.",
+        "security": [],
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Checkout details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HostedCheckout" } } } },
+          "404": { "description": "Link not found or disabled" }
+        }
+      }
+    },
+    "/v1/links/{slug}/pay": {
+      "post": {
+        "tags": ["Checkout"],
+        "summary": "Start a payment for a hosted checkout",
+        "description": "Public — no API key. Pass the `method` the customer chose (from GET /v1/links/{slug} → methods[].method); ManishaPay routes it to the connected gateway that serves it and returns a browser_url — or, for phone-push rails, a pending status with the prompt already on the customer's phone. Omit `method` to use the checkout's primary provider.",
+        "security": [],
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": {
+            "schema": { "$ref": "#/components/schemas/CheckoutPayRequest" },
+            "example": { "method": "ecocash", "phone": "0771234567" }
+          } }
+        },
+        "responses": {
+          "201": { "description": "Payment started", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PayResponse" } } } },
+          "400": { "description": "No connected gateway can process the chosen method", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Link not found or disabled" }
         }
       }
     }
@@ -81,13 +135,14 @@
         "type": "object",
         "required": ["reference", "amount"],
         "properties": {
+          "provider": { "type": "string", "default": "paynow", "description": "Which gateway processes the payment: paynow | stripe | paystack | flutterwave | paypal | mpesa | payfast. Defaults to paynow. Coming soon: yoco, pesepay, ozow, dpo." },
           "reference": { "type": "string", "maxLength": 64, "description": "Your unique order reference." },
           "amount": { "type": "string", "description": "Amount; normalised to two decimals server-side." },
           "currency": { "type": "string", "default": "USD", "enum": ["USD", "ZWL"] },
           "description": { "type": "string" },
           "email": { "type": "string", "format": "email", "description": "Customer email (used as authemail for Express Checkout)." },
           "phone": { "type": "string", "description": "Customer mobile; normalised to +263 form so OTPs fire." },
-          "method": { "type": "string", "enum": ["ecocash", "onemoney", "innbucks", "zimswitch"], "description": "Set for Express Checkout (mobile/card). Omit for web redirect." },
+          "method": { "type": "string", "description": "Payment rail — depends on the provider (e.g. PayNow: ecocash, onemoney, innbucks, omari, zimswitch, card; M-Pesa: mpesa; Stripe/PayPal: card). Omit for a hosted redirect / all methods." },
           "return_url": { "type": "string", "format": "uri" },
           "result_url": { "type": "string", "format": "uri" }
         }
@@ -98,11 +153,13 @@
           "data": {
             "type": "object",
             "properties": {
+              "provider": { "type": "string", "description": "The gateway that processed this payment." },
               "reference": { "type": "string" },
               "tracker": { "type": "string" },
               "browser_url": { "type": "string", "description": "Send the customer here to pay." },
               "poll_url": { "type": "string" },
-              "status": { "type": "string" },
+              "status": { "type": "string", "description": "The gateway's raw status." },
+              "status_normalized": { "type": "string", "enum": ["paid", "pending", "failed", "disputed", "refunded"], "description": "Canonical status — same values across all gateways." },
               "mode": { "type": "string", "enum": ["live", "test", "simulated"] },
               "currency": { "type": "string" },
               "qr_code": { "type": "string", "description": "Data-URI QR of the checkout URL." }
@@ -124,6 +181,73 @@
               "currency": { "type": "string" }
             }
           }
+        }
+      },
+      "LinkCreateRequest": {
+        "type": "object",
+        "required": ["project_id", "title", "amount"],
+        "properties": {
+          "project_id": { "type": "string", "format": "uuid" },
+          "provider": { "type": "string", "default": "paynow", "description": "Primary gateway for the checkout. Wins the routing tie-break when several connected gateways serve a chosen method." },
+          "title": { "type": "string", "maxLength": 120 },
+          "amount": { "type": "string" },
+          "currency": { "type": "string", "enum": ["USD", "ZWL"], "default": "USD" },
+          "description": { "type": "string" },
+          "enabled_methods": { "type": "array", "items": { "type": "string" }, "description": "Methods to offer the customer, e.g. [\"ecocash\",\"card\"]. Omit to offer the primary provider's own methods. Each method is routed to a connected gateway at pay time." },
+          "method_routing": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Optional override pinning a method to a specific gateway, e.g. {\"card\":\"stripe\"}." }
+        }
+      },
+      "LinkCreated": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "slug": { "type": "string", "description": "Share the checkout at /pay/{slug}." },
+              "title": { "type": "string" },
+              "amount": { "type": "string" },
+              "currency": { "type": "string" },
+              "active": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "CheckoutMethod": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "description": "Rail id — pass this back to POST /v1/links/{slug}/pay." },
+          "label": { "type": "string", "description": "Human label, e.g. EcoCash." },
+          "needsPhone": { "type": "boolean", "description": "Collect a mobile number for this method." },
+          "kind": { "type": "string", "description": "Grouping for iconography: mobile | card | bank | wallet | voucher | ussd." },
+          "provider": { "type": "string", "description": "The gateway this method routes to." },
+          "mode": { "type": "string", "enum": ["live", "test"] }
+        }
+      },
+      "HostedCheckout": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "slug": { "type": "string" },
+              "title": { "type": "string" },
+              "amount": { "type": "string" },
+              "currency": { "type": "string" },
+              "description": { "type": "string" },
+              "active": { "type": "boolean" },
+              "primary_provider": { "type": "string" },
+              "methods": { "type": "array", "items": { "$ref": "#/components/schemas/CheckoutMethod" }, "description": "What the customer can pay with right now. Empty → render a single Pay button (legacy single-gateway link)." }
+            }
+          }
+        }
+      },
+      "CheckoutPayRequest": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "description": "The method the customer chose (from HostedCheckout.methods[].method). Omit to use the primary provider." },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string", "description": "Required for mobile-money methods where needsPhone is true." }
         }
       },
       "Error": {

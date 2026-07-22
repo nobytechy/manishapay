@@ -9,6 +9,15 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useAccount } from '../../context/AccountContext';
 
+// Friendly labels for payment-method rails (mirrors the backend catalog).
+const METHOD_LABELS = {
+  ecocash: 'EcoCash', onemoney: 'OneMoney', omari: "O'mari", innbucks: 'InnBucks',
+  zimswitch: 'Zimswitch', card: 'Card', vmc: 'Visa / Mastercard', mobile_money: 'Mobile Money',
+  mpesa: 'M-Pesa', bank_transfer: 'Bank Transfer', eft: 'Instant EFT', ussd: 'USSD',
+  apple_pay: 'Apple Pay', google_pay: 'Google Pay', paypal: 'PayPal',
+};
+const methodLabel = (m) => METHOD_LABELS[m] || m;
+
 /*
  * No-code payment links. A merchant creates a link (title + amount), gets a
  * shareable URL (/pay/<slug>), and anyone can pay it — zero code, no website.
@@ -23,30 +32,46 @@ export default function PaymentLinks() {
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [methodOptions, setMethodOptions] = useState([]); // available rails from the catalog
+  const [enabledMethods, setEnabledMethods] = useState([]); // merchant's chosen subset
   const [creating, setCreating] = useState(false);
 
   const origin = window.location.origin;
 
   const refresh = async () => {
     setLoading(true);
-    const [{ data: l }, p] = await Promise.all([
+    const [{ data: l }, p, prov] = await Promise.all([
       supabase.from('manishapay_payment_links').select('*').eq('developer_id', accountId).order('created_at', { ascending: false }),
       api.listProjects(),
+      api.listProviders().catch(() => ({ data: [] })),
     ]);
     setLinks(l || []);
     setProjects(p.data || []);
     if (!projectId && p.data?.length) setProjectId(p.data[0].id);
+    // Union of every method any catalog gateway can serve — the merchant picks
+    // which to offer; routing sends each to whichever gateway they've connected.
+    const union = [...new Set((prov.data || []).flatMap((g) => g.capabilities?.methods || []))];
+    setMethodOptions(union);
     setLoading(false);
   };
   useEffect(() => { if (accountId) refresh(); /* eslint-disable-next-line */ }, [accountId]);
+
+  const toggleMethod = (m) =>
+    setEnabledMethods((cur) => (cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]));
 
   const create = async () => {
     if (!projectId) return toast.error('Create a project first');
     if (!title.trim() || !amount) return toast.error('Title and amount are required');
     setCreating(true);
     try {
-      await api.createLink({ project_id: projectId, title: title.trim(), amount, currency });
-      setTitle(''); setAmount('');
+      await api.createLink({
+        project_id: projectId,
+        title: title.trim(),
+        amount,
+        currency,
+        enabled_methods: enabledMethods.length ? enabledMethods : undefined,
+      });
+      setTitle(''); setAmount(''); setEnabledMethods([]);
       toast.success('Payment link created');
       refresh();
     } catch (e) {
@@ -94,6 +119,35 @@ export default function PaymentLinks() {
             </select>
           </div>
         </div>
+
+        {methodOptions.length > 0 && (
+          <div className="mt-4">
+            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+              Payment methods to offer <span className="text-slate-500">(optional)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {methodOptions.map((m) => {
+                const on = enabledMethods.includes(m);
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => toggleMethod(m)}
+                    className={`rounded-full border px-3 py-1 text-xs transition ${
+                      on ? 'border-brand bg-brand/15 text-slate-100' : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600'
+                    }`}
+                  >
+                    {methodLabel(m)}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-slate-500">
+              Leave empty to offer every method your connected gateways support. Each method is routed to a gateway you've connected under <span className="text-slate-400">Payment Gateways</span>.
+            </p>
+          </div>
+        )}
+
         <div className="mt-4 flex justify-end">
           <Button onClick={create} loading={creating}><Plus size={14} /> Create link</Button>
         </div>

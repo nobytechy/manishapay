@@ -50,14 +50,14 @@ const quickstartSteps = [
 ];
 
 const codeSample =
-`curl -X POST https://manishapay-api.onrender.com/v1/pay \\
+`curl -X POST https://manishapay.netlify.app/api/v1/pay \\
   -H "Authorization: Bearer mp_test_xxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"reference":"order-123","amount":"5.00"}'
 
 # → { "data": {
 #       "tracker":     "mp_a1b2c3d4...",
-#       "browser_url": "https://manishapay-api.onrender.com/simulator/mp_a1b2c3d4...",
+#       "browser_url": "https://manishapay.netlify.app/api/simulator/mp_a1b2c3d4...",
 #       "mode":        "simulated"
 #     } }`;
 
@@ -66,7 +66,7 @@ const quickstart = (
     <div>
       <h2 className="text-2xl font-semibold tracking-tight text-slate-100">Quickstart</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-400">
-        From signup to first webhook in roughly 10 minutes. Every step has a corresponding sandbox action so you can verify the integration without writing production code.
+        From signup to first webhook in roughly 10 minutes. Every step has a corresponding sandbox action so you can verify the integration without writing production code — no gateway account required to start.
       </p>
     </div>
 
@@ -399,7 +399,7 @@ const welcome = (
     <div>
       <h2 className="text-2xl font-semibold tracking-tight text-slate-100">Documentation</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-400">
-        Everything you need to integrate ManishaPay — from a 10-minute Quickstart to the deep walkthrough, FAQ, and the full forum-issue coverage map.
+        ManishaPay is one payments API for many gateways — PayNow (live in production), Stripe, Paystack, Flutterwave, PayPal, M-Pesa and more. Integrate once and you can accept payments across all of them. Everything you need is here: a 10-minute Quickstart, the deep walkthrough, FAQ, and the full forum-issue coverage map.
       </p>
     </div>
 
@@ -522,7 +522,7 @@ export default function DocsHome() {
   return (
     <SidebarDoc
       headerTitle="Documentation"
-      headerSubtitle="Quickstart, FAQ, forum coverage, and the deep walkthrough — all in one sidebar."
+      headerSubtitle="One API for many gateways — Quickstart, SDKs, FAQ, and the deep walkthrough, all in one sidebar."
       groups={groups}
       defaultActive="welcome"
       topRight={

@@ -56,6 +56,10 @@ const schema = z.object({
   JWT_EXPIRY: z.string().default('1h'),
   REFRESH_EXPIRY: z.string().default('30d'),
 
+  // Email(s) auto-promoted to super-admin on login/bootstrap. Comma-separated,
+  // case-insensitive. Survives data resets — no manual SQL promote needed.
+  SUPERADMIN_EMAILS: z.string().default('nobytechy@gmail.com'),
+
   RATE_LIMIT_DEV: z.coerce.number().int().positive().default(100),
   RATE_LIMIT_ADMIN: z.coerce.number().int().positive().default(1000),
   MAX_RETRY_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),

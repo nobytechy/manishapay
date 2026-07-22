@@ -22,7 +22,7 @@ const PLATFORMS = [
   { id: 'api',       icon: Server,       label: 'Custom / Server',        sub: 'Direct API + SDKs' },
 ];
 
-const API_BASE = 'https://manishapay.netlify.app/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://manishapay.netlify.app/api';
 
 export default function Connect() {
   const nav = useNavigate();
@@ -100,7 +100,7 @@ export default function Connect() {
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/15 text-brand"><Rocket size={18} /></div>
         <div>
           <h1 className="text-2xl font-semibold">Connect Your App</h1>
-          <p className="text-sm text-slate-400">Live in a minute — no PayNow account needed to start. We only ask for what your platform needs.</p>
+          <p className="text-sm text-slate-400">Live in a minute — no gateway account needed to start. Connect PayNow, Stripe, Paystack and more when you're ready.</p>
         </div>
       </header>
 
@@ -194,6 +194,11 @@ export default function Connect() {
               </div>
             )}
 
+            <p className="text-xs text-slate-500">
+              Want Stripe, Paystack, Flutterwave, PayPal, M-Pesa and more? Connect them on the{' '}
+              <Link to="/app/gateways" className="text-brand underline">Payment Gateways</Link> page once your app is set up — your code never changes.
+            </p>
+
             <div className="flex items-center justify-between">
               <button className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-slate-200" onClick={() => setStep(1)}>
                 <ArrowLeft size={14} /> Back
@@ -231,7 +236,7 @@ export default function Connect() {
             <div className="flex flex-wrap gap-3 border-t border-slate-800 pt-4">
               <Button onClick={() => nav('/app/keys')}>Get your test API key</Button>
               <Link to="/app/sandbox" className="btn btn-secondary">Open the Sandbox</Link>
-              <Link to="/app/credentials" className="btn btn-secondary">Manage PayNow credentials</Link>
+              <Link to="/app/gateways" className="btn btn-secondary">Connect payment gateways</Link>
             </div>
           </div>
         </Card>
@@ -342,7 +347,7 @@ function SetupSteps({ platform, copy, apiKey }) {
       <ol className="space-y-4">
         <Step n={1}>Grab your <b>test API key</b> and keep it on your server, never in the app.</Step>
         <Step n={2}>From your backend, create the payment:<CodeBlock code={curl} copy={copy} /></Step>
-        <Step n={3}>Open the returned <code>browser_url</code> in a WebView / browser; PayNow returns to your <code>Return URL</code> (deep link).</Step>
+        <Step n={3}>Open the returned <code>browser_url</code> in a WebView / browser; the gateway returns the customer to your <code>Return URL</code> (deep link).</Step>
         <Step n={4}>Confirm the result from the signed webhook — verify it in one line with our Node / PHP SDK.</Step>
       </ol>
     );
@@ -352,7 +357,7 @@ function SetupSteps({ platform, copy, apiKey }) {
     <ol className="space-y-4">
       <Step n={1}>Install an SDK:<CodeBlock code={`npm install manishapay\n# or\ncomposer require manishapay/manishapay`} copy={copy} /></Step>
       <Step n={2}>Create a payment:<CodeBlock code={curl} copy={copy} /></Step>
-      <Step n={3}>Redirect the customer to <code>browser_url</code>; PayNow calls your <code>Result URL</code> webhook.</Step>
+      <Step n={3}>Redirect the customer to <code>browser_url</code>; the gateway calls your <code>Result URL</code> webhook (<code>POST /v1/webhook/&lt;provider&gt;</code>).</Step>
       <Step n={4}>Verify the webhook signature (SDK <code>verifyWebhook</code>) and mark the order paid.</Step>
     </ol>
   );

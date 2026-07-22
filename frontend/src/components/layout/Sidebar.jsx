@@ -22,6 +22,7 @@ import {
   Link2,
   CreditCard,
   Repeat,
+  Plug,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -32,7 +33,8 @@ const developerNav = [
   { to: '/app/links', icon: Link2, label: 'Payment Links' },
   { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/app/keys', icon: KeyRound, label: 'API Keys' },
-  { to: '/app/credentials', icon: Lock, label: 'PayNow Credentials' },
+  { to: '/app/gateways', icon: Plug, label: 'Payment Gateways' },
+  { to: '/app/credentials', icon: Lock, label: 'PayNow' },
   { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
   { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
   { to: '/app/fiscalise', icon: ScrollText, label: 'Fiscalisation' },
@@ -68,7 +70,7 @@ export default function Sidebar() {
         <img src="/logo.png" alt="ManishaPay" className="h-8 w-8 rounded-lg" />
         <div>
           <p className="text-sm font-semibold text-slate-100">ManishaPay</p>
-          <p className="text-[10px] uppercase tracking-wider text-slate-500">PayNow Bridge</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">Payments API</p>
         </div>
       </div>
 

@@ -248,15 +248,19 @@ export default function GetStarted() {
             Developer guide
           </p>
           <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-            Ship your first PayNow integration<br/>
+            Ship your first payment integration<br/>
             <span className="bg-gradient-to-r from-brand-300 via-brand to-brand-700 bg-clip-text text-transparent">
               in under 10 minutes.
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-400">
-            Sign up, copy a curl, watch a webhook fire in your terminal. No PayNow merchant account
-            needed for the first transaction. When you&apos;re ready for real money, paste your keys
-            and the same code hits production.
+            Sign up, copy a curl, watch a webhook fire in your terminal. No gateway account needed
+            for the first transaction. When you&apos;re ready for real money, paste your keys and the
+            same code hits production.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">
+            The same API shape works across every gateway. This guide uses{' '}
+            <span className="font-medium text-slate-300">PayNow Zimbabwe</span> — the gateway that&apos;s live in production today.
           </p>
           <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

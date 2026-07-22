@@ -19,7 +19,7 @@ export default function Transactions() {
   const [refundingRef, setRefundingRef] = useState(null);
 
   const refund = async (t) => {
-    if (!window.confirm(`Refund ${t.currency || 'USD'} ${t.merchant_amount} for "${t.merchant_reference}"?\n\nManishaPay records the refund and notifies your webhooks; the funds movement is completed via PayNow.`)) return;
+    if (!window.confirm(`Refund ${t.currency || 'USD'} ${t.merchant_amount} for "${t.merchant_reference}"?\n\nManishaPay records the refund and notifies your webhooks; the funds movement is completed via the payment gateway.`)) return;
     setRefundingRef(t.merchant_reference);
     try {
       await api.refund(t.merchant_reference);
@@ -39,7 +39,7 @@ export default function Transactions() {
       setLoading(true);
       let query = supabase
         .from('manishapay_transactions')
-        .select('tracker, merchant_reference, paynow_reference, merchant_amount, currency, status, status_normalized, mode, method, created_at')
+        .select('*')
         .eq('developer_id', accountId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -78,12 +78,16 @@ export default function Transactions() {
           items.length === 0 ? <p className="text-sm text-slate-400">No transactions match.</p> :
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-slate-500">
-              <tr><th className="text-left py-2">Reference</th><th className="text-left">PayNow ref</th><th className="text-left">Amount</th><th className="text-left">Mode</th><th className="text-left">Status</th><th className="text-left">When</th><th className="text-right">Actions</th></tr>
+              <tr><th className="text-left py-2">Reference</th><th className="text-left">Gateway</th><th className="text-left">Gateway ref</th><th className="text-left">Amount</th><th className="text-left">Mode</th><th className="text-left">Status</th><th className="text-left">When</th><th className="text-right">Actions</th></tr>
             </thead>
             <tbody>
               {items.map((t) => (
                 <tr key={t.tracker} className="border-t border-slate-800">
                   <td className="py-2 font-mono text-xs text-slate-300">{t.merchant_reference}</td>
+                  <td className="text-xs text-slate-300">
+                    <span className="rounded bg-slate-800/70 px-1.5 py-0.5 capitalize">{t.provider || 'paynow'}</span>
+                    {t.method ? <span className="ml-1 text-slate-500">· {t.method}</span> : null}
+                  </td>
                   <td className="font-mono text-xs text-slate-400">{t.paynow_reference || '—'}</td>
                   <td className="text-slate-300">${t.merchant_amount}</td>
                   <td><span className={t.mode === 'live' ? 'badge-success' : t.mode === 'simulated' ? 'badge-warn' : 'badge-warn'}>{t.mode}</span></td>

@@ -107,6 +107,12 @@ export const api = {
   saveCredential: (body) => apiFetchAuthed('/v1/credentials', { method: 'POST', body }),
   revokeCredential: (id) => apiFetchAuthed(`/v1/credentials/${id}`, { method: 'DELETE' }),
 
+  // Multi-gateway catalog + per-gateway credentials
+  listProviders: () => apiFetchAuthed('/v1/providers'),
+  listGatewayCredentials: () => apiFetchAuthed('/v1/credentials/gateway'),
+  saveGatewayCredential: (body) => apiFetchAuthed('/v1/credentials/gateway', { method: 'POST', body }),
+  revokeGatewayCredential: (id) => apiFetchAuthed(`/v1/credentials/gateway/${id}`, { method: 'DELETE' }),
+
   refund: (reference, body) => apiFetchAuthed(`/v1/transactions/${encodeURIComponent(reference)}/refund`, { method: 'POST', body: body || {} }),
 
   listTeam: () => apiFetchAuthed('/v1/team'),

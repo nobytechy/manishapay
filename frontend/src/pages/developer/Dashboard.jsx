@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Skeleton from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { Receipt, KeyRound, Webhook, Activity } from 'lucide-react';
+import { Receipt, KeyRound, Webhook, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
 
 function Stat({ icon: Icon, label, value, loading }) {
@@ -69,6 +70,19 @@ export default function DeveloperDashboard() {
         <Stat icon={Webhook} label="Webhook endpoints" value={counts.hooks} loading={loading} />
         <Stat icon={Activity} label="Success rate" value={`${counts.success}%`} loading={loading} />
       </div>
+
+      <Link to="/app/gateways" className="block rounded-xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand/15 text-brand"><Plug size={18} /></div>
+            <div>
+              <div className="text-sm font-semibold text-slate-100">One API, many gateways</div>
+              <div className="text-xs text-slate-400">Connect PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa &amp; more — your code never changes.</div>
+            </div>
+          </div>
+          <span className="whitespace-nowrap text-xs font-semibold text-brand">Connect gateways →</span>
+        </div>
+      </Link>
 
       <Card title="Recent transactions">
         {loading ? (

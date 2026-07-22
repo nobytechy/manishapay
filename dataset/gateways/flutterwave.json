@@ -1,0 +1,136 @@
+{
+  "id": "flutterwave",
+  "name": "Flutterwave",
+  "aliases": ["Flutterwave v4", "F4B", "Flutterwave for Business"],
+  "homepage": "https://flutterwave.com",
+  "docs_url": "https://developer.flutterwave.com/docs",
+  "api_version": "v4",
+  "category": "african-aggregator",
+  "regions": ["Pan-African"],
+  "countries": ["NG", "GH", "KE", "ZA", "UG", "TZ", "RW"],
+  "currencies": ["USD", "NGN", "GHS", "KES", "ZAR", "UGX", "TZS", "RWF"],
+  "methods": ["card", "mobile_money", "bank_transfer", "ussd"],
+  "auth": {
+    "model": "oauth-client-credentials",
+    "token_endpoint": "POST https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token",
+    "grant_type": "client_credentials",
+    "token_content_type": "application/x-www-form-urlencoded",
+    "token_ttl_seconds": 600,
+    "refresh_before_expiry_seconds": 60,
+    "bearer_header": "Authorization: Bearer <access_token>",
+    "key_types": ["clientId", "clientSecret", "encryptionKey", "secretHash"],
+    "sandbox_instant": true,
+    "kyc_required_for_live": true,
+    "note": "v4 replaces v3's static FLWSECK- Bearer key with OAuth client-credentials. Cache the 10-minute token per clientId, refresh ~60s before expiry, and re-auth once on a 401."
+  },
+  "environments": {
+    "token_host": "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token",
+    "sandbox_base": "https://developersandbox-api.flutterwave.com",
+    "live_base_default": "https://f4bexperience.flutterwave.com",
+    "live_base_alt": "https://api.flutterwave.cloud/f4b/production",
+    "note": "The production base host is documented inconsistently (f4bexperience vs api.flutterwave.cloud/f4b/production) — make the live host configurable; sandbox host is fixed."
+  },
+  "initiate": {
+    "flow": "orchestration-direct-charge",
+    "endpoint": "POST /orchestration/direct-charges",
+    "http_method": "POST",
+    "required_headers": ["Authorization", "Content-Type: application/json", "X-Idempotency-Key"],
+    "optional_headers": ["X-Scenario-Key (sandbox test outcomes only)"],
+    "required_params": ["amount", "currency", "reference", "payment_method", "customer.email", "customer.name"],
+    "amount_unit": "major",
+    "amount_type": "number",
+    "payment_method": {
+      "card": "payment_method.type='card', card:{ nonce, encrypted_card_number, encrypted_expiry_month, encrypted_expiry_year, encrypted_cvv } — AES-256-GCM field encryption",
+      "mobile_money": "payment_method.type='mobile_money', mobile_money:{ network, country_code, phone_number } — NO encryption",
+      "bank_transfer_ussd": "payment_method.type='bank_transfer'|'ussd' — customer completes via next_action"
+    },
+    "returns": ["data.id (chg_...)", "data.status", "data.next_action", "data.reference"],
+    "next_action_types": ["redirect_url", "requires_otp", "requires_pin", "requires_additional_fields", "payment_instruction"],
+    "checkout_url": "data.next_action.redirect_url.url when data.next_action.type === 'redirect_url'"
+  },
+  "encryption": {
+    "algorithm": "AES-256-GCM (AES/GCM/NoPadding)",
+    "applies_to": ["card"],
+    "fields": ["encrypted_card_number", "encrypted_expiry_month", "encrypted_expiry_year", "encrypted_cvv"],
+    "key": "base64-decode the Encryption Key to 32 bytes (AES-256)",
+    "iv": "the per-request 12-char nonce (its UTF-8 bytes), also echoed inside payment_method.card.nonce",
+    "output": "base64(ciphertext || 16-byte GCM auth tag)",
+    "note": "Key encoding, IV=nonce, and tag-append are per-docs convention and UNCONFIRMED against an official SDK. Mobile money / bank transfer are NOT encrypted."
+  },
+  "status": {
+    "mechanisms": ["poll", "webhook", "redirect-return"],
+    "poll_endpoint": "GET /charges/{id}",
+    "webhook_verification": "v4: header 'flutterwave-signature' = base64(HMAC-SHA256(rawBody, secretHash)); compared constant-time over the RAW bytes. This REPLACES v3's plain 'verif-hash' equality check — the header name and scheme both changed.",
+    "raw_status_values": ["succeeded", "pending", "processing", "requires_requery", "requires_otp", "failed", "cancelled"],
+    "status_map": {
+      "succeeded": "paid",
+      "successful": "paid",
+      "completed": "paid",
+      "charge.completed": "paid",
+      "pending": "pending",
+      "processing": "pending",
+      "requires_requery": "pending",
+      "requires_otp": "pending",
+      "requires_pin": "pending",
+      "requires_additional_fields": "pending",
+      "failed": "failed",
+      "cancelled": "failed",
+      "error": "failed",
+      "refunded": "refunded",
+      "refund.completed": "refunded",
+      "disputed": "disputed",
+      "dispute.created": "disputed",
+      "chargeback.created": "disputed"
+    },
+    "requires_requery_note": "GET /charges/{id} may return requires_requery — wait ~20s and re-GET; do NOT re-charge."
+  },
+  "capabilities": {
+    "redirect": true,
+    "poll": true,
+    "webhook": true,
+    "mobile_push": true,
+    "refund": true,
+    "recurring": true
+  },
+  "credentials_required": [
+    { "key": "clientId", "label": "Client ID", "secret": false, "note": "v4 OAuth client id (Settings → API Keys). Distinct from the legacy FLWSECK- v3 key." },
+    { "key": "clientSecret", "label": "Client Secret", "secret": true, "note": "v4 OAuth client secret; exchanged for a 10-minute Bearer token at the IdP token endpoint." },
+    { "key": "encryptionKey", "label": "Encryption Key", "secret": true, "note": "base64 → 32-byte AES-256 key used for direct card-field encryption (not needed for mobile money / bank)." },
+    { "key": "secretHash", "label": "Webhook Secret Hash", "secret": true, "note": "Settings → Webhooks; HMAC-SHA256 key that verifies the 'flutterwave-signature' header." }
+  ],
+  "sandbox": {
+    "base": "https://developersandbox-api.flutterwave.com",
+    "scenario_header": "X-Scenario-Key",
+    "card_scenarios": "scenario:<v>&issuer:<v> (scenario: auth_pin, auth_pin_3ds, auth_3ds, auth_avs, auth_redirect; issuer: approved, insufficient_funds, incorrect_pin, expired_card, suspected_fraud, system_error)",
+    "other_method_scenarios": "scenario:<v> (e.g. auth_redirect)",
+    "notes": "v4 outcomes are scenario-driven via X-Scenario-Key rather than fixed test PANs. Omit the header → card defaults to noauth."
+  },
+  "pain_points": [
+    { "problem": "v3 integration breaks after migrating to v4", "cause": "v4 changes auth (OAuth vs static FLWSECK- key), the initiate endpoint (/orchestration/direct-charges vs /v3/payments), card encryption (AES-256-GCM fields vs none), and the webhook header (flutterwave-signature HMAC vs plain verif-hash)", "mitigation": "Treat the API version as a hard config boundary; do not port v3 code path-by-path — rebuild against the v4 orchestration + OAuth + HMAC scheme", "severity": "critical", "source": "https://developer.flutterwave.com/docs" },
+    { "problem": "OAuth access token expires mid-request", "cause": "v4 client-credentials tokens live only ~10 minutes", "mitigation": "Cache the token per clientId, refresh ~60s before expiry, and re-auth once on a 401 before failing", "severity": "high", "source": "https://developer.flutterwave.com/docs/authentication" },
+    { "problem": "Card charge rejected / decrypt error", "cause": "Wrong AES-256-GCM setup — key not base64-decoded to 32 bytes, IV not the 12-char nonce, or the GCM tag placed wrongly", "mitigation": "base64-decode the Encryption Key to 32 bytes, use the 12-char nonce as the IV (echoed in card.nonce), and append the 16-byte tag to the ciphertext before base64; verify against an official SDK", "severity": "high", "source": "https://developer.flutterwave.com/docs" },
+    { "problem": "Webhook signature check fails after upgrade", "cause": "Still comparing v3's plain 'verif-hash' header; v4 sends 'flutterwave-signature' = base64(HMAC-SHA256(rawBody, secretHash))", "mitigation": "Verify the new header as an HMAC over the RAW body bytes with constant-time compare; never re-serialise the JSON before hashing", "severity": "critical", "source": "https://developer.flutterwave.com/docs/webhooks" },
+    { "problem": "Marking an order paid on the redirect return or an unverified webhook", "cause": "next_action.redirect_url and inbound webhooks can be spoofed or replayed", "mitigation": "Always reconcile via GET /charges/{id} and confirm data.status === succeeded before fulfilling; handle requires_requery by waiting ~20s and re-querying (never re-charge)", "severity": "critical", "source": "https://developer.flutterwave.com/docs" },
+    { "problem": "Duplicate charges on retry", "cause": "A reset connection re-POSTs the same charge", "mitigation": "Send a UUID X-Idempotency-Key on every POST; Flutterwave returns X-Idempotency-Cache-Hit on a replay", "severity": "medium", "source": "https://developer.flutterwave.com/docs" }
+  ],
+  "sdks": { "node": "flutterwave (v4)", "rest_direct_ok": true },
+  "notes": "Zimbabwe is NOT a supported Flutterwave merchant/settlement country — a ZW business cannot onboard for local settlement. Flutterwave is only useful to ManishaPay for regional/USD/diaspora collections (NG, GH, KE, ZA, etc.); route Zimbabwe-local payments to PayNow. Built on the CURRENT default v4 API (OAuth client-credentials, orchestration direct-charges, AES-256-GCM card encryption, HMAC 'flutterwave-signature' webhook).",
+  "sources": [
+    "https://developer.flutterwave.com/docs",
+    "https://developer.flutterwave.com/docs/authentication",
+    "https://developer.flutterwave.com/docs/webhooks",
+    "https://developer.flutterwave.com/docs/direct-charges",
+    "https://developer.flutterwave.com/docs/testing"
+  ],
+  "verification": {
+    "verified": true,
+    "verified_notes": "v4 OAuth token + mobile-money orchestrator direct-charge verified live against the sandbox (real chg_ id + hosted redirect). Reference must be alphanumeric; customer.phone must be an object {country_code, number}.",
+    "unverified_fields": [
+      "production base host (f4bexperience.flutterwave.com vs api.flutterwave.cloud/f4b/production)",
+      "refund request body schema (charge_id/reference + amount)",
+      "full charge status enum",
+      "card AES-256-GCM path (only mobile-money charge tested live; verify card encryption vs official SDK)"
+    ],
+    "last_updated": "2026-07-18"
+  }
+}

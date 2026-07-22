@@ -1,0 +1,88 @@
+{
+  "id": "paypal",
+  "name": "PayPal",
+  "aliases": ["PayPal Checkout", "PayPal REST", "Orders v2"],
+  "homepage": "https://paypal.com",
+  "docs_url": "https://developer.paypal.com/docs/api/orders/v2/",
+  "category": "wallet",
+  "regions": ["Global"],
+  "countries": ["US", "GB", "EU", "global"],
+  "currencies": ["USD", "EUR", "GBP", "and 20+ other supported currencies"],
+  "methods": ["paypal", "card"],
+  "auth": {
+    "model": "oauth-client-credentials",
+    "key_types": ["client_id", "client_secret", "access_token (Bearer, ~9h)", "webhook_id"],
+    "sandbox_instant": true,
+    "kyc_required_for_live": true
+  },
+  "initiate": {
+    "flow": "redirect",
+    "endpoint": "POST https://api-m.paypal.com/v2/checkout/orders",
+    "http_method": "POST",
+    "required_params": ["intent", "purchase_units[].amount.currency_code", "purchase_units[].amount.value"],
+    "returns": ["id", "status", "links[] (rel:payer-action | rel:approve)"],
+    "amount_unit": "decimal-2dp"
+  },
+  "status": {
+    "mechanisms": ["webhook", "poll"],
+    "webhook_verification": "Headers PAYPAL-TRANSMISSION-ID/-TIME/-SIG/-CERT-URL/-AUTH-ALGO. Offline: RSA-verify PAYPAL-TRANSMISSION-SIG (base64) over 'transmissionId|transmissionTime|webhookId|crc32(RAW body)' using the cert at PAYPAL-CERT-URL (paypal.com only, cache it). Or online postback POST /v1/notifications/verify-webhook-signature (needs webhook_id; unsupported for the simulator). RAW body required for crc32.",
+    "raw_status_values": ["CREATED", "SAVED", "APPROVED", "PAYER_ACTION_REQUIRED", "COMPLETED", "VOIDED", "PENDING", "DECLINED", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"],
+    "status_map": {
+      "CREATED": "pending",
+      "SAVED": "pending",
+      "APPROVED": "pending",
+      "PAYER_ACTION_REQUIRED": "pending",
+      "PENDING": "pending",
+      "COMPLETED": "paid",
+      "VOIDED": "failed",
+      "DECLINED": "failed",
+      "FAILED": "failed",
+      "REFUNDED": "refunded",
+      "PARTIALLY_REFUNDED": "refunded",
+      "CUSTOMER.DISPUTE.CREATED": "disputed"
+    }
+  },
+  "capabilities": {
+    "redirect": true,
+    "poll": true,
+    "webhook": true,
+    "mobile_push": false,
+    "refund": true,
+    "recurring": true
+  },
+  "credentials_required": [
+    { "key": "clientId", "label": "Client ID", "secret": false, "note": "PayPal Developer dashboard → Apps & Credentials → your app → Client ID" },
+    { "key": "clientSecret", "label": "Client Secret", "secret": true, "note": "same screen as the Client ID; used for OAuth2 Basic auth" },
+    { "key": "webhookId", "label": "Webhook ID", "secret": false, "note": "required to verify inbound webhook signatures (per merchant/app)" }
+  ],
+  "sandbox": {
+    "test_credentials": { "note": "Sandbox client_id/secret are instant from developer.paypal.com → Apps & Credentials → Sandbox; live needs a verified Business account + KYC" },
+    "test_cards": [
+      { "number": "4032039999999994", "brand": "visa", "result": "success (generated in Sandbox → Testing Tools → Credit Card Generator)" }
+    ],
+    "notes": "Testing Tools → Sandbox Accounts gives a business (seller) and a personal (buyer w/ balance) account. Approve an order by logging into the personal account at sandbox.paypal.com/checkoutnow?token=<orderId>. The webhook simulator exists but online postback verify is NOT supported there — use offline crypto verification."
+  },
+  "pain_points": [
+    { "problem": "Order marked paid on APPROVED — merchant ships but no money arrives", "cause": "For intent=CAPTURE, CHECKOUT.ORDER.APPROVED means the buyer approved but funds are NOT captured yet", "mitigation": "Map paid ONLY to a capture COMPLETED; auto-capture (POST /v2/checkout/orders/{id}/capture) on ORDER.APPROVED for CAPTURE intent, then fulfil on PAYMENT.CAPTURE.COMPLETED", "severity": "critical", "source": "https://developer.paypal.com/docs/api/orders/v2/" },
+    { "problem": "Webhook signature verification fails", "cause": "The crc32 is computed over a re-serialised JSON body instead of the raw bytes", "mitigation": "Capture the RAW request body before any JSON parser; build the message 'transmissionId|time|webhookId|crc32(rawBody)' and RSA-verify with the cached cert", "severity": "critical", "source": "https://developer.paypal.com/api/rest/webhooks/rest/" },
+    { "problem": "Access-token churn / intermittent 401s under load", "cause": "Requesting a new OAuth token on every call, or reusing an expired one", "mitigation": "Central token cache keyed by (env, client_id), single-flight refresh at ~80% of expires_in (token lasts ~9h)", "severity": "high", "source": "https://developer.paypal.com/api/rest/authentication/" },
+    { "problem": "verify-webhook-signature endpoint fails / needs webhook_id", "cause": "Online postback requires the merchant's webhook_id and does not work from the webhook simulator", "mitigation": "Store webhook_id per merchant; default to OFFLINE crypto verification which also works with simulated events", "severity": "high", "source": "https://developer.paypal.com/api/rest/webhooks/rest/" },
+    { "problem": "Duplicate orders / double captures on retry", "cause": "Network retries re-POST create-order or capture", "mitigation": "Send a stable PayPal-Request-Id (idempotency key) on create/capture/refund; dedupe inbound webhooks by event id", "severity": "high", "source": "https://developer.paypal.com/api/rest/reference/idempotency/" },
+    { "problem": "Sandbox creds hit the live host (or vice-versa) → 401", "cause": "Wrong base URL for the environment", "mitigation": "Select api-m.sandbox.paypal.com for test vs api-m.paypal.com for live from an env flag; validate creds with a token call on connect", "severity": "medium", "source": "https://developer.paypal.com/api/rest/" }
+  ],
+  "sdks": { "node": "@paypal/paypal-server-sdk", "php": "paypal/paypal-server-sdk", "rest_direct_ok": true },
+  "notes": "Zimbabwe PayPal accounts are historically RESTRICTED to send-only — a ZW merchant generally CANNOT receive/withdraw PayPal funds without an entity in a supported country. Verify merchant receive capability before going live; sandbox testing works fine regardless. Two-step flow: create order → buyer approves (redirect) → capture. APPROVED is never money; only a capture COMPLETED is settled funds.",
+  "sources": [
+    "https://developer.paypal.com/docs/api/orders/v2/",
+    "https://developer.paypal.com/api/rest/authentication/",
+    "https://developer.paypal.com/api/rest/webhooks/rest/",
+    "https://developer.paypal.com/api/rest/reference/idempotency/",
+    "https://developer.paypal.com/docs/api/payments/v2/"
+  ],
+  "verification": {
+    "verified": true,
+    "verified_notes": "OAuth token + Orders v2 create-order verified live against the sandbox (real order id + approve URL).",
+    "unverified_fields": ["exact supported-currency count", "current ZW receive-capability status", "webhook offline-signature verification against a real event"],
+    "last_updated": "2026-07-18"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "ozow",
+  "name": "Ozow",
+  "aliases": ["i-Pay", "Ozow Instant EFT", "Ozow PayNow"],
+  "homepage": "https://ozow.com",
+  "docs_url": "https://hub.ozow.com/docs",
+  "category": "sa-gateway",
+  "regions": ["South Africa"],
+  "countries": ["ZA"],
+  "currencies": ["ZAR"],
+  "methods": ["eft"],
+  "auth": {
+    "model": "hash-signed",
+    "key_types": ["SiteCode", "PrivateKey", "ApiKey"],
+    "sandbox_instant": false,
+    "kyc_required_for_live": true
+  },
+  "initiate": {
+    "flow": "form-post-redirect",
+    "endpoint": "POST https://pay.ozow.com/ (form-post redirect) OR POST https://api.ozow.com/postpaymentrequest (REST, ApiKey header)",
+    "http_method": "POST",
+    "required_params": ["SiteCode", "CountryCode", "CurrencyCode", "Amount", "TransactionReference", "BankReference", "CancelUrl", "ErrorUrl", "SuccessUrl", "NotifyUrl", "IsTest", "HashCheck"],
+    "returns": ["url", "paymentRequestId"],
+    "amount_unit": "decimal-2dp"
+  },
+  "status": {
+    "mechanisms": ["webhook", "poll", "redirect-return"],
+    "webhook_verification": "NotifyUrl POST carries a Hash. Recompute: concat notification field VALUES in NOTIFICATION order (differs from request order) + PrivateKey, lowercase the WHOLE string, SHA512 hex, compare case-insensitively. Redirect return is NOT trustworthy alone — verify server-side.",
+    "raw_status_values": ["Complete", "Cancelled", "Error", "Abandoned", "Pending", "PendingInvestigation", "Voided", "Refunded"],
+    "status_map": {
+      "Complete": "paid",
+      "Pending": "pending",
+      "PendingInvestigation": "pending",
+      "Cancelled": "failed",
+      "Abandoned": "failed",
+      "Error": "failed",
+      "Voided": "failed",
+      "Refunded": "refunded"
+    }
+  },
+  "capabilities": {
+    "redirect": true,
+    "poll": true,
+    "webhook": true,
+    "mobile_push": false,
+    "refund": true,
+    "recurring": false
+  },
+  "credentials_required": [
+    { "key": "siteCode", "label": "Site Code", "secret": false, "note": "identifies the site; sent in the request body/query and is the first value in the HashCheck concatenation" },
+    { "key": "privateKey", "label": "Private Key", "secret": true, "note": "SHA512 salt — NEVER transmitted; appended to the concatenation before lowercasing + hashing" },
+    { "key": "apiKey", "label": "API Key", "secret": true, "note": "sent as the HTTP 'ApiKey' header for REST calls (postpaymentrequest, GetTransactionByReference)" },
+    { "key": "mode", "label": "Environment", "secret": false, "note": "test → stagingapi.ozow.com + IsTest=true; live → pay.ozow.com (redirect) + api.ozow.com (REST). Separate credentials per environment." }
+  ],
+  "sandbox": {
+    "test_credentials": { "note": "No instant self-serve sandbox — staging site + credentials are issued during onboarding. Staging host: stagingapi.ozow.com. Set IsTest=\"true\"." },
+    "test_cards": [],
+    "notes": "IsTest=true + staging host shows a selection page where you choose the success/fail outcome (no real bank). ⚠️ Test transactions may NOT fire the NotifyUrl webhook — you must also test the redirect-return path. Confirm current staging webhook behaviour with Ozow."
+  },
+  "pain_points": [
+    { "problem": "HashCheck mismatch (request rejected / webhook rejected)", "cause": "Fields concatenated in the wrong order, wrong empty-field handling, Amount not '%.2f', IsTest sent as a boolean, or lowercasing only part of the string", "mitigation": "Keep TWO hardcoded ordered field lists (request vs notification — they differ). Concatenate VALUES only (no separators, missing→''), append the RAW PrivateKey, then lowercase the WHOLE string before SHA512. Amount must be exactly 2dp; IsTest is the lowercase string 'true'/'false'. Lock it with a golden vector.", "severity": "critical", "source": "https://hub.ozow.com/docs" },
+    { "problem": "Notification hash uses a DIFFERENT field order than the request", "cause": "Developers reuse the request field order to verify the inbound notification", "mitigation": "Maintain a separate NOTIFICATION field order and recompute the hash with it. ⚠️ The exact notification order is UNVERIFIED here — confirm against live hub.ozow.com.", "severity": "high", "source": "https://hub.ozow.com/docs" },
+    { "problem": "Trusting the redirect return as proof of payment", "cause": "SuccessUrl redirect can be reached without a settled EFT", "mitigation": "Treat the NotifyUrl POST (verified by hash) as authoritative and reconcile via GetTransactionByReference polling. Never fulfil on the redirect alone.", "severity": "high", "source": "https://hub.ozow.com/docs" },
+    { "problem": "Test transactions never trigger the webhook", "cause": "Staging/IsTest flows may skip NotifyUrl", "mitigation": "Test BOTH the redirect-return and webhook paths; drive reconciliation via polling in test.", "severity": "medium", "source": "https://hub.ozow.com/docs" },
+    { "problem": "No official SDK", "cause": "Ozow ships REST + hand-rolled SHA512 only", "mitigation": "Call REST directly and compute the HashCheck yourself with Node crypto. Community libs: omnipay-ozow (PHP), ozpay.", "severity": "low", "source": "https://github.com/thephpleague/omnipay" }
+  ],
+  "sdks": { "node": "none (REST + hand-rolled SHA512)", "php": "omnipay-ozow (community)", "rest_direct_ok": true },
+  "notes": "South Africa only, ZAR only, instant EFT (bank redirect) — formerly i-Pay. Three credentials per site: SiteCode (public-ish), PrivateKey (SHA512 salt, never sent), ApiKey (REST header). Live onboarding is KYC-gated (business), not an instant sandbox. Refunds run through a SEPARATE Refunds API (GetToken bearer → POST refund with TransactionId + HashCheck, paid from the Ozow float); a refund reaching Complete maps to canonical 'refunded'. No dispute/chargeback status on Ozow (bank EFT). In ManishaPay the catalog currently gates refund=false, so the provider does not implement refund() yet.",
+  "sources": [
+    "https://hub.ozow.com/docs",
+    "https://ozow.com",
+    "https://github.com/thephpleague/omnipay"
+  ],
+  "verification": {
+    "verified": false,
+    "unverified_fields": [
+      "notification (webhook) field order for HashCheck — confirm exact list + order against live hub.ozow.com",
+      "refund endpoint + field order (GetToken bearer → POST refund; TransactionId + HashCheck)",
+      "whether staging sends NotifyUrl webhooks for IsTest=true transactions",
+      "exact set of raw status values (Voided/Refunded observed but not doc-confirmed)"
+    ],
+    "last_updated": "2026-07-18"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "id": "mpesa",
+  "name": "M-Pesa (Safaricom Daraja)",
+  "aliases": ["Daraja", "Lipa na M-Pesa", "M-Pesa Express", "STK Push", "Safaricom M-Pesa"],
+  "homepage": "https://developer.safaricom.co.ke",
+  "docs_url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "category": "mobile-money",
+  "regions": ["East Africa"],
+  "countries": ["KE"],
+  "currencies": ["KES"],
+  "methods": ["mpesa"],
+  "auth": {
+    "model": "oauth-client-credentials",
+    "key_types": ["consumerKey", "consumerSecret", "bearer-access-token", "lipa-na-mpesa-passkey"],
+    "sandbox_instant": true,
+    "kyc_required_for_live": true
+  },
+  "initiate": {
+    "flow": "stk-push",
+    "endpoint": "POST https://{sandbox|api}.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+    "http_method": "POST",
+    "required_params": ["BusinessShortCode", "Password", "Timestamp", "TransactionType", "Amount", "PartyA", "PartyB", "PhoneNumber", "CallBackURL", "AccountReference", "TransactionDesc"],
+    "returns": ["MerchantRequestID", "CheckoutRequestID", "ResponseCode", "ResponseDescription", "CustomerMessage"],
+    "amount_unit": "integer"
+  },
+  "status": {
+    "mechanisms": ["webhook", "poll"],
+    "webhook_verification": "No signature. Daraja POSTs Body.stkCallback to the CallBackURL supplied in the STK Push. Trust is established by (a) ManishaPay OWNING the callback URL (public HTTPS, never merchant-supplied) and (b) correlating on CheckoutRequestID; must ack HTTP 200 within ~30s. Poll STK Query as a fallback only.",
+    "raw_status_values": ["0", "1", "17", "1001", "1019", "1025", "1032", "1037", "2001", "500.001.1001"],
+    "status_map": {
+      "0": "paid",
+      "1": "failed",
+      "17": "failed",
+      "1001": "failed",
+      "1019": "failed",
+      "1025": "failed",
+      "1032": "failed",
+      "1037": "failed",
+      "2001": "failed",
+      "500.001.1001": "pending"
+    }
+  },
+  "capabilities": {
+    "redirect": false,
+    "poll": true,
+    "webhook": true,
+    "mobile_push": true,
+    "refund": true,
+    "recurring": false
+  },
+  "credentials_required": [
+    { "key": "consumerKey", "label": "Consumer Key", "secret": true, "note": "Daraja portal → your app → Keys. Used with the secret for OAuth Basic auth." },
+    { "key": "consumerSecret", "label": "Consumer Secret", "secret": true, "note": "Daraja portal → your app → Keys." },
+    { "key": "shortcode", "label": "Business Shortcode", "secret": false, "note": "Paybill or Till (Buy Goods) number. Sandbox shortcode is 174379." },
+    { "key": "passkey", "label": "Lipa na M-Pesa Passkey", "secret": true, "note": "Daraja → Lipa na M-Pesa Online → Passkey. Concatenated with shortcode+timestamp and base64-encoded to form the STK Password." },
+    { "key": "transactionType", "label": "Transaction Type", "secret": false, "note": "CustomerPayBillOnline (Paybill, default) or CustomerBuyGoodsTill (Till). CallBackURL is NOT collected — ManishaPay owns it." }
+  ],
+  "sandbox": {
+    "test_credentials": {
+      "shortcode": "174379",
+      "passkey": "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
+      "test_msisdn": "254708374149",
+      "note": "Consumer Key/Secret are generated instantly per app in the Daraja portal (no KYC). Sandbox auto-approves the prompt (no PIN)."
+    },
+    "test_cards": [],
+    "notes": "Canonical password vector: base64('174379' + passkey + '20160216165627') = MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMTYwMjE2MTY1NjI3. Sandbox STK Query is unreliable — drive failure paths by replaying callback payloads with ResultCode 1032/1037/1. Live requires Go-Live approval (days) which issues a production shortcode + passkey."
+  },
+  "pain_points": [
+    { "problem": "OAuth access token expires and calls 401 mid-flow", "cause": "Daraja tokens live ~3600s; a stale cached token or none at all", "mitigation": "Cache the token per (mode, consumerKey), refresh at ~50min, and retry the request exactly once on a 401 after forcing a fresh token", "severity": "high", "source": "https://developer.safaricom.co.ke/APIs/Authorization" },
+    { "problem": "STK callbacks never arrive", "cause": "CallBackURL is http://, localhost, or a self-signed host — Daraja drops these silently", "mitigation": "ManishaPay OWNS a single hardened public HTTPS callback; the merchant never supplies one. Correlate on CheckoutRequestID and fan out to the merchant webhook — structurally eliminates the #1 failure", "severity": "critical", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate" },
+    { "problem": "Invalid password / 'Bad Request - Invalid Timestamp'", "cause": "Timestamp used in Password differs from the Timestamp field, or the passkey has a trailing newline", "mitigation": "Generate the YYYYMMDDHHMMSS timestamp ONCE, build Password=base64(shortcode+passkey+timestamp) with the SAME value in the same call, trim the passkey; unit-test against the canonical vector", "severity": "high", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate" },
+    { "problem": "Amount rejected or wrong charge", "cause": "Passing decimals — M-Pesa amounts are whole KES only", "mitigation": "Coerce to an integer at the edge and refuse fractional values loudly rather than silently rounding", "severity": "high", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate" },
+    { "problem": "STK prompt never reaches the phone", "cause": "PhoneNumber/PartyA not in 2547XXXXXXXX MSISDN form", "mitigation": "Normalize 07.., +254.., 7.. to 2547XXXXXXXX before sending", "severity": "high", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate" },
+    { "problem": "Transaction stuck 'pending' forever", "cause": "User ignored/cancelled the prompt (1037/1032) and the callback was missed; sandbox STK Query is unreliable", "mitigation": "Bounded ~90-120s timer with an STK Query fallback and a hard deadline that resolves to failed with the ResultCode reason", "severity": "medium", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressQuery" },
+    { "problem": "Duplicate order fulfillment", "cause": "Daraja can deliver/replay the callback more than once; must 200 within ~30s or it retries", "mitigation": "Ack 200 immediately, process async, dedupe on MpesaReceiptNumber", "severity": "high", "source": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate" },
+    { "problem": "Sandbox vs production confusion", "cause": "Mixing sandbox.safaricom.co.ke host / shortcode 174379 with production keys (or vice-versa)", "mitigation": "Make environment first-class config; pick host + shortcode + passkey atomically per mode", "severity": "medium", "source": "https://developer.safaricom.co.ke/APIs/Authorization" }
+  ],
+  "sdks": { "node": "mpesa-api (community, stale)", "php": "community wrappers (stale)", "rest_direct_ok": true },
+  "notes": "Daraja is KENYA ONLY (KES). Tanzania/Mozambique/DRC/Ghana M-Pesa run on a SEPARATE platform (Vodacom OpenAPI) with different auth — do not reuse this integration. STK Push (M-Pesa Express) is a mobilePush flow: no redirect/checkout URL, the customer approves a prompt on their phone. The synchronous ResponseCode 0 means 'prompt sent', NOT paid — the real result is the async callback's ResultCode. Refund exists only as the Reversal API (POST /mpesa/reversal/v1/request), which needs an Initiator + RSA-encrypted SecurityCredential (extra Go-Live step) and is not wired here. Recurring is not native — schedule a fresh STK each cycle (the customer approves every time).",
+  "sources": [
+    "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+    "https://developer.safaricom.co.ke/APIs/MpesaExpressQuery",
+    "https://developer.safaricom.co.ke/APIs/Authorization",
+    "https://developer.safaricom.co.ke/APIs/Reversal"
+  ],
+  "verification": {
+    "verified": true,
+    "verified_notes": "STK push verified live against the Daraja sandbox (real CheckoutRequestID; ResponseCode 0). Password = base64(shortcode+passkey+timestamp) with the SAME timestamp; sandbox uses public test shortcode 174379 + passkey with any sandbox app's consumer key/secret.",
+    "unverified_fields": ["exhaustive ResultCode catalogue", "sandbox STK Query reliability", "async callback receipt (needs a public webhook)"],
+    "last_updated": "2026-07-18"
+  }
+}

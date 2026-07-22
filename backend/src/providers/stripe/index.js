@@ -10,7 +10,7 @@
  *
  * ctx.creds = { secretKey, webhookSecret }.
  *
- * Real-world pain points this adapter preempts (see dataset/gateways/stripe.json):
+ * Real-world pain points this adapter preempts (see the manishapay-dataset repo, gateways/stripe.json):
  *   1. Webhook sig fails on a mutated body   → verify over RAW bytes only, never a re-serialised JSON.
  *   2. Duplicate at-least-once delivery      → we surface event.id so routes can dedupe.
  *   3. Out-of-order events / redirect race   → never trust the redirect; confirm via webhook/poll.

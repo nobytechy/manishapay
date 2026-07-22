@@ -20,7 +20,7 @@
  *
  * ctx.creds = { clientId, clientSecret, encryptionKey, secretHash, baseUrl? }.
  *
- * Mitigations baked in (see dataset/gateways/flutterwave.json):
+ * Mitigations baked in (see the manishapay-dataset repo, gateways/flutterwave.json):
  *   1. Never trust the redirect return as proof of payment → confirm via
  *      pollStatus (GET /charges/{id}) or the verified webhook.
  *   2. Token expiry (10 min) → cache + refresh at T-60s + one 401 re-auth.

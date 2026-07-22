@@ -447,6 +447,13 @@ export default function Sandbox() {
       setHistory((h) => h.map((entry) =>
         entry.tracker === current.tracker ? { ...entry, status: newStatus } : entry,
       ));
+      // Toast the returned status so checking the endpoint gives the same
+      // dual (toast + pill) feedback as sending a payment.
+      const label = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+      const raw = payload.status && payload.status.toLowerCase() !== newStatus ? ` (${payload.status})` : '';
+      if (newStatus === 'paid') toast.success(`Status: ${label}${raw} ✓`);
+      else if (newStatus === 'cancelled' || newStatus === 'failed') toast.error(`Status: ${label}${raw}`);
+      else toast(`Status: ${label}${raw}`, { icon: '⏳' });
     } catch {
       /* api.js already toasts */
     }

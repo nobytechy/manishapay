@@ -132,6 +132,33 @@ create table if not exists public.manishapay_platform_settings (
 );
 alter table public.manishapay_platform_settings enable row level security;
 
+-- Platform receiving / payout details (super-admin configurable, not hardcoded).
+-- Bank fields are display-for-payer (shown on ManishaPay's own invoices) so they
+-- stay plaintext; the billing-PayNow credential is encrypted like every other.
+alter table public.manishapay_platform_settings
+  add column if not exists bank_name                     text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_account_name             text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_account_number           text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_branch                   text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_swift                    text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_currency                 text;
+alter table public.manishapay_platform_settings
+  add column if not exists bank_enabled                  boolean not null default false;
+alter table public.manishapay_platform_settings
+  add column if not exists billing_notes                 text;
+-- ManishaPay's OWN PayNow account, used to collect developer/platform fees.
+alter table public.manishapay_platform_settings
+  add column if not exists billing_paynow_config_encrypted   text;
+alter table public.manishapay_platform_settings
+  add column if not exists billing_paynow_datakey_encrypted  text;
+alter table public.manishapay_platform_settings
+  add column if not exists billing_paynow_enabled        boolean not null default false;
+
 
 -- ── 6. Customer phone on transactions (for WhatsApp receipts) ──────────────
 alter table public.manishapay_transactions

@@ -55,7 +55,11 @@ class ManishaPay
     /**
      * Initiate a payment. Returns the data block from /v1/pay.
      *
-     * @param array $input  reference, amount, description?, email?, phone?, method?, return_url?, result_url?
+     * @param array $input  provider?, reference, amount, description?, email?, phone?, method?, currency?, return_url?, result_url?
+     *   provider — optional payment gateway slug; defaults to 'paynow'
+     *   (paynow | stripe | paystack | flutterwave | paypal | mpesa | payfast | …).
+     *   method — optional rail (ecocash, card, mobile_money, …); routed to the
+     *   chosen provider. The response shape is identical across every gateway.
      * @return array  { tracker, browser_url, poll_url, status, mode, instructions? }
      */
     public function pay(array $input): array
@@ -69,6 +73,31 @@ class ManishaPay
     public function status(string $reference): array
     {
         return $this->request('GET', '/v1/pay/' . rawurlencode($reference) . '/status');
+    }
+
+    /**
+     * Fetch a hosted checkout's details + method chooser (PUBLIC — no API key).
+     * Use to render your own checkout UI, or just send the customer to /pay/<slug>.
+     *
+     * @return array  { slug, title, amount, currency, primary_provider, methods[] }
+     *   methods[] = { method, label, needsPhone, kind, provider, mode }
+     */
+    public function getCheckout(string $slug): array
+    {
+        return $this->request('GET', '/v1/links/' . rawurlencode($slug));
+    }
+
+    /**
+     * Start a payment for a hosted checkout (PUBLIC — no API key). Pass the
+     * `method` the customer chose; ManishaPay routes it to the connected gateway
+     * that serves it. Omit `method` to use the checkout's primary provider.
+     *
+     * @param array $input  { method?, email?, phone? }
+     * @return array  { provider, reference, tracker, browser_url?, status, mode }
+     */
+    public function payCheckout(string $slug, array $input = []): array
+    {
+        return $this->request('POST', '/v1/links/' . rawurlencode($slug) . '/pay', $input);
     }
 
     /**

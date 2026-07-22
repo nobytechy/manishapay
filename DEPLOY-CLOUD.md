@@ -4,7 +4,7 @@ The current hosting plan. Three services:
 
 | Service | Hosts | Config |
 |---|---|---|
-| **Supabase** (new project) | Postgres + Auth + RLS | `supabase/install.sql` |
+| **Supabase** (dedicated project `ywfuydrreunrgfnyjzlv`) | Postgres + Auth + RLS | `supabase/install.sql` + `supabase/setup.sql` |
 | **Render** | Node/Express API (`backend/`) | `render.yaml` |
 | **Netlify** | React/Vite dashboard (`frontend/`) | `netlify.toml` |
 
@@ -19,10 +19,11 @@ Have these two secrets ready (generated for you — keep them safe):
 
 ## 1. Supabase (5 min)
 
-1. supabase.com → **New project** (pick a region close to ZW, e.g. EU). Save the DB password.
+1. supabase.com → open the dedicated ManishaPay project (`ywfuydrreunrgfnyjzlv`), or **New project** if starting fresh (pick a region close to ZW, e.g. EU). Save the DB password. This is ManishaPay's own project — not shared with any sibling app.
 2. **SQL Editor → New query** → paste all of `supabase/install.sql` → **Run**. It's idempotent.
-3. Verify in **Table Editor** that the `manishapay_*` tables exist (developers, projects, api_keys, paynow_credentials, transactions, webhook_endpoints, webhook_deliveries, usage_daily, invoices, logs, button_configs, announcements).
-4. **Settings → API** → copy three values:
+3. **SQL Editor → New query** → paste all of `supabase/setup.sql` → **Run**. This adds the multi-gateway pieces the current release depends on: the `provider` column on `manishapay_transactions` and the `manishapay_gateway_credentials` table. Skipping it breaks `/v1/pay`.
+4. Verify in **Table Editor** that the `manishapay_*` tables exist (developers, projects, api_keys, paynow_credentials, gateway_credentials, transactions, webhook_endpoints, webhook_deliveries, usage_daily, invoices, logs, button_configs, announcements).
+5. **Settings → API** → copy three values:
    - **Project URL** → `https://<ref>.supabase.co`
    - **anon public** key
    - **service_role** key (secret — server only)
@@ -49,10 +50,10 @@ Have these two secrets ready (generated for you — keep them safe):
    You won't know the Render or Netlify URLs until each is created — set placeholders now, then come back in step 4 to fix the cross-references and redeploy.
 
    > **Single-domain setup (Option A).** The whole app lives under one domain
-   > (`manishapay.netlify.app`); `netlify.toml` proxies `/api/*` and `/simulator/*`
-   > to the Render API. **Name the Render service `manishapay-api`** so its URL is
-   > `https://manishapay-api.onrender.com` (the proxy target in `netlify.toml`). If
-   > Render assigns a different URL, update the two `to =` lines in `netlify.toml`.
+   > (`manishapay.netlify.app`); `frontend/public/_redirects` proxies `/api/*` and
+   > `/simulator/*` to the Render API (it already carries the real Render URL,
+   > `manishapay-api-1ndn.onrender.com`). If Render assigns a different URL, update
+   > the proxy target lines in `frontend/public/_redirects`.
 3. **Create** → wait for the build → note the service URL `https://<name>.onrender.com`.
 4. Smoke test: open `https://<name>.onrender.com/health` → `{ "ok": true, ... }`.
 
@@ -86,7 +87,7 @@ Have these two secrets ready (generated for you — keep them safe):
 Now both URLs exist — go back and fix the placeholders, then redeploy each:
 
 - **Render** env: `ALLOW_CORS_ORIGINS`, `PAYNOW_RETURN_URL` and `SIMULATOR_BASE_URL` → `https://manishapay.netlify.app`; `PAYNOW_RESULT_URL` → `https://<your-render>.onrender.com/v1/webhook` (direct) → **Save / Manual Deploy**.
-- **Netlify**: `VITE_API_BASE` stays `/api`. Confirm the `netlify.toml` proxy `to =` URLs match your real Render URL → **Trigger deploy**.
+- **Netlify**: `VITE_API_BASE` stays `/api`. Confirm the proxy target lines in `frontend/public/_redirects` match your real Render URL → **Trigger deploy**.
 
 ---
 

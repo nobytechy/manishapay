@@ -95,7 +95,11 @@ class ManishaPay {
 
   /**
    * Initiate a payment.
-   * @param {object} input - { reference, amount, description?, email?, phone?, method?, return_url?, result_url? }
+   * @param {object} input - { provider?, reference, amount, description?, email?, phone?, method?, currency?, return_url?, result_url? }
+   *   provider — optional payment gateway slug; defaults to 'paynow'
+   *   (paynow | stripe | paystack | flutterwave | paypal | mpesa | payfast | …).
+   *   method — optional rail (ecocash, card, mobile_money, …); routed to the
+   *   chosen provider. The response shape is identical across every gateway.
    * @returns {Promise<{ tracker, browser_url, poll_url, status, mode, instructions? }>}
    */
   pay(input) {
@@ -109,6 +113,32 @@ class ManishaPay {
    */
   status(reference) {
     return this._request(`/v1/pay/${encodeURIComponent(reference)}/status`);
+  }
+
+  /**
+   * Fetch a hosted checkout's details and the method chooser (PUBLIC — no API
+   * key needed). Use this to render your OWN checkout UI; otherwise just send
+   * the customer to the hosted page at /pay/<slug>.
+   *
+   * @param {string} slug
+   * @returns {Promise<{ slug, title, amount, currency, primary_provider, methods: Array<{ method, label, needsPhone, kind, provider, mode }> }>}
+   */
+  getCheckout(slug) {
+    return this._request(`/v1/links/${encodeURIComponent(slug)}`);
+  }
+
+  /**
+   * Start a payment for a hosted checkout (PUBLIC — no API key needed). Pass the
+   * `method` the customer chose from getCheckout().methods; ManishaPay routes it
+   * to the connected gateway that serves it. Omit `method` to use the checkout's
+   * primary provider.
+   *
+   * @param {string} slug
+   * @param {{ method?: string, email?: string, phone?: string }} [input]
+   * @returns {Promise<{ provider, reference, tracker, browser_url?, status, mode, qr_code? }>}
+   */
+  payCheckout(slug, input = {}) {
+    return this._request(`/v1/links/${encodeURIComponent(slug)}/pay`, { method: 'POST', body: input });
   }
 
   /**

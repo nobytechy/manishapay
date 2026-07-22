@@ -5,10 +5,13 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D18-emerald)]()
 [![PHP](https://img.shields.io/badge/php-%3E%3D7.4-amber)]()
 
-> Middleware for the **PayNow Zimbabwe** payment gateway. Your code talks to a
-> clean REST API; ManishaPay handles hash math, retries, payload normalization,
-> phone formatting, webhook signing, and mock testing — so you ship payment
-> flows in an afternoon instead of a week.
+> **One payments API for many gateways.** Integrate once with ManishaPay and accept
+> payments across **PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa (Daraja),
+> PayFast** and more — one clean REST API and one response shape, whichever gateway
+> moves the money. ManishaPay handles auth, signatures, retries, amount/phone
+> normalization, webhook verification and a zero-setup sandbox — so you ship payment
+> flows in an afternoon instead of a week. Pick the gateway with a `provider` field;
+> your code never changes when you switch.
 
 **Live:** [manishapay.netlify.app](https://manishapay.netlify.app) ·
 **Author:** [Noby Tebulo](https://noby.aizim.co.zw)
@@ -22,6 +25,19 @@
 
 ## What you get
 
+**One integration, many gateways** — a single API over PayNow, Stripe, Paystack,
+Flutterwave, PayPal, M-Pesa and PayFast (with Yoco, Pesepay, Ozow and DPO Pay coming
+soon), normalized to one request + response shape and one 5-value status enum
+(`paid | pending | failed | disputed | refunded`).
+
+**One checkout, any method** — hosted payment links let the customer pick a method
+(EcoCash, Card, …) and ManishaPay routes each to whichever gateway you've connected
+that serves it. Share `/pay/<slug>`, or build your own UI over the public
+`GET /v1/links/<slug>` + `POST /v1/links/<slug>/pay` endpoints.
+
+Its Zimbabwe strength is **PayNow**, where it also fixes the integration pain that
+fills the PayNow forums:
+
 | Pain point on PayNow direct | ManishaPay fix |
 |---|---|
 | `HashMismatchException` (SHA-512 field-order is non-obvious) | Server-side compute + verify, byte-for-byte matches PayNow's docs example |
@@ -33,11 +49,11 @@
 
 ## Stack
 
-- **Backend** — Node 20 + Express + Zod + Pino + libsodium-wrappers, hosted as a cPanel Node.js app at `manishapay.netlify.app/api`
-- **Frontend** — React 18 + Vite + Tailwind 3, static SPA at `manishapay.netlify.app`
-- **Database** — Supabase Postgres (shared with sibling apps; tables prefixed `manishapay_`)
+- **Backend** — Node 20 + Express + Zod + Pino + libsodium-wrappers, hosted on **Render** (`manishapay-api-1ndn.onrender.com`) and reached at `manishapay.netlify.app/api` (Netlify proxies `/api` to Render)
+- **Frontend** — React 18 + Vite + Tailwind 3, static SPA on **Netlify** at `manishapay.netlify.app`
+- **Database** — Supabase Postgres (ManishaPay's own dedicated project; tables prefixed `manishapay_`)
 - **Auth** — Supabase Auth (signup gated by `app=manishapay` user-metadata marker)
-- **Encryption** — libsodium envelope encryption for merchant PayNow credentials at rest
+- **Encryption** — libsodium envelope encryption for merchant gateway credentials at rest
 
 ## Repo layout
 
@@ -50,7 +66,7 @@ manisha/
 │   │   └── services/      paynow, hash, crypto (envelope), credentials, retry, logger
 │   ├── scripts/
 │   │   └── seed-credentials.js   CLI to add a project's PayNow creds without the dashboard
-│   └── tests/             21 unit tests (hash, crypto, paynow normalizers)
+│   └── tests/             187 unit tests (hash, crypto, paynow normalizers)
 │
 ├── frontend/               Vite + React SPA (manishapay.netlify.app)
 │   ├── public/            logo.svg, checkout.js (drop-in widget), .htaccess
@@ -61,7 +77,9 @@ manisha/
 │   └── php/               `manishapay/manishapay` Composer package — PHP 7.4+ client
 │
 ├── supabase/
-│   └── install.sql        single-file schema (apply once via Supabase Studio → SQL editor)
+│   ├── install.sql        base schema (apply once via Supabase Studio → SQL editor)
+│   ├── setup.sql          multi-gateway add-ons (provider column + gateway_credentials) — run after install.sql
+│   └── reset.sql          destructive clean-slate wipe (manishapay_* only)
 │
 ├── docs/                   API.md, ERRORS.md, INTEGRATION.md
 ├── examples/               6-language quick-start scripts
@@ -116,7 +134,8 @@ MySQL (3306), so you can keep aizim running alongside.
 
 ```bash
 # 0. Apply the schema on your Supabase project (once):
-#    Open Supabase Studio → SQL Editor → paste supabase/install.sql → Run
+#    Open Supabase Studio → SQL Editor → paste supabase/install.sql → Run,
+#    then paste supabase/setup.sql → Run (adds provider column + gateway_credentials)
 
 # 1. Backend
 cd backend
@@ -126,7 +145,7 @@ cp .env.example .env.local
 # SIMULATOR_BASE_URL=http://localhost:8787,
 # ALLOW_CORS_ORIGINS=http://localhost:5173
 npm install
-npm test              # 21 tests should pass
+npm test              # 187 tests should pass
 
 # 2. Frontend
 cd ../frontend
@@ -163,7 +182,7 @@ curl -X POST http://localhost:8787/v1/pay \
 |---|---|
 | Frontend code editing + hot reload | ❌ no — Vite is fully local once `npm install`ed |
 | Backend code editing + nodemon restart | ❌ no — same |
-| `npm test` (the 21 unit tests) | ❌ no — hash, crypto, normalizers all offline |
+| `npm test` (the 187 unit tests) | ❌ no — hash, crypto, normalizers all offline |
 | Sign up / log in | ✅ yes — Supabase Auth is cloud-only |
 | Simulated `POST /v1/pay` | ⚠️ tiny burst — one Supabase round-trip per call (~10 KB) |
 | Click outcome on simulator → fire webhook | ⚠️ depends — if your webhook endpoint is also localhost, fully offline |

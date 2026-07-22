@@ -19,12 +19,17 @@ const router = require('express').Router();
 const { z } = require('zod');
 const { authenticate } = require('../middleware/auth');
 const paynow = require('../services/paynow');
+const { getProvider } = require('../providers');
 const credentials = require('../services/credentials');
 const qr = require('../services/qr');
 const { supabase } = require('../config/supabase');
 const AppError = require('../errors/AppError');
 
 const initiateSchema = z.object({
+  // Which gateway moves the money. Optional — defaults to PayNow. Unknown or
+  // not-yet-live gateways are rejected by the registry with a clear error, so
+  // the caller never gets a silent wrong-provider charge.
+  provider: z.string().min(1).max(32).optional(),
   reference: z.string().min(1).max(64),
   // Accept string OR number — normalizer fixes the format.
   amount: z.union([z.string(), z.number()]),
@@ -75,10 +80,17 @@ router.post('/', async (req, res, next) => {
     }
     if (!project) throw AppError.notFound('Project');
 
-    // Load creds for the API key's mode. May be null → simulated path.
-    const creds = await credentials.loadActive(project.id, req.developer.mode);
+    // Resolve the gateway via the registry — never call a provider directly.
+    // Defaults to PayNow; an unknown gateway throws a clean error here.
+    const providerId = parsed.data.provider || 'paynow';
+    const provider = getProvider(providerId);
 
-    const result = await paynow.initiate(parsed.data, {
+    // Load THIS provider's credentials for the API key's mode. May be null:
+    //   • PayNow test with no creds → simulated path
+    //   • other gateways with no creds in live mode → provider throws CREDENTIALS_REQUIRED
+    const creds = await credentials.loadActive(project.id, providerId, req.developer.mode);
+
+    const result = await provider.initiate(parsed.data, {
       mode: req.developer.mode,
       creds,
       project,
@@ -94,18 +106,19 @@ router.post('/', async (req, res, next) => {
     const { error: insertErr } = await supabase.from('manishapay_transactions').insert({
       developer_id: req.developer.id,
       project_id: project.id,
-      tracker: result.tracker,
+      provider: providerId,
+      tracker: result.providerRef,
       merchant_reference: parsed.data.reference,
       merchant_amount: merchantAmount,
       customer_amount: merchantAmount, // v1: no fee pass-through
       currency: parsed.data.currency || 'USD',
-      status: result.status || 'Sent',
-      status_normalized: paynow.normalizeStatus(result.status || 'Sent'),
+      status: result.rawStatus || 'Sent',
+      status_normalized: result.status || paynow.normalizeStatus('Sent'),
       mode: result.mode,
       method: parsed.data.method || null,
       customer_phone: parsed.data.phone || null,
-      poll_url: result.poll_url,
-      browser_url: result.browser_url,
+      poll_url: result.pollUrl,
+      browser_url: result.checkoutUrl,
       request_id: req.id,
       billable: result.mode !== 'simulated', // simulated transactions don't count toward billing
     });
@@ -123,9 +136,9 @@ router.post('/', async (req, res, next) => {
     // it with their phone and lands straight on the checkout. Never let a QR
     // failure break the payment — it's a convenience field.
     let qrCode = null;
-    if (result.browser_url) {
+    if (result.checkoutUrl) {
       try {
-        qrCode = await qr.toDataUrl(result.browser_url);
+        qrCode = await qr.toDataUrl(result.checkoutUrl);
       } catch (qrErr) {
         if (req.log) req.log.warn({ err: qrErr }, 'qr generation failed; continuing');
       }
@@ -133,11 +146,13 @@ router.post('/', async (req, res, next) => {
 
     const responseBody = {
       data: {
+        provider: providerId,
         reference: parsed.data.reference,
-        tracker: result.tracker,
-        browser_url: result.browser_url,
-        poll_url: result.poll_url,
-        status: result.status,
+        tracker: result.providerRef,
+        browser_url: result.checkoutUrl,
+        poll_url: result.pollUrl,
+        status: result.rawStatus,
+        status_normalized: result.status,
         mode: result.mode,
         currency: parsed.data.currency || 'USD',
         qr_code: qrCode,
@@ -167,7 +182,7 @@ router.get('/:reference/status', async (req, res, next) => {
     const { data, error } = await supabase
       .from('manishapay_transactions')
       .select(
-        'tracker, merchant_reference, merchant_amount, customer_amount, currency, status, status_normalized, mode, method, poll_url, paynow_reference, created_at, updated_at',
+        'provider, tracker, merchant_reference, merchant_amount, customer_amount, currency, status, status_normalized, mode, method, poll_url, paynow_reference, created_at, updated_at',
       )
       .eq('developer_id', req.developer.id)
       .eq('project_id', req.developer.projectId)
@@ -182,15 +197,19 @@ router.get('/:reference/status', async (req, res, next) => {
     let live = null;
     if (data.poll_url && data.mode !== 'simulated') {
       try {
-        const creds = await credentials.loadActive(req.developer.projectId, data.mode);
+        const providerId = data.provider || 'paynow';
+        const prov = getProvider(providerId);
+        const creds = await credentials.loadActive(req.developer.projectId, providerId, data.mode);
         if (creds) {
-          live = await paynow.pollStatus(data.poll_url, creds);
-          if (live.status && live.status !== data.status) {
-            const normalized = paynow.normalizeStatus(live.status);
+          live = await prov.pollStatus(data.poll_url, creds);
+          // Providers return a canonical `status` (+ raw `rawStatus`). Persist a
+          // change only when the canonical status actually moved.
+          const normalized = live.status || prov.normalizeStatus(live.rawStatus);
+          if (normalized && normalized !== data.status_normalized) {
             await supabase
               .from('manishapay_transactions')
               .update({
-                status: live.status,
+                status: live.rawStatus || live.status,
                 status_normalized: normalized,
                 paid_at: normalized === 'paid' ? new Date().toISOString() : null,
                 updated_at: new Date().toISOString(),
@@ -206,6 +225,7 @@ router.get('/:reference/status', async (req, res, next) => {
 
     res.json({
       data: {
+        provider: data.provider || 'paynow',
         reference: data.merchant_reference,
         tracker: data.tracker,
         amount: data.merchant_amount,

@@ -154,6 +154,47 @@ async function decryptCredential(row) {
 }
 
 /**
+ * Envelope-encrypts an arbitrary provider credential config object (any shape,
+ * per each gateway's credentialSchema — e.g. { secretKey, webhookSecret } for
+ * Stripe, { integrationKey, encryptionKey } for Pesepay). Same two-layer scheme
+ * as encryptCredential, but the whole config is JSON-sealed under a fresh data key.
+ *
+ * @param {Record<string, any>} config
+ * @returns {Promise<{ config_encrypted: string, data_key_encrypted: string }>}
+ */
+async function encryptConfig(config) {
+  await ready();
+  if (!config || typeof config !== 'object') {
+    throw new Error('encryptConfig: config object is required');
+  }
+  const masterKey = loadMasterKey();
+  const dataKey = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+  return {
+    config_encrypted: sealBytes(JSON.stringify(config), dataKey),
+    data_key_encrypted: sealBytes(dataKey, masterKey),
+  };
+}
+
+/**
+ * Inverse of encryptConfig — returns the decrypted config object.
+ * @param {{ config_encrypted: string, data_key_encrypted: string }} row
+ * @returns {Promise<Record<string, any>>}
+ */
+async function decryptConfig(row) {
+  await ready();
+  if (!row || !row.data_key_encrypted || !row.config_encrypted) {
+    throw new Error('decryptConfig: row is missing config_encrypted / data_key_encrypted');
+  }
+  const masterKey = loadMasterKey();
+  const dataKey = openBytes(row.data_key_encrypted, masterKey);
+  try {
+    return JSON.parse(openString(row.config_encrypted, dataKey));
+  } finally {
+    if (dataKey && dataKey.fill) dataKey.fill(0);
+  }
+}
+
+/**
  * Re-encrypts an existing credential row's data key under a new master key
  * without touching the credential payloads. Used by master-key rotation.
  */
@@ -184,6 +225,8 @@ async function selfTest() {
 module.exports = {
   encryptCredential,
   decryptCredential,
+  encryptConfig,
+  decryptConfig,
   rewrapDataKey,
   selfTest,
   // Exported for unit tests only.

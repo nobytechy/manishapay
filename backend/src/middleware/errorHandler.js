@@ -36,14 +36,25 @@ module.exports = function errorHandler(err, req, res, _next) {
     });
   }
 
-  // pino-http made req.log for us.
+  // pino-http made req.log for us. The FULL error (incl. any raw DB text) is
+  // logged here with the requestId — the client never needs to see it.
   if (req.log) {
     req.log.error({ err: appErr, requestId: req.id }, 'request failed');
   }
 
+  const body = appErr.toJSON();
+
+  // Never leak internal error text (DB constraint names, driver messages, table
+  // internals) to API clients. For server-side (5xx) failures in production,
+  // return a generic message + the stable code; the requestId ties it to the log.
+  if (appErr.status >= 500 && env.NODE_ENV === 'production') {
+    body.message = 'Something went wrong on our side — quote the request id if you contact support.';
+    body.details = undefined;
+  }
+
   res.status(appErr.status).json({
     error: {
-      ...appErr.toJSON(),
+      ...body,
       requestId: req.id,
     },
   });

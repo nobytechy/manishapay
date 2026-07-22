@@ -24,11 +24,13 @@
 'use strict';
 
 const { supabase: defaultSupabase } = require('../config/supabase');
-const defaultPaynow = require('./paynow');
+const { getProvider } = require('../providers');
 const defaultCredentials = require('./credentials');
 const webhookDelivery = require('./webhookDelivery');
 const { logger: defaultLogger } = require('./logger');
 const env = require('../config/env');
+
+const CANON = new Set(['paid', 'pending', 'failed', 'disputed', 'refunded']);
 
 // Process-wide guard so two overlapping sweeps (interval + manual trigger)
 // don't double-poll PayNow and race on the same rows.
@@ -57,7 +59,10 @@ async function reconcilePending(opts = {}) {
   running = true;
 
   const db = opts.supabase || defaultSupabase;
-  const paynow = opts.paynow || defaultPaynow;
+  // Resolve a provider adapter per transaction (contract: pollStatus/normalizeStatus).
+  // Injectable for tests; defaults to the real registry so reconcile follows the
+  // gateway that actually processed each transaction, not just PayNow.
+  const resolveProvider = opts.resolveProvider || ((id) => getProvider(id || 'paynow'));
   const credentials = opts.credentials || defaultCredentials;
   const dispatch = opts.dispatch || webhookDelivery.dispatchToEndpoints;
   const log = opts.logger || defaultLogger;
@@ -77,7 +82,7 @@ async function reconcilePending(opts = {}) {
     const { data: rows, error } = await db
       .from('manishapay_transactions')
       .select(
-        'id, project_id, developer_id, tracker, merchant_reference, merchant_amount, currency, status, status_normalized, mode, method, poll_url, created_at',
+        'id, project_id, developer_id, provider, tracker, merchant_reference, merchant_amount, currency, status, status_normalized, mode, method, poll_url, created_at',
       )
       .neq('mode', 'simulated')
       .eq('status_normalized', 'pending')
@@ -97,27 +102,34 @@ async function reconcilePending(opts = {}) {
 
     for (const txn of rows || []) {
       try {
-        const creds = await credentials.loadActive(txn.project_id, txn.mode);
+        const providerId = txn.provider || 'paynow';
+        const provider = resolveProvider(providerId);
+        const creds = await credentials.loadActive(txn.project_id, providerId, txn.mode);
         if (!creds) {
-          // No credentials → we can't verify PayNow's hash, so don't trust
-          // the poll. Skip quietly; nothing we can safely do here.
+          // No credentials → we can't verify the poll response. Skip quietly.
           continue;
         }
 
-        const live = await paynow.pollStatus(txn.poll_url, creds);
-        if (!live || !live.status) continue;
+        const live = await provider.pollStatus(txn.poll_url, creds);
+        if (!live) continue;
 
-        const rawChanged = live.status !== txn.status;
-        if (!rawChanged) continue; // PayNow agrees with us — nothing to do.
+        // Providers may return a canonical `status` (adapter) or a raw one
+        // (legacy service). Derive both robustly either way.
+        const rawStatus = live.rawStatus != null ? live.rawStatus : live.status;
+        const normalized = live.status && CANON.has(live.status)
+          ? live.status
+          : provider.normalizeStatus(rawStatus);
 
-        const normalized = paynow.normalizeStatus(live.status);
+        const rawChanged = rawStatus != null && rawStatus !== txn.status;
+        const normChanged = normalized && normalized !== txn.status_normalized;
+        if (!rawChanged && !normChanged) continue; // gateway agrees — nothing to do.
+
         const updatedAt = new Date(nowMs).toISOString();
-
         const { error: updErr } = await db
           .from('manishapay_transactions')
           .update({
-            status: live.status,
-            status_normalized: normalized,
+            status: rawStatus != null ? rawStatus : txn.status,
+            status_normalized: normalized || txn.status_normalized,
             paynow_reference: live.paynow_reference || null,
             paid_at: normalized === 'paid' ? updatedAt : null,
             updated_at: updatedAt,
@@ -132,15 +144,14 @@ async function reconcilePending(opts = {}) {
         summary.updated += 1;
 
         // Fire the merchant webhook only when the payment actually RESOLVED
-        // (left the pending state). A Created→Sent shuffle still updates our
-        // row above but is not a merchant-facing event.
-        const resolved = normalized !== txn.status_normalized;
-        if (resolved) {
-          const target = { ...txn, status: live.status, status_normalized: normalized };
+        // (normalized status left `pending`). A raw-only shuffle updates the row
+        // above but is not a merchant-facing event.
+        if (normChanged) {
+          const target = { ...txn, status: rawStatus, status_normalized: normalized };
           const res = await dispatch(target, { supabase: db, logger: log });
           summary.dispatched += (res && res.dispatched) || 0;
           log.info(
-            { tracker: txn.tracker, from: txn.status, to: live.status, dispatched: res && res.dispatched },
+            { tracker: txn.tracker, provider: providerId, from: txn.status_normalized, to: normalized, dispatched: res && res.dispatched },
             'reconcile: recovered stranded transaction',
           );
         }

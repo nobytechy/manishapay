@@ -35,6 +35,8 @@ const billingRouter = require('./routes/billing');
 const subscriptionsRouter = require('./routes/subscriptions');
 const cliRouter = require('./routes/cli');
 const teamRouter = require('./routes/team');
+const providersRouter = require('./routes/providers');
+const gatewayWebhookRouter = require('./routes/gatewayWebhook');
 
 function buildApp() {
   const app = express();
@@ -91,9 +93,11 @@ function buildApp() {
   // ─── Public routes (no auth needed) ────────────────────
   app.use('/health', healthRouter);
   app.use('/v1/auth', authRouter);         // Bootstrap a developer profile from any Supabase session
-  app.use('/v1/webhook', webhookRouter);   // PayNow → us, signature-validated inside the router
+  app.use('/v1/webhook', webhookRouter);   // PayNow → us (POST /), signature-validated inside the router
+  app.use('/v1/webhook', gatewayWebhookRouter); // /:provider — generic multi-gateway inbound callbacks
   app.use('/v1/reconcile', reconcileRouter); // Cron-secret-guarded missed-webhook sweep
   app.use('/simulator', simulatorRouter);  // Simulated checkout pages + outcome triggers
+  app.use('/v1/providers', providersRouter); // Public gateway catalog (Connect App + docs + SDKs)
 
   // ─── Data-plane (API key auth) ─────────────────────────
   app.use('/v1/pay', devRateLimiter, payRouter);

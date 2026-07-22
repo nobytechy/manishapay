@@ -286,7 +286,61 @@ create policy manishapay_team_deliveries on public.manishapay_webhook_deliveries
     (select e.developer_id from public.manishapay_webhook_endpoints e where e.id = endpoint_id)));
 
 -- ════════════════════════════════════════════════════════════════════════
+--  Multi-gateway orchestration: provider column + generic gateway credentials
+--  (2026-07 provider-abstraction release — every gateway stores creds here)
+-- ════════════════════════════════════════════════════════════════════════
+
+-- Which gateway processed each transaction. Backfills existing rows → 'paynow'.
+alter table public.manishapay_transactions
+  add column if not exists provider text not null default 'paynow';
+
+-- Which gateway collects on a payment link / bills a subscription. Backfills
+-- existing rows → 'paynow', so all pre-multi-gateway links & subs keep working.
+alter table public.manishapay_payment_links
+  add column if not exists provider text not null default 'paynow';
+alter table public.manishapay_subscriptions
+  add column if not exists provider text not null default 'paynow';
+
+-- Multi-method hosted checkout: the methods a link offers the customer, plus an
+-- optional per-method gateway override. Both null on legacy links → the link
+-- behaves as a single-gateway checkout (fully backward compatible).
+alter table public.manishapay_payment_links
+  add column if not exists enabled_methods jsonb;
+alter table public.manishapay_payment_links
+  add column if not exists method_routing jsonb;
+
+-- One generic, encrypted credential store for ALL gateways. Each gateway keeps
+-- its own config shape (per its credentialSchema) as an envelope-encrypted blob,
+-- so adding a new gateway never requires a schema change.
+create table if not exists public.manishapay_gateway_credentials (
+  id                 uuid primary key default gen_random_uuid(),
+  project_id         uuid not null references public.manishapay_projects(id) on delete cascade,
+  provider           text not null,                       -- 'stripe' | 'paystack' | ...
+  mode               text not null check (mode in ('test','live')),
+  config_encrypted   text not null,                       -- envelope-sealed JSON config
+  data_key_encrypted text not null,
+  hint               text,                                -- non-secret display label (e.g. last4)
+  status             text not null default 'active',
+  added_by           uuid,
+  last_used_at       timestamptz,
+  rotated_at         timestamptz,
+  created_at         timestamptz not null default now()
+);
+
+-- Exactly one active credential per (project, provider, mode).
+create unique index if not exists manishapay_gwcred_one_active
+  on public.manishapay_gateway_credentials (project_id, provider, mode)
+  where status = 'active';
+create index if not exists manishapay_gwcred_lookup
+  on public.manishapay_gateway_credentials (project_id, provider, mode, status);
+
+-- Least privilege: enable RLS with NO policies → readable/writable ONLY by the
+-- service role (the backend). The dashboard never touches this table directly;
+-- it reads credential metadata exclusively through the ManishaPay API.
+alter table public.manishapay_gateway_credentials enable row level security;
+
+-- ════════════════════════════════════════════════════════════════════════
 --  Done. After this runs: PayNow merchant email, admin audit trail, support
---  desk, idempotency keys, dynamic WhatsApp settings, and customer-phone
---  receipts are all live.
+--  desk, idempotency keys, dynamic WhatsApp settings, customer-phone receipts,
+--  and multi-gateway provider credentials are all live.
 -- ════════════════════════════════════════════════════════════════════════

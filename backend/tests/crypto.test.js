@@ -84,3 +84,19 @@ test('accepts master key in base64 form too', async () => {
     process.env.MANISHAPAY_MASTER_KEY = saved;
   }
 });
+
+test('encryptConfig → decryptConfig round-trips an arbitrary gateway config', async () => {
+  const config = { secretKey: 'sk_test_abc', webhookSecret: 'whsec_xyz', nested: { a: 1, b: [2, 3] } };
+  const sealed = await crypto.encryptConfig(config);
+  assert.ok(sealed.config_encrypted && sealed.data_key_encrypted, 'both ciphertexts present');
+  assert.ok(!JSON.stringify(sealed).includes('sk_test_abc'), 'plaintext never appears in the sealed blob');
+  const out = await crypto.decryptConfig(sealed);
+  assert.deepEqual(out, config);
+});
+
+test('decryptConfig rejects a tampered config blob', async () => {
+  const sealed = await crypto.encryptConfig({ k: 'v' });
+  await assert.rejects(() =>
+    crypto.decryptConfig({ ...sealed, config_encrypted: sealed.config_encrypted.slice(0, -6) + 'AAAAAA' }),
+  );
+});

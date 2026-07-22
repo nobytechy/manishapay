@@ -293,6 +293,13 @@ async function pollStatus(pollUrl, creds) {
   if (pollUrl.includes('/simulator/')) {
     return { ok: true, status: 'Sent', amount: '0.00', reference: 'simulated', simulated: true };
   }
+  // SSRF guard: a real PayNow poll_url is supplied by PayNow's response and must
+  // point at PayNow — never an internal or arbitrary host — before we POST to it.
+  let pollHost;
+  try { pollHost = new URL(pollUrl).host; } catch { throw AppError.badRequest('poll_url is not a valid URL'); }
+  if (!/(^|\.)paynow\.co\.zw$/i.test(pollHost)) {
+    throw AppError.badRequest(`poll_url host not allowed: ${pollHost}`);
+  }
   if (!creds) throw AppError.badRequest('creds required to verify poll response');
 
   const res = await withRetry(() => axios.post(pollUrl, '', { timeout: 10_000 }), {

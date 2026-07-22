@@ -77,10 +77,10 @@ test('reconcile: resolves a paid transaction and dispatches the merchant webhook
       selectResult: [pendingTxn()],
       onUpdate: (id, payload) => updates.push({ id, payload }),
     }),
-    paynow: {
+    resolveProvider: () => ({
       pollStatus: async () => ({ status: 'Paid', paynow_reference: 'pn-123' }),
       normalizeStatus: realPaynow.normalizeStatus,
-    },
+    }),
     credentials: okCreds,
     dispatch: async (txn) => { dispatched.push(txn); return { dispatched: 1 }; },
   });
@@ -106,7 +106,7 @@ test('reconcile: no change when PayNow still reports the same status', async () 
     force: true,
     logger: noopLogger,
     supabase: mockSupabase({ selectResult: [pendingTxn()], onUpdate: (i, p) => updates.push({ i, p }) }),
-    paynow: { pollStatus: async () => ({ status: 'Sent' }), normalizeStatus: realPaynow.normalizeStatus },
+    resolveProvider: () => ({ pollStatus: async () => ({ status: 'Sent' }), normalizeStatus: realPaynow.normalizeStatus }),
     credentials: okCreds,
     dispatch: async () => { dispatched.push(1); return { dispatched: 1 }; },
   });
@@ -125,7 +125,7 @@ test('reconcile: a status shuffle that stays pending updates the row but fires n
     logger: noopLogger,
     supabase: mockSupabase({ selectResult: [pendingTxn({ status: 'Created' })], onUpdate: (i, p) => updates.push(p) }),
     // Created → Sent: raw status changed, but both normalize to 'pending'.
-    paynow: { pollStatus: async () => ({ status: 'Sent' }), normalizeStatus: realPaynow.normalizeStatus },
+    resolveProvider: () => ({ pollStatus: async () => ({ status: 'Sent' }), normalizeStatus: realPaynow.normalizeStatus }),
     credentials: okCreds,
     dispatch: async () => { dispatched.push(1); return { dispatched: 1 }; },
   });
@@ -141,7 +141,7 @@ test('reconcile: skips transactions with no loadable credentials', async () => {
     force: true,
     logger: noopLogger,
     supabase: mockSupabase({ selectResult: [pendingTxn()], onUpdate: (i, p) => updates.push(p) }),
-    paynow: { pollStatus: async () => ({ status: 'Paid' }), normalizeStatus: realPaynow.normalizeStatus },
+    resolveProvider: () => ({ pollStatus: async () => ({ status: 'Paid' }), normalizeStatus: realPaynow.normalizeStatus }),
     credentials: { loadActive: async () => null },
     dispatch: async () => ({ dispatched: 1 }),
   });
@@ -158,14 +158,14 @@ test('reconcile: one failing transaction does not abort the sweep', async () => 
     force: true,
     logger: noopLogger,
     supabase: mockSupabase({ selectResult: [pendingTxn({ id: 'a' }), pendingTxn({ id: 'b' })] }),
-    paynow: {
+    resolveProvider: () => ({
       pollStatus: async () => {
         polls += 1;
         if (polls === 1) throw new Error('PayNow timeout');
         return { status: 'Paid' };
       },
       normalizeStatus: realPaynow.normalizeStatus,
-    },
+    }),
     credentials: okCreds,
     dispatch: async () => { dispatched.push(1); return { dispatched: 1 }; },
   });
@@ -192,7 +192,7 @@ test('reconcile: concurrency guard skips an overlapping sweep', async () => {
     },
   };
 
-  const deps = { logger: noopLogger, paynow: realPaynow, credentials: okCreds, dispatch: async () => ({ dispatched: 0 }) };
+  const deps = { logger: noopLogger, resolveProvider: () => realPaynow, credentials: okCreds, dispatch: async () => ({ dispatched: 0 }) };
   const p1 = reconcilePending({ ...deps, supabase: lingering });
   const p2 = reconcilePending({ ...deps, supabase: slowSupabase });
   const [r1, r2] = await Promise.all([p1, p2]);

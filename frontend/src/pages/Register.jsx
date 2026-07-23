@@ -43,7 +43,7 @@ export default function Register() {
   const verify = async (e) => {
     e.preventDefault();
     const clean = code.replace(/\D/g, '');
-    if (clean.length < 6) { toast.error('Enter the 6-digit code from your email'); return; }
+    if (clean.length < 6) { toast.error('Enter the full code from your email'); return; }
     setVerifying(true);
     try {
       await verifyEmailOtp(email, clean);
@@ -123,7 +123,7 @@ export default function Register() {
               </span>
               <h1 className="text-lg font-semibold text-slate-100">Verify your email</h1>
               <p className="mt-1 text-sm text-slate-400">
-                We sent a 6-digit code and a confirmation link to
+                We sent a verification code and a confirmation link to
               </p>
               <p className="text-sm font-medium text-slate-200">{email}</p>
             </div>
@@ -136,15 +136,15 @@ export default function Register() {
 
             <form onSubmit={verify} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-300">Enter the 6-digit code</label>
+                <label className="mb-1 block text-sm font-medium text-slate-300">Enter the code from your email</label>
                 <input
-                  className="input w-full text-center font-mono text-lg tracking-[0.5em]"
+                  className="input w-full text-center font-mono text-lg tracking-[0.3em]"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={6}
-                  placeholder="••••••"
+                  maxLength={10}
+                  placeholder="Enter code"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   autoFocus
                 />
               </div>

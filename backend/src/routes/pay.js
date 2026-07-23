@@ -246,6 +246,9 @@ router.get('/:reference/status', async (req, res, next) => {
         status: data.status,
         status_normalized: data.status_normalized,
         mode: data.mode,
+        // How the gateway was authenticated: the developer's own connected keys,
+        // ManishaPay's shared test sandbox, or the built-in PayNow simulator.
+        credential_source: creds ? (creds.source || 'own') : (result.mode === 'simulated' ? 'simulated' : null),
         method: data.method,
         paynow_reference: data.paynow_reference,
         created_at: data.created_at,

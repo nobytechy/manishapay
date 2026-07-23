@@ -393,6 +393,7 @@ export default function Sandbox() {
         amount: payload.amount || amount.trim(),
         browser_url: checkoutUrl,
         mode: payload.mode,
+        credential_source: payload.credential_source, // own | platform-sandbox | simulated
         status: (payload.status_normalized || payload.status || 'pending').toLowerCase(),
         scenarioId,
         createdAt: new Date().toISOString(),
@@ -534,6 +535,16 @@ export default function Sandbox() {
           </div>
         </div>
       </header>
+
+      {/* Shared-sandbox reassurance — the whole point: test with zero setup. */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-brand/20 bg-brand/5 p-4 text-sm text-slate-300">
+        <ShieldCheck size={18} className="mt-0.5 shrink-0 text-brand" />
+        <span>
+          <span className="font-semibold text-slate-100">No gateway account needed to test.</span> In test mode, PayNow runs on the
+          built-in simulator and every other gateway runs on <span className="font-semibold text-brand">ManishaPay's shared sandbox</span> —
+          so you can try any gateway here with zero keys or setup. Connect your own keys only when you're ready to go live.
+        </span>
+      </div>
 
       {/* ── Forum scenario presets ─────────────────────────── */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
@@ -776,6 +787,14 @@ export default function Sandbox() {
                   {current.mode && <> · Mode: <span className="font-mono text-slate-300">{current.mode}</span></>}
                 </span>
               </div>
+              {(current.credential_source === 'platform-sandbox' || current.credential_source === 'simulated') && (
+                <div className="flex items-center gap-1.5 rounded-md border border-brand/20 bg-brand/5 px-2.5 py-1.5 text-[11px] text-slate-300">
+                  <ShieldCheck size={12} className="text-brand" />
+                  {current.credential_source === 'simulated'
+                    ? 'Ran on the built-in PayNow simulator — no account or keys needed.'
+                    : "Ran on ManishaPay's shared sandbox — no gateway account or keys needed."}
+                </div>
+              )}
 
               {current.tracker && <CopyField label="Tracker" value={current.tracker} />}
               <CopyField label="Reference" value={current.reference} />

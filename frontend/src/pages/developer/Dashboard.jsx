@@ -6,6 +6,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { Receipt, KeyRound, Webhook, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
+import GettingStarted from '../../components/onboarding/GettingStarted';
+import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
 
 function Stat({ icon: Icon, label, value, loading }) {
   return (
@@ -26,6 +28,8 @@ export default function DeveloperDashboard() {
   const [counts, setCounts] = useState({ keys: 0, txns: 0, hooks: 0, success: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Welcome tour auto-opens once per device on first visit; replayable from the card.
+  const [tourOpen, setTourOpen] = useState(() => !localStorage.getItem(TOUR_SEEN_KEY));
 
   useEffect(() => {
     if (!user) return;
@@ -59,10 +63,14 @@ export default function DeveloperDashboard() {
 
   return (
     <div className="space-y-6">
+      <WelcomeTour open={tourOpen} onClose={() => setTourOpen(false)} />
+
       <header>
         <h1 className="text-2xl font-semibold text-slate-100">Overview</h1>
         <p className="text-sm text-slate-400">Snapshot of your ManishaPay activity.</p>
       </header>
+
+      <GettingStarted onStartTour={() => setTourOpen(true)} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={KeyRound} label="API keys" value={counts.keys} loading={loading} />

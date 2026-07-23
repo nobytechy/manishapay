@@ -110,12 +110,15 @@ export function AuthProvider({ children }) {
       // whole dashboard on a Supabase profile round-trip. Load it in the background.
       setLoading(false);
       if (data.session?.user) {
-        ensureProfile(data.session.user.id).then((p) => {
-          if (active) { setProfile(p); setProfileReady(true); }
-        });
+        ensureProfile(data.session.user.id)
+          .then((p) => { if (active) { setProfile(p); setProfileReady(true); } })
+          .catch(() => { if (active) setProfileReady(true); }); // never hang admin gate
       } else {
         setProfileReady(true);
       }
+    }).catch(() => {
+      // getSession should never reject, but if it does, don't spin forever.
+      if (active) { setLoading(false); setProfileReady(true); }
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, s) => {

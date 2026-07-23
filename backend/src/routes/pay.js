@@ -20,6 +20,7 @@ const { z } = require('zod');
 const { authenticate } = require('../middleware/auth');
 const paynow = require('../services/paynow');
 const { getProvider } = require('../providers');
+const catalog = require('../providers/catalog');
 const credentials = require('../services/credentials');
 const qr = require('../services/qr');
 const { supabase } = require('../config/supabase');
@@ -36,11 +37,13 @@ const initiateSchema = z.object({
   description: z.string().max(255).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  method: z.enum(['ecocash', 'onemoney', 'innbucks', 'omari', 'zimswitch', 'vmc']).optional(),
-  // PayNow currency is fixed by the integration (commonly USD or ZWL). We let
-  // the merchant declare it so we can store and echo it back on every response —
-  // removing the "which currency did this run in?" ambiguity from the forum.
-  currency: z.enum(['USD', 'ZWL']).optional(),
+  // Method is a free-form rail name (ecocash, mpesa, card, mobile_money, paypal…).
+  // It is validated PROVIDER-AWARE against the resolved gateway's capabilities
+  // below — a fixed enum here would reject every non-PayNow gateway.
+  method: z.string().min(1).max(32).optional(),
+  // 3-letter ISO currency code. Each provider validates the currencies it actually
+  // supports; a fixed USD/ZWL enum here would reject KES (M-Pesa), ZAR (Yoco), etc.
+  currency: z.string().regex(/^[A-Za-z]{3}$/, 'currency must be a 3-letter code').optional(),
   return_url: z.string().url().optional(),
   result_url: z.string().url().optional(),
 });
@@ -84,6 +87,16 @@ router.post('/', async (req, res, next) => {
     // Defaults to PayNow; an unknown gateway throws a clean error here.
     const providerId = parsed.data.provider || 'paynow';
     const provider = getProvider(providerId);
+
+    // Provider-aware method validation (replaces the old PayNow-only enum): if a
+    // method is given, it must be one the resolved gateway actually serves.
+    if (parsed.data.method && !catalog.providerServes(providerId, parsed.data.method)) {
+      const supported = catalog.get(providerId)?.capabilities?.methods || [];
+      throw AppError.badRequest(
+        `Method '${parsed.data.method}' is not supported by ${provider.displayName || providerId}`,
+        { resolution: supported.length ? `Supported methods: ${supported.join(', ')}` : undefined },
+      );
+    }
 
     // Load THIS provider's credentials for the API key's mode. May be null:
     //   • PayNow test with no creds → simulated path

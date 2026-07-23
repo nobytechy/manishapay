@@ -283,7 +283,10 @@ export default function Sandbox() {
   const changeProvider = (id) => {
     setProvider(id);
     setMethod('');
-    setCurrency('USD'); // reset to a value valid for the new gateway's option list
+    // Default to a currency THIS gateway actually supports (Paystack rejects an
+    // unsupported currency; M-Pesa is KES-only). Driven by the catalog, not hardcoded.
+    const p = providers.find((x) => x.id === id);
+    setCurrency((p?.currencies && p.currencies[0]) || 'USD');
   };
 
   // PayNow Express Checkout rules (PayNow-only): any `method` → email (authemail)
@@ -666,7 +669,10 @@ export default function Sandbox() {
                     onChange={(e) => setCurrency(e.target.value)}
                     title="Currency sent to the gateway"
                   >
-                    {(isPaynow ? ['USD', 'ZWL'] : ['USD', 'EUR', 'GBP', 'ZAR', 'KES', 'NGN', 'GHS'])
+                    {/* Dynamic — only currencies this gateway actually supports. */}
+                    {((selectedProvider?.currencies && selectedProvider.currencies.length)
+                      ? selectedProvider.currencies
+                      : (isPaynow ? ['USD', 'ZWL'] : ['USD']))
                       .map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>

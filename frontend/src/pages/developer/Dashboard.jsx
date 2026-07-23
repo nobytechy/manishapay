@@ -8,6 +8,7 @@ import { Receipt, KeyRound, Webhook, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
 import GettingStarted from '../../components/onboarding/GettingStarted';
 import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
+import Congrats from '../../components/onboarding/Congrats';
 
 function Stat({ icon: Icon, label, value, loading }) {
   return (
@@ -28,8 +29,10 @@ export default function DeveloperDashboard() {
   const [counts, setCounts] = useState({ keys: 0, txns: 0, hooks: 0, success: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Welcome tour auto-opens once per device on first visit; replayable from the card.
-  const [tourOpen, setTourOpen] = useState(() => !localStorage.getItem(TOUR_SEEN_KEY));
+  // First-run onboarding: celebrate activation, then the tour. 'congrats' -> 'tour' -> null.
+  // Auto-runs once per device (TOUR_SEEN_KEY); the tour is replayable from the card.
+  const [stage, setStage] = useState(() => (localStorage.getItem(TOUR_SEEN_KEY) ? null : 'congrats'));
+  const finishOnboarding = () => { localStorage.setItem(TOUR_SEEN_KEY, '1'); setStage(null); };
 
   useEffect(() => {
     if (!user) return;
@@ -63,14 +66,15 @@ export default function DeveloperDashboard() {
 
   return (
     <div className="space-y-6">
-      <WelcomeTour open={tourOpen} onClose={() => setTourOpen(false)} />
+      <Congrats open={stage === 'congrats'} onTour={() => setStage('tour')} onSkip={finishOnboarding} />
+      <WelcomeTour open={stage === 'tour'} onClose={finishOnboarding} />
 
       <header>
         <h1 className="text-2xl font-semibold text-slate-100">Overview</h1>
         <p className="text-sm text-slate-400">Snapshot of your ManishaPay activity.</p>
       </header>
 
-      <GettingStarted onStartTour={() => setTourOpen(true)} />
+      <GettingStarted onStartTour={() => setStage('tour')} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={KeyRound} label="API keys" value={counts.keys} loading={loading} />

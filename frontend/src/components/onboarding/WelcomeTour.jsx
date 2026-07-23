@@ -16,7 +16,7 @@ const SLIDES = [
   {
     icon: Rocket, accent: 'text-brand', bg: 'bg-brand/15',
     title: 'Welcome to ManishaPay 👋',
-    body: 'One API for many payment gateways — PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa and more. Here\'s a 30-second tour of where everything lives.',
+    body: 'One API for many payment gateways — PayNow, Stripe, Paystack, M-Pesa and more. New here? To start testing you only need two things: a test API key and the Sandbox. This 30-second tour shows you exactly where to go — no experience required.',
   },
   {
     icon: FlaskConical, accent: 'text-brand', bg: 'bg-brand/15',

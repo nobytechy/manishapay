@@ -26,6 +26,9 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Separate from `loading`: the app renders as soon as the SESSION is known;
+  // the profile (needed only for admin gating / display) loads in the background.
+  const [profileReady, setProfileReady] = useState(false);
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) return null;
@@ -100,19 +103,30 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       setSession(data.session);
-      if (data.session?.user) {
-        setProfile(await ensureProfile(data.session.user.id));
-      }
+      // Render the app immediately once the session is known — don't block the
+      // whole dashboard on a Supabase profile round-trip. Load it in the background.
       setLoading(false);
+      if (data.session?.user) {
+        ensureProfile(data.session.user.id).then((p) => {
+          if (active) { setProfile(p); setProfileReady(true); }
+        });
+      } else {
+        setProfileReady(true);
+      }
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, s) => {
       if (!active) return;
       setSession(s);
-      setProfile(s?.user ? await ensureProfile(s.user.id) : null);
+      if (s?.user) {
+        const p = await ensureProfile(s.user.id);
+        if (active) { setProfile(p); setProfileReady(true); }
+      } else {
+        setProfile(null); setProfileReady(true);
+      }
     });
 
     return () => {
@@ -252,6 +266,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!session,
     isAdmin: profile?.role === 'admin',
     loading,
+    profileReady,
     signIn,
     signUp,
     verifyEmailOtp,

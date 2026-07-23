@@ -23,6 +23,7 @@ import {
   CreditCard,
   Repeat,
   Plug,
+  X,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -60,40 +61,64 @@ const adminNav = [
   { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose = () => {} }) {
   const { isAdmin } = useAuth();
   const items = isAdmin ? adminNav : developerNav;
 
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900/40 px-4 py-6 md:flex">
-      <div className="mb-8 flex items-center gap-2.5 px-2">
-        <img src="/logo.png" alt="ManishaPay" className="h-8 w-8 rounded-lg" />
-        <div>
-          <p className="text-sm font-semibold text-slate-100">ManishaPay</p>
-          <p className="text-[10px] uppercase tracking-wider text-slate-500">Payments API</p>
-        </div>
-      </div>
+    <>
+      {/* Mobile backdrop — tap to close */}
+      {open && (
+        <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={onClose} aria-hidden="true" />
+      )}
 
-      <nav className="flex-1 space-y-1">
-        {items.map(({ to, icon: Icon, label, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-brand/10 text-brand'
-                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
-              )
-            }
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-900 px-4 py-6 transition-transform duration-200 ease-out',
+          'md:static md:z-auto md:translate-x-0 md:bg-slate-900/40',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="mb-8 flex items-center justify-between px-2">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="ManishaPay" className="h-8 w-8 rounded-lg" />
+            <div>
+              <p className="text-sm font-semibold text-slate-100">ManishaPay</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">Payments API</p>
+            </div>
+          </div>
+          {/* Close button — mobile only */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 md:hidden"
+            aria-label="Close menu"
           >
-            <Icon size={16} />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+            <X size={18} />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1">
+          {items.map(({ to, icon: Icon, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              onClick={onClose}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-brand/10 text-brand'
+                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
+                )
+              }
+            >
+              <Icon size={16} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
 
       <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900 p-3">
         <p className="mb-2 text-xs font-medium text-slate-300">Need help?</p>
@@ -120,6 +145,7 @@ export default function Sidebar() {
           </a>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

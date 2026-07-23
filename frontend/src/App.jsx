@@ -44,8 +44,12 @@ import AdminWebhooks from './pages/admin/Webhooks';
 import AdminAnnouncements from './pages/admin/Announcements';
 
 function Protected({ children, adminOnly = false }) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  if (loading) {
+  const { isAuthenticated, isAdmin, loading, profileReady } = useAuth();
+  // Spinner only while the SESSION is unknown, or (for admin routes) while the
+  // profile that decides admin access is still loading. Regular /app pages render
+  // as soon as the session is known — no waiting on a profile round-trip.
+  const waiting = loading || (adminOnly && isAuthenticated && !profileReady);
+  if (waiting) {
     return (
       <div className="grid min-h-screen place-items-center bg-slate-950">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />

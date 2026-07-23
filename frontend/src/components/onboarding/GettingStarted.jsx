@@ -21,21 +21,28 @@ export default function GettingStarted({ onStartTour }) {
     if (!user || dismissed) return;
     let active = true;
     (async () => {
-      // Note: manishapay_gateway_credentials has service-role-only RLS, so a
-      // client query always returns 0 — use the client-readable PayNow creds as
-      // the "connected a gateway" signal (the common first case).
-      const [proj, keys, txns, gwPaynow] = await Promise.all([
-        supabase.from('manishapay_projects').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
+      // PayNow creds are keyed by project_id (NOT developer_id) — fetch the
+      // developer's project ids first, then scope the gateway check to them.
+      // (manishapay_gateway_credentials is service-role RLS, so PayNow creds are
+      // the client-readable "connected a gateway" signal.)
+      const { data: projRows, error: projErr } = await supabase
+        .from('manishapay_projects').select('id').eq('developer_id', user.id);
+      if (projErr) return; // fail quiet — the checklist is best-effort
+      const projectIds = (projRows || []).map((p) => p.id);
+
+      const [keys, txns, gw] = await Promise.all([
         supabase.from('manishapay_api_keys').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
         supabase.from('manishapay_transactions').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
-        supabase.from('manishapay_paynow_credentials').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
+        projectIds.length
+          ? supabase.from('manishapay_paynow_credentials').select('id', { count: 'exact', head: true }).in('project_id', projectIds)
+          : Promise.resolve({ count: 0 }),
       ]);
       if (!active) return;
       setCounts({
-        projects: proj.count ?? 0,
+        projects: projectIds.length,
         keys: keys.count ?? 0,
         txns: txns.count ?? 0,
-        gateways: gwPaynow.count ?? 0,
+        gateways: gw.count ?? 0,
       });
     })();
     return () => { active = false; };

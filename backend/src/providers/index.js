@@ -84,6 +84,10 @@ function listCatalog() {
     website: c.website,
     capabilities: c.capabilities,
     credentialSchema: c.credentialSchema,
+    // True when the server has shared TEST/sandbox credentials for this gateway,
+    // so a developer can test it with ZERO setup (their own keys only for live).
+    // Lazy require avoids any load-order cycle with the credentials service.
+    sandboxAvailable: !!require('../services/credentials').sandboxFromEnv(c.id),
   }));
 }
 

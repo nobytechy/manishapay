@@ -149,8 +149,8 @@ export default function Docs() {
       <Card title="More resources">
         <ul className="space-y-2 text-sm">
           <li><a className="inline-flex items-center gap-2 text-brand hover:underline" href="/openapi.json" target="_blank" rel="noopener noreferrer"><BookOpen size={14}/> OpenAPI spec <ExternalLink size={12}/></a></li>
-          <li><a className="inline-flex items-center gap-2 text-brand hover:underline" href="/docs/API.md" target="_blank" rel="noopener noreferrer"><Terminal size={14}/> Full API reference <ExternalLink size={12}/></a></li>
-          <li><a className="inline-flex items-center gap-2 text-brand hover:underline" href="/docs/INTEGRATION.md" target="_blank" rel="noopener noreferrer"><Code2 size={14}/> Integration walkthrough <ExternalLink size={12}/></a></li>
+          <li><a className="inline-flex items-center gap-2 text-brand hover:underline" href="https://github.com/nobytechy/manishapay/blob/main/docs/API.md" target="_blank" rel="noopener noreferrer"><Terminal size={14}/> Full API reference <ExternalLink size={12}/></a></li>
+          <li><a className="inline-flex items-center gap-2 text-brand hover:underline" href="https://github.com/nobytechy/manishapay/blob/main/docs/INTEGRATION.md" target="_blank" rel="noopener noreferrer"><Code2 size={14}/> Integration walkthrough <ExternalLink size={12}/></a></li>
         </ul>
       </Card>
     </div>

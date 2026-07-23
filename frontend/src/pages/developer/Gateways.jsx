@@ -111,6 +111,19 @@ export default function Gateways() {
         </div>
       </Card>
 
+      {/* Shared-sandbox note — only in test mode. */}
+      {mode === 'test' && (
+        <div className="flex items-start gap-2 rounded-lg border border-brand/20 bg-brand/5 p-3 text-xs text-slate-300">
+          <Check size={14} className="mt-0.5 shrink-0 text-brand" />
+          <span>
+            <span className="font-semibold text-slate-100">Test mode — no setup needed.</span> Gateways marked
+            {' '}<span className="font-semibold text-brand">Test-ready</span> run on ManishaPay's shared sandbox, so you can test
+            payments and payment links right away. Prefer your own test account? <span className="font-semibold">Use my own keys</span> on any
+            gateway — optional in test, required to go <span className="font-semibold">live</span>.
+          </span>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-sm text-slate-400">Loading gateways…</p>
       ) : providers.length === 0 ? (
@@ -125,7 +138,7 @@ export default function Gateways() {
             {live.map((p) => {
               const conn = connectedFor(p.id);
               return (
-                <GatewayCard key={p.id} p={p} connected={conn}
+                <GatewayCard key={p.id} p={p} connected={conn} mode={mode}
                   onConnect={() => openConnect(p)}
                   onDisconnect={conn ? () => setConfirmId(conn.id) : null}
                   isPaynow={p.id === 'paynow'} />
@@ -192,7 +205,10 @@ export default function Gateways() {
   );
 }
 
-function GatewayCard({ p, connected, comingSoon, onConnect, onDisconnect, isPaynow }) {
+function GatewayCard({ p, connected, comingSoon, mode, onConnect, onDisconnect, isPaynow }) {
+  // Test-ready when the server has shared sandbox creds for this gateway (or it's
+  // PayNow, which always has the built-in simulator). Only relevant in test mode.
+  const testReady = mode === 'test' && (p.sandboxAvailable || isPaynow);
   return (
     <div className={`rounded-xl border p-4 ${comingSoon ? 'border-slate-800 bg-slate-900/30 opacity-70' : 'border-slate-800 bg-slate-900/40'}`}>
       <div className="flex items-start justify-between">
@@ -209,7 +225,9 @@ function GatewayCard({ p, connected, comingSoon, onConnect, onDisconnect, isPayn
           ? <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-400">Coming soon</span>
           : connected
             ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400"><Check size={10} /> Connected</span>
-            : <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-brand">Live</span>}
+            : testReady
+              ? <span className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-brand"><Check size={10} /> Test-ready</span>
+              : <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-400">Connect for test</span>}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1">
@@ -222,14 +240,16 @@ function GatewayCard({ p, connected, comingSoon, onConnect, onDisconnect, isPayn
         <div className="mt-4 flex items-center justify-between">
           {connected
             ? <span className="font-mono text-xs text-slate-500"><Lock size={11} className="mr-1 inline" />{connected.hint || 'configured'}</span>
-            : <span className="text-xs text-slate-500">{isPaynow ? 'Managed on Credentials' : 'Not connected'}</span>}
+            : testReady
+              ? <span className="text-xs text-brand">Shared sandbox — no keys needed to test</span>
+              : <span className="text-xs text-slate-500">{isPaynow ? 'Managed on Credentials' : 'Not connected'}</span>}
           <div className="flex gap-2">
             {onDisconnect && (
               <button onClick={onDisconnect} className="text-rose-400 hover:text-rose-300" title="Disconnect"><Trash2 size={14} /></button>
             )}
             {isPaynow
               ? <Link to="/app/credentials" className="text-xs font-semibold text-brand underline">Manage</Link>
-              : <Button variant="ghost" onClick={onConnect}>{connected ? 'Update keys' : 'Connect'}</Button>}
+              : <Button variant="ghost" onClick={onConnect}>{connected ? 'Update keys' : (testReady ? 'Use my own keys' : 'Connect')}</Button>}
           </div>
         </div>
       )}

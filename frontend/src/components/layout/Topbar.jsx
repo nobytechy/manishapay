@@ -1,18 +1,28 @@
 import { useState } from 'react';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAccount } from '../../context/AccountContext';
 import ThemeToggle from '../ThemeToggle';
 
-export default function Topbar() {
+export default function Topbar({ onMenu = () => {} }) {
   const { user, profile, signOut } = useAuth();
   const { accountId, accounts, setAccountId } = useAccount();
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-800 bg-slate-950/80 px-6 backdrop-blur">
-      <div className="text-sm text-slate-400">
-        Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span>
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-slate-800 bg-slate-950/80 px-4 backdrop-blur sm:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onMenu}
+          className="-ml-1 rounded-md p-2 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:hidden"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="truncate text-sm text-slate-400">
+          Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {accounts.length > 1 && (

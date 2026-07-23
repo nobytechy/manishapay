@@ -4,9 +4,9 @@ import toast from 'react-hot-toast';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { ConfirmModal } from '../../components/ui/Modal';
+import Modal, { ConfirmModal } from '../../components/ui/Modal';
 import { api } from '../../lib/api';
-import { Check, Lock, Plug, Trash2, X } from 'lucide-react';
+import { Check, Lock, Plug, Trash2 } from 'lucide-react';
 
 /**
  * Payment Gateways — connect the gateways you want, once. One ManishaPay API
@@ -144,39 +144,41 @@ export default function Gateways() {
         </>
       )}
 
-      {/* Connect form */}
-      {connecting && (
-        <Card>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold">Connect {connecting.displayName} <span className="text-xs text-slate-500">· {mode}</span></h3>
-            <button onClick={() => setConnecting(null)} className="text-slate-500 hover:text-slate-300"><X size={16} /></button>
-          </div>
-          {connecting.id === 'paynow' ? (
-            <p className="text-sm text-slate-400">
-              PayNow is managed on the <Link to="/app/credentials" className="text-brand underline">Credentials</Link> page.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {(connecting.credentialSchema || []).map((f) => (
-                <div key={f.key}>
-                  <Input
-                    label={f.label + (f.required ? '' : ' (optional)')}
-                    type={f.type === 'password' ? 'password' : 'text'}
-                    value={form[f.key] || ''}
-                    onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
-                  />
-                  {f.help && <p className="mt-1 text-xs text-slate-500">{f.help}</p>}
-                </div>
-              ))}
-              <div className="flex justify-end gap-2 border-t border-slate-800 pt-3">
-                <Button variant="ghost" onClick={() => setConnecting(null)}>Cancel</Button>
-                <Button onClick={save} loading={saving}><Plug size={14} /> Connect {connecting.displayName}</Button>
+      {/* Connect form — a focused modal so it's instantly visible regardless of
+          how many gateways are listed (no scrolling to a form at the bottom). */}
+      <Modal
+        open={!!connecting}
+        onClose={() => setConnecting(null)}
+        title={connecting ? `Connect ${connecting.displayName}` : ''}
+        description={connecting ? `${mode} mode · enter this gateway's keys` : ''}
+        actions={connecting && connecting.id !== 'paynow' ? (
+          <>
+            <Button variant="ghost" onClick={() => setConnecting(null)}>Cancel</Button>
+            <Button onClick={save} loading={saving}><Plug size={14} /> {connectedFor(connecting.id) ? 'Update' : 'Connect'}</Button>
+          </>
+        ) : null}
+      >
+        {connecting && (connecting.id === 'paynow' ? (
+          <p className="text-sm text-slate-400">
+            PayNow is managed on the <Link to="/app/credentials" className="text-brand underline">Credentials</Link> page.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {(connecting.credentialSchema || []).map((f) => (
+              <div key={f.key}>
+                <Input
+                  label={f.label + (f.required ? '' : ' (optional)')}
+                  type={f.type === 'password' ? 'password' : 'text'}
+                  value={form[f.key] || ''}
+                  onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+                />
+                {f.help && <p className="mt-1 text-xs text-slate-500">{f.help}</p>}
               </div>
-              <p className="text-xs text-slate-500">Keys are encrypted server-side and never shown back to the dashboard.</p>
-            </div>
-          )}
-        </Card>
-      )}
+            ))}
+            <p className="text-xs text-slate-500">Keys are encrypted server-side and never shown back to the dashboard.</p>
+          </div>
+        ))}
+      </Modal>
 
       <ConfirmModal
         open={!!confirmId}

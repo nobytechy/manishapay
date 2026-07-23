@@ -154,8 +154,10 @@ export function AuthProvider({ children }) {
   // the link — better on mobile / across devices). On success Supabase returns a
   // session and onAuthStateChange lands the user in the app.
   const verifyEmailOtp = async (email, token) => {
+    // Supabase: the 6-digit code from the Confirm-signup email is verified with
+    // type 'email' (NOT 'signup' — that 403s). 'signup' is only for resend below.
     const { error } = await withTimeout(
-      supabase.auth.verifyOtp({ email, token: String(token).trim(), type: 'signup' }),
+      supabase.auth.verifyOtp({ email, token: String(token).trim(), type: 'email' }),
       20000,
       'Verification timed out — check your connection and try again.',
     );

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import * as pinAuth from '../lib/pinAuth';
+import { syncActiveKey } from '../lib/api';
 
 const AuthContext = createContext(null);
 const APP_MARKER = 'manishapay';
@@ -113,6 +114,7 @@ export function AuthProvider({ children }) {
         ensureProfile(data.session.user.id)
           .then((p) => { if (active) { setProfile(p); setProfileReady(true); } })
           .catch(() => { if (active) setProfileReady(true); }); // never hang admin gate
+        syncActiveKey().catch(() => {}); // load the in-use key on this device
       } else {
         setProfileReady(true);
       }

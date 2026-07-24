@@ -4,7 +4,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { ConfirmModal } from '../../components/ui/Modal';
-import { api, setActiveKey, getActiveKey } from '../../lib/api';
+import { api, setActiveKey, getActiveKey, syncActiveKey } from '../../lib/api';
 import { KeyRound, Plus, Trash2, ClipboardCopy, CheckCircle2 } from 'lucide-react';
 import { copyToClipboard, formatDate } from '../../lib/utils';
 
@@ -55,10 +55,14 @@ export default function ApiKeys() {
         expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : undefined,
       });
       setRevealed(r.data.key);
+      // A new key becomes the active/in-use key (server-side too), so the
+      // dashboard tools use it immediately — on this and any other device.
+      setActiveKey(r.data.key);
+      setActivePrefix(r.data.key.slice(0, 12));
       setLabel('');
       setReadOnly(false);
       setExpiresAt('');
-      toast.success('Key created — copy it now, you won\'t see it again');
+      toast.success('Key created & set as active — copy it now, you won\'t see it again');
       await refresh();
     } catch {
       /* toast already fired */
@@ -79,23 +83,36 @@ export default function ApiKeys() {
     }
   };
 
-  const useThis = () => {
-    const k = prompt('Paste the plaintext key (it was shown once on creation):');
-    if (!k) return;
-    if (!/^mp_(test|live)_/.test(k.trim())) {
-      toast.error('That doesn\'t look like a ManishaPay key');
-      return;
-    }
-    setActiveKey(k.trim());
-    setActivePrefix(k.trim().slice(0, 12));
-    toast.success('Active key set for dashboard tools');
+  // Mark a key active server-side (persists across devices). TEST keys are pulled
+  // back automatically; LIVE keys can't be revealed, so we ask for the plaintext.
+  const useThis = async (k) => {
+    try {
+      await api.activateKey(k.id);
+      const a = await syncActiveKey(); // fetches + caches the value for test keys
+      if (a?.key) {
+        setActivePrefix(a.key.slice(0, 12));
+        toast.success('Active key set — works on all your devices');
+      } else if (k.mode === 'live') {
+        const v = prompt('Live keys are never stored. Paste the plaintext key to use it here:');
+        if (v && /^mp_live_/.test(v.trim())) {
+          setActiveKey(v.trim()); setActivePrefix(v.trim().slice(0, 12));
+          toast.success('Active key set (this device)');
+        }
+      } else {
+        toast.success('Marked active');
+      }
+      await refresh();
+    } catch { /* toast already fired */ }
   };
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">API Keys</h1>
-        <p className="text-sm text-slate-400">Plaintext is shown once. Store it like a password.</p>
+        <p className="text-sm text-slate-400">
+          Your <span className="text-brand">in-use</span> key is remembered on your account, so the dashboard tools work on any device.
+          Live keys are shown once — store them like a password.
+        </p>
       </header>
 
       <Card title="Create new key">
@@ -164,8 +181,9 @@ export default function ApiKeys() {
                   <td><span className={k.status === 'active' ? 'badge-success' : 'badge-danger'}>{k.status}</span></td>
                   <td className="text-slate-400">{formatDate(k.last_used_at)}</td>
                   <td className="text-right">
-                    {activePrefix === k.prefix && <CheckCircle2 size={14} className="mr-2 inline text-brand-400" title="Active in dashboard tools"/>}
-                    <button onClick={useThis} className="mr-2 text-xs text-brand hover:underline">Use</button>
+                    {(k.is_active || activePrefix === k.prefix)
+                      ? <span className="mr-2 inline-flex items-center gap-1 text-xs font-medium text-brand-400"><CheckCircle2 size={13} /> In use</span>
+                      : k.status === 'active' && <button onClick={()=>useThis(k)} className="mr-2 text-xs text-brand hover:underline">Use this</button>}
                     {k.status === 'active' && (
                       <button onClick={()=>setConfirmId(k.id)} className="text-rose-400 hover:text-rose-300" title="Revoke"><Trash2 size={14}/></button>
                     )}

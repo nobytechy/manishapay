@@ -14,7 +14,16 @@ const bcrypt = require('bcryptjs');
 const nodeCrypto = require('crypto');
 const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
+const crypto = require('../services/crypto');
 const AppError = require('../errors/AppError');
+
+// One active key per developer — flip this one on, everything else off.
+async function setActiveKey(developerId, keyId) {
+  await supabase.from('manishapay_api_keys').update({ is_active: false })
+    .eq('developer_id', developerId).eq('is_active', true);
+  await supabase.from('manishapay_api_keys').update({ is_active: true })
+    .eq('developer_id', developerId).eq('id', keyId);
+}
 
 router.use(jwtAuthenticate);
 
@@ -41,11 +50,52 @@ router.get('/', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('manishapay_api_keys')
-      .select('id, project_id, prefix, label, mode, status, plan, last_used_at, created_at')
+      .select('id, project_id, prefix, label, mode, status, plan, is_active, last_used_at, created_at')
       .eq('developer_id', req.developer.id)
       .order('created_at', { ascending: false });
     if (error) throw new AppError({ status: 500, code: 'LIST_FAILED', message: error.message });
     res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The developer's active key, resolved server-side so it works on ANY device.
+// For a TEST key we return the decrypted value so the client can use it; a LIVE
+// key is never revealed (hash-only) — the client keeps whatever it saved at mint.
+router.get('/active', async (req, res, next) => {
+  try {
+    const { data } = await supabase
+      .from('manishapay_api_keys')
+      .select('id, prefix, mode, status, key_encrypted, key_data_key_encrypted')
+      .eq('developer_id', req.developer.id)
+      .eq('is_active', true)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (!data) return res.json({ data: null });
+    let key = null;
+    if (data.mode === 'test' && data.key_encrypted && data.key_data_key_encrypted) {
+      try {
+        const cfg = await crypto.decryptConfig({ config_encrypted: data.key_encrypted, data_key_encrypted: data.key_data_key_encrypted });
+        key = cfg.k || null;
+      } catch { /* leave null — client falls back to its saved copy */ }
+    }
+    res.json({ data: { id: data.id, prefix: data.prefix, mode: data.mode, key } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Mark a key as the active/in-use one (persisted server-side, cross-device).
+router.post('/:id/activate', async (req, res, next) => {
+  try {
+    const { data } = await supabase
+      .from('manishapay_api_keys')
+      .select('id').eq('id', req.params.id).eq('developer_id', req.developer.id)
+      .eq('status', 'active').maybeSingle();
+    if (!data) throw AppError.notFound('API key');
+    await setActiveKey(req.developer.id, req.params.id);
+    res.json({ data: { ok: true, id: req.params.id } });
   } catch (err) {
     next(err);
   }
@@ -67,6 +117,11 @@ router.post('/', requireCapability('manage'), async (req, res, next) => {
     const { fullKey, prefix } = mintKey(parsed.mode);
     const keyHash = await bcrypt.hash(fullKey, BCRYPT_COST);
 
+    // TEST keys are ALSO stored encrypted so they can be re-revealed / loaded on
+    // any device. LIVE keys keep only the bcrypt hash and are never retrievable.
+    let sealed = { config_encrypted: null, data_key_encrypted: null };
+    if (parsed.mode === 'test') sealed = await crypto.encryptConfig({ k: fullKey });
+
     const { data, error } = await supabase
       .from('manishapay_api_keys')
       .insert({
@@ -74,10 +129,13 @@ router.post('/', requireCapability('manage'), async (req, res, next) => {
         project_id: parsed.project_id,
         prefix,
         key_hash: keyHash,
+        key_encrypted: sealed.config_encrypted,
+        key_data_key_encrypted: sealed.data_key_encrypted,
         label: parsed.label || null,
         mode: parsed.mode,
         status: 'active',
         plan: 'free',
+        is_active: true, // a freshly-minted key becomes the active/in-use one
         scopes: parsed.scopes && parsed.scopes.length ? parsed.scopes : ['pay', 'read'],
         expires_at: parsed.expires_at || null,
         ip_allowlist: parsed.ip_allowlist || null,
@@ -85,6 +143,9 @@ router.post('/', requireCapability('manage'), async (req, res, next) => {
       .select('id, project_id, prefix, label, mode, status, scopes, expires_at, created_at')
       .single();
     if (error) throw new AppError({ status: 500, code: 'CREATE_FAILED', message: error.message });
+
+    // Make it the sole active key (turn the others off).
+    await setActiveKey(req.developer.id, data.id);
 
     res.status(201).json({
       data: {

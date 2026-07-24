@@ -25,6 +25,18 @@ export function setActiveKey(key) {
   else localStorage.removeItem('mp.activeKey');
 }
 
+// Pull the developer's active key from the server (works on ANY device). TEST
+// keys come back with their value so we cache it locally for the dashboard tools;
+// LIVE keys are never revealed. Called on app load and after create/activate.
+export async function syncActiveKey() {
+  try {
+    const r = await apiFetchAuthed('/v1/keys/active', { silent: true });
+    const a = r?.data || null;
+    if (a?.key) setActiveKey(a.key);
+    return a;
+  } catch { return null; }
+}
+
 async function rawFetch(path, headers, { method, body, silent }) {
   // Abort a stalled request (extension interference, dead network) after 20s
   // so the UI shows an error instead of spinning forever.
@@ -102,6 +114,8 @@ export const api = {
   listKeys: () => apiFetchAuthed('/v1/keys'),
   createKey: (body) => apiFetchAuthed('/v1/keys', { method: 'POST', body }),
   revokeKey: (id) => apiFetchAuthed(`/v1/keys/${id}`, { method: 'DELETE' }),
+  getActiveApiKey: () => apiFetchAuthed('/v1/keys/active'),
+  activateKey: (id) => apiFetchAuthed(`/v1/keys/${id}/activate`, { method: 'POST' }),
 
   listCredentials: () => apiFetchAuthed('/v1/credentials'),
   saveCredential: (body) => apiFetchAuthed('/v1/credentials', { method: 'POST', body }),

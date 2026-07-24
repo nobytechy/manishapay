@@ -160,6 +160,19 @@ alter table public.manishapay_platform_settings
   add column if not exists billing_paynow_enabled        boolean not null default false;
 
 
+-- ── 5b. Active API key + retrievable TEST keys ────────────────────────────
+-- is_active: the developer's currently-in-use key (one per developer), remembered
+-- server-side so it persists across devices. key_encrypted: TEST keys are also
+-- stored encrypted so they can be re-revealed / loaded on any device (like Stripe
+-- test keys). LIVE keys keep only the bcrypt hash and are never retrievable.
+alter table public.manishapay_api_keys
+  add column if not exists is_active               boolean not null default false;
+alter table public.manishapay_api_keys
+  add column if not exists key_encrypted           text;
+alter table public.manishapay_api_keys
+  add column if not exists key_data_key_encrypted  text;
+
+
 -- ── 6. Customer phone on transactions (for WhatsApp receipts) ──────────────
 alter table public.manishapay_transactions
   add column if not exists customer_phone text;

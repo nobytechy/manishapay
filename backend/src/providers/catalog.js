@@ -209,6 +209,9 @@ const CATALOG = [
     capabilities: {
       redirect: false, poll: false, webhook: true, mobilePush: true,
       refund: false, recurring: false,
+      // M-Pesa STK Push accepts WHOLE KES only (no cents) — surfaced to the UI so
+      // decimal amounts are caught before the charge, not after.
+      integerAmount: true,
       methods: ['mpesa'],
     },
     credentialSchema: [

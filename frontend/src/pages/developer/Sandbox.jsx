@@ -360,6 +360,11 @@ export default function Sandbox() {
       toast.error(`${prettyMethod(method)} is a PayNow Express Checkout method — an email (authemail) is required.`);
       return;
     }
+    // Integer-only gateways (M-Pesa) reject cents — catch it here, not at charge.
+    if (selectedProvider?.capabilities?.integerAmount && !Number.isInteger(Number(amount))) {
+      toast.error(`${providerName} accepts whole amounts only (no cents). Use e.g. ${Math.round(Number(amount)) || 10}, not ${amount}.`);
+      return;
+    }
     if (requiresPhone && !phone.trim()) {
       toast.error(`${prettyMethod(method)} needs the customer phone so PayNow can push the OTP prompt.`);
       return;

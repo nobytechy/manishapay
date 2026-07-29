@@ -182,11 +182,11 @@
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    /* Lift the chat bubble above the floating WhatsApp button (56px + 24px offset) */
+    /* Bottom-left: the right edge is occupied by WhatsApp + Back-to-top buttons */
     Tawk_API.customStyle = {
       visibility: {
-        desktop: { position: 'br', xOffset: 20, yOffset: 92 },
-        mobile:  { position: 'br', xOffset: 12, yOffset: 92 }
+        desktop: { position: 'bl', xOffset: 20, yOffset: 24 },
+        mobile:  { position: 'bl', xOffset: 12, yOffset: 20 }
       }
     };
     (function(){

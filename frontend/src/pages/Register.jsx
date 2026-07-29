@@ -130,8 +130,9 @@ export default function Register() {
 
             {/* Spam guidance — professional, reassuring */}
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-relaxed text-amber-200/90">
-              📩 Don't see it within a minute? Check your <span className="font-semibold">spam / junk</span> folder
-              and mark it <span className="font-semibold">"Not spam"</span> so future emails land in your inbox.
+              📩 Haven't received it within a minute? Please check your <span className="font-semibold">spam / junk</span> folder.
+              If it's there, mark it as <span className="font-semibold">"Not spam"</span> and add us to your{' '}
+              <span className="font-semibold">trusted senders</span> so all future ManishaPay emails reach your inbox directly.
             </div>
 
             <form onSubmit={verify} className="space-y-4">

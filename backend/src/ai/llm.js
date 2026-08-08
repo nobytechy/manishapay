@@ -4,8 +4,17 @@
  * Configuration (all optional; endpoint degrades gracefully when absent):
  *   AI_API_KEY     — provider API key (required to enable the assistant)
  *   AI_PROVIDER    — 'anthropic' (default) | 'openai'
+ *   AI_BASE_URL    — override for OpenAI-compatible providers, e.g.
+ *                    Gemini: https://generativelanguage.googleapis.com/v1beta/openai
+ *                    Groq:   https://api.groq.com/openai/v1
  *   AI_MODEL       — provider model id (sane defaults below)
  *   AI_MAX_TOKENS  — output cap (default 700)
+ *
+ * Free-tier recipe (Google AI Studio):
+ *   AI_PROVIDER=openai
+ *   AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+ *   AI_MODEL=gemini-2.5-flash
+ *   AI_API_KEY=<key from aistudio.google.com>
  *
  * `generate({ system, messages })` → { text }
  * Tests can inject a fake with `_setGenerateForTests(fn)`.
@@ -13,6 +22,7 @@
 'use strict';
 
 const PROVIDER = process.env.AI_PROVIDER || 'anthropic';
+const BASE_URL = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
 const MODEL = process.env.AI_MODEL ||
   (PROVIDER === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-latest');
 const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS || 700);
@@ -38,7 +48,7 @@ async function anthropicGenerate({ system, messages }) {
 }
 
 async function openaiGenerate({ system, messages }) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

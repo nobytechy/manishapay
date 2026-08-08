@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword';
 import GetStarted from './pages/GetStarted';
 import DocsHome from './pages/DocsHome';
 import ForumCoverage from './pages/ForumCoverage';
+import AiAssistant from './pages/AiAssistant';
 
 import Overview from './pages/developer/Dashboard';
 import Connect from './pages/developer/Connect';
@@ -68,6 +69,7 @@ export default function App() {
       <Route path="/get-started" element={<GetStarted />} />
       <Route path="/docs" element={<DocsHome />} />
       <Route path="/forum-coverage" element={<ForumCoverage />} />
+      <Route path="/ai" element={<AiAssistant />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/register" element={<Register />} />

@@ -1,0 +1,1339 @@
+[
+ {
+  "id": "c1",
+  "text": "DPO Pay (dpo) overview. Category: african-aggregator. Regions: East Africa, Southern Africa, West Africa, UAE. Countries: KE, UG, TZ, RW, GH, ZM, NA, BW, ZA, CI, ZW, AE. Currencies: USD, KES, TZS, UGX, ZAR, GHS, ZMW, and per-merchant provisioned. Payment methods supported: card, mobile_money, bank_transfer. Docs: https://docs.dpopay.com.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "overview",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c2",
+  "text": "DPO Pay authentication: model company-token. Credential types: CompanyToken. Sandbox access is NOT instant (requires approval); KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c3",
+  "text": "DPO Pay payment initiation: flow type \"xml-redirect\". Endpoint: POST https://secure.3gdirectpay.com/API/v6/ (live) | https://secure1.sandbox.directpay.online/API/v6/ (sandbox). Required parameters: CompanyToken, Request=createToken, Transaction.PaymentAmount, Transaction.PaymentCurrency, Transaction.CompanyRef, Services.Service.ServiceType, Services.Service.ServiceDescription, Services.Service.ServiceDate.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c4",
+  "text": "DPO Pay payment status: {\"mechanisms\":[\"poll\",\"redirect-return\"],\"webhook_verification\":\"None — DPO has no signed webhook. RedirectURL/BackURL are browser redirects and are NOT proof of payment. Poll verifyToken server-side (must verify within 30 min of payment) as the source of truth.\",\"raw_status_values\":[\"000\",\"001\",\"002\",\"004\",\"006\",\"007\",\"801\",\"802\",\"900\",\"901\",\"902\",\"903\",\"904\",\"950\"],\"status_map\":{\"801\":\"failed\",\"802\":\"failed\",\"900\":\"pending\",\"901\":\"failed\",\"902\":\"failed\",\"903\":\"failed\",\"904\":\"failed\",\"950\":\"failed\",\"000\":\"paid\",\"001\":\"pending\",\"002\":\"paid\",\"007\":\"pending\",\"006\":\"disputed\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c5",
+  "text": "DPO Pay known pain point: XML API in a JSON world. Cause: DPO's only API (API3G) is XML request/response with no JSON option. Fix/mitigation: Hide XML entirely behind ManishaPay's JSON contract — hand-built buildXml()/parseXml() are the only tag-aware code; the merchant POSTs and receives JSON. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c6",
+  "text": "DPO Pay known pain point: Company Token onboarding delay, no self-serve portal. Cause: KYC-gated; token issued by sales (sales1@dpogroup.com) over days-to-weeks. Fix/mitigation: Merchant builds against DPO's public sandbox demo token pre-wired in test mode; swap the real token via config at cutover — zero code change. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c7",
+  "text": "DPO Pay known pain point: No webhook + mandatory 30-minute verifyToken window. Cause: DPO never pushes a signed callback; RedirectURL is a best-effort browser redirect and payment must be verified within 30 min or an alert email fires. Fix/mitigation: Run verifyToken server-side on a poll loop and emit a single normalized ManishaPay webhook; never gate fulfilment on the browser redirect. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c8",
+  "text": "DPO Pay known pain point: Result-code confusion: 000 'created' vs 'paid', 001 auth-only, 900 pending. Cause: createToken returns 000 for token CREATED (not paid) while verifyToken 000 means paid; 001 is authorised-not-captured. Fix/mitigation: Interpret 000 by call site; map verifyToken 001 -> pending (never paid) and 900 -> pending; collapse all codes to the 5 canonical statuses. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c9",
+  "text": "DPO Pay known pain point: Mobile MNO/country string nuance. Cause: Mobile-money charge requires exact MNO+country strings (e.g. MTNZM/Zambia, Safaricom STK v2/Kenya). Fix/mitigation: Call GetMobilePaymentOptions first and maintain an MNO->country lookup before chargeTokenMobile. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c10",
+  "text": "DPO Pay known pain point: V6 / V7 API version drift. Cause: Both /API/v6/ and /API/v7/ are live with subtly different behaviour. Fix/mitigation: Pin one tested version (V6) internally and upgrade deliberately after re-testing. Source: https://docs.dpopay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "dpo",
+   "topic": "pain-point",
+   "url": "https://docs.dpopay.com"
+  }
+ },
+ {
+  "id": "c11",
+  "text": "Flutterwave (flutterwave) overview. Category: african-aggregator. Regions: Pan-African. Countries: NG, GH, KE, ZA, UG, TZ, RW. Currencies: USD, NGN, GHS, KES, ZAR, UGX, TZS, RWF. Payment methods supported: card, mobile_money, bank_transfer, ussd. Docs: https://developer.flutterwave.com/docs.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "overview",
+   "url": "https://developer.flutterwave.com/docs"
+  }
+ },
+ {
+  "id": "c12",
+  "text": "Flutterwave authentication: model oauth-client-credentials. Credential types: clientId, clientSecret, encryptionKey, secretHash. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c13",
+  "text": "Flutterwave payment initiation: flow type \"orchestration-direct-charge\". Endpoint: POST /orchestration/direct-charges. Required parameters: amount, currency, reference, payment_method, customer.email, customer.name.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c14",
+  "text": "Flutterwave payment status: {\"mechanisms\":[\"poll\",\"webhook\",\"redirect-return\"],\"poll_endpoint\":\"GET /charges/{id}\",\"webhook_verification\":\"v4: header 'flutterwave-signature' = base64(HMAC-SHA256(rawBody, secretHash)); compared constant-time over the RAW bytes. This REPLACES v3's plain 'verif-hash' equality check — the header name and scheme both changed.\",\"raw_status_values\":[\"succeeded\",\"pending\",\"processing\",\"requires_requery\",\"requires_otp\",\"failed\",\"cancelled\"],\"status_map\":{\"succeeded\":\"paid\",\"successful\":\"paid\",\"completed\":\"paid\",\"charge.completed\":\"paid\",\"pending\":\"pending\",\"processing\":\"pending\",\"requires_requery\":\"pending\",\"requires_otp\":\"pending\",\"requires_pin\":\"pending\",\"requires_additional_fields\":\"pending\",\"failed\":\"failed\",\"cancelled\":\"failed\",\"error\":\"failed\",\"refunded\":\"refunded\",\"refund.completed\":\"refunded\",\"disputed\":\"disputed\",\"dispute.created\":\"disputed\",\"chargeback.created\":\"disputed\"},\"requires_requery_note\":\"GET /charges/{id} may return requires_requery — wait ~20s and re-GET; do NOT re-charge.\"}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c15",
+  "text": "Flutterwave known pain point: v3 integration breaks after migrating to v4. Cause: v4 changes auth (OAuth vs static FLWSECK- key), the initiate endpoint (/orchestration/direct-charges vs /v3/payments), card encryption (AES-256-GCM fields vs none), and the webhook header (flutterwave-signature HMAC vs plain verif-hash). Fix/mitigation: Treat the API version as a hard config boundary; do not port v3 code path-by-path — rebuild against the v4 orchestration + OAuth + HMAC scheme. Source: https://developer.flutterwave.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs"
+  }
+ },
+ {
+  "id": "c16",
+  "text": "Flutterwave known pain point: OAuth access token expires mid-request. Cause: v4 client-credentials tokens live only ~10 minutes. Fix/mitigation: Cache the token per clientId, refresh ~60s before expiry, and re-auth once on a 401 before failing. Source: https://developer.flutterwave.com/docs/authentication",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs/authentication"
+  }
+ },
+ {
+  "id": "c17",
+  "text": "Flutterwave known pain point: Card charge rejected / decrypt error. Cause: Wrong AES-256-GCM setup — key not base64-decoded to 32 bytes, IV not the 12-char nonce, or the GCM tag placed wrongly. Fix/mitigation: base64-decode the Encryption Key to 32 bytes, use the 12-char nonce as the IV (echoed in card.nonce), and append the 16-byte tag to the ciphertext before base64; verify against an official SDK. Source: https://developer.flutterwave.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs"
+  }
+ },
+ {
+  "id": "c18",
+  "text": "Flutterwave known pain point: Webhook signature check fails after upgrade. Cause: Still comparing v3's plain 'verif-hash' header; v4 sends 'flutterwave-signature' = base64(HMAC-SHA256(rawBody, secretHash)). Fix/mitigation: Verify the new header as an HMAC over the RAW body bytes with constant-time compare; never re-serialise the JSON before hashing. Source: https://developer.flutterwave.com/docs/webhooks",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs/webhooks"
+  }
+ },
+ {
+  "id": "c19",
+  "text": "Flutterwave known pain point: Marking an order paid on the redirect return or an unverified webhook. Cause: next_action.redirect_url and inbound webhooks can be spoofed or replayed. Fix/mitigation: Always reconcile via GET /charges/{id} and confirm data.status === succeeded before fulfilling; handle requires_requery by waiting ~20s and re-querying (never re-charge). Source: https://developer.flutterwave.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs"
+  }
+ },
+ {
+  "id": "c20",
+  "text": "Flutterwave known pain point: Duplicate charges on retry. Cause: A reset connection re-POSTs the same charge. Fix/mitigation: Send a UUID X-Idempotency-Key on every POST; Flutterwave returns X-Idempotency-Cache-Hit on a replay. Source: https://developer.flutterwave.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "flutterwave",
+   "topic": "pain-point",
+   "url": "https://developer.flutterwave.com/docs"
+  }
+ },
+ {
+  "id": "c21",
+  "text": "M-Pesa (Safaricom Daraja) (mpesa) overview. Category: mobile-money. Regions: East Africa. Countries: KE. Currencies: KES. Payment methods supported: mpesa. Docs: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "overview",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c22",
+  "text": "M-Pesa (Safaricom Daraja) authentication: model oauth-client-credentials. Credential types: consumerKey, consumerSecret, bearer-access-token, lipa-na-mpesa-passkey. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c23",
+  "text": "M-Pesa (Safaricom Daraja) payment initiation: flow type \"stk-push\". Endpoint: POST https://{sandbox|api}.safaricom.co.ke/mpesa/stkpush/v1/processrequest. Required parameters: BusinessShortCode, Password, Timestamp, TransactionType, Amount, PartyA, PartyB, PhoneNumber, CallBackURL, AccountReference, TransactionDesc.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c24",
+  "text": "M-Pesa (Safaricom Daraja) payment status: {\"mechanisms\":[\"webhook\",\"poll\"],\"webhook_verification\":\"No signature. Daraja POSTs Body.stkCallback to the CallBackURL supplied in the STK Push. Trust is established by (a) ManishaPay OWNING the callback URL (public HTTPS, never merchant-supplied) and (b) correlating on CheckoutRequestID; must ack HTTP 200 within ~30s. Poll STK Query as a fallback only.\",\"raw_status_values\":[\"0\",\"1\",\"17\",\"1001\",\"1019\",\"1025\",\"1032\",\"1037\",\"2001\",\"500.001.1001\"],\"status_map\":{\"0\":\"paid\",\"1\":\"failed\",\"17\":\"failed\",\"1001\":\"failed\",\"1019\":\"failed\",\"1025\":\"failed\",\"1032\":\"failed\",\"1037\":\"failed\",\"2001\":\"failed\",\"500.001.1001\":\"pending\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c25",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: OAuth access token expires and calls 401 mid-flow. Cause: Daraja tokens live ~3600s; a stale cached token or none at all. Fix/mitigation: Cache the token per (mode, consumerKey), refresh at ~50min, and retry the request exactly once on a 401 after forcing a fresh token. Source: https://developer.safaricom.co.ke/APIs/Authorization",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/Authorization"
+  }
+ },
+ {
+  "id": "c26",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: STK callbacks never arrive. Cause: CallBackURL is http://, localhost, or a self-signed host — Daraja drops these silently. Fix/mitigation: ManishaPay OWNS a single hardened public HTTPS callback; the merchant never supplies one. Correlate on CheckoutRequestID and fan out to the merchant webhook — structurally eliminates the #1 failure. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c27",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: Invalid password / 'Bad Request - Invalid Timestamp'. Cause: Timestamp used in Password differs from the Timestamp field, or the passkey has a trailing newline. Fix/mitigation: Generate the YYYYMMDDHHMMSS timestamp ONCE, build Password=base64(shortcode+passkey+timestamp) with the SAME value in the same call, trim the passkey; unit-test against the canonical vector. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c28",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: Amount rejected or wrong charge. Cause: Passing decimals — M-Pesa amounts are whole KES only. Fix/mitigation: Coerce to an integer at the edge and refuse fractional values loudly rather than silently rounding. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c29",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: STK prompt never reaches the phone. Cause: PhoneNumber/PartyA not in 2547XXXXXXXX MSISDN form. Fix/mitigation: Normalize 07.., +254.., 7.. to 2547XXXXXXXX before sending. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c30",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: Transaction stuck 'pending' forever. Cause: User ignored/cancelled the prompt (1037/1032) and the callback was missed; sandbox STK Query is unreliable. Fix/mitigation: Bounded ~90-120s timer with an STK Query fallback and a hard deadline that resolves to failed with the ResultCode reason. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressQuery",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressQuery"
+  }
+ },
+ {
+  "id": "c31",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: Duplicate order fulfillment. Cause: Daraja can deliver/replay the callback more than once; must 200 within ~30s or it retries. Fix/mitigation: Ack 200 immediately, process async, dedupe on MpesaReceiptNumber. Source: https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate"
+  }
+ },
+ {
+  "id": "c32",
+  "text": "M-Pesa (Safaricom Daraja) known pain point: Sandbox vs production confusion. Cause: Mixing sandbox.safaricom.co.ke host / shortcode 174379 with production keys (or vice-versa). Fix/mitigation: Make environment first-class config; pick host + shortcode + passkey atomically per mode. Source: https://developer.safaricom.co.ke/APIs/Authorization",
+  "meta": {
+   "source": "dataset",
+   "gateway": "mpesa",
+   "topic": "pain-point",
+   "url": "https://developer.safaricom.co.ke/APIs/Authorization"
+  }
+ },
+ {
+  "id": "c33",
+  "text": "Ozow (ozow) overview. Category: sa-gateway. Regions: South Africa. Countries: ZA. Currencies: ZAR. Payment methods supported: eft. Docs: https://hub.ozow.com/docs.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "overview",
+   "url": "https://hub.ozow.com/docs"
+  }
+ },
+ {
+  "id": "c34",
+  "text": "Ozow authentication: model hash-signed. Credential types: SiteCode, PrivateKey, ApiKey. Sandbox access is NOT instant (requires approval); KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c35",
+  "text": "Ozow payment initiation: flow type \"form-post-redirect\". Endpoint: POST https://pay.ozow.com/ (form-post redirect) OR POST https://api.ozow.com/postpaymentrequest (REST, ApiKey header). Required parameters: SiteCode, CountryCode, CurrencyCode, Amount, TransactionReference, BankReference, CancelUrl, ErrorUrl, SuccessUrl, NotifyUrl, IsTest, HashCheck.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c36",
+  "text": "Ozow payment status: {\"mechanisms\":[\"webhook\",\"poll\",\"redirect-return\"],\"webhook_verification\":\"NotifyUrl POST carries a Hash. Recompute: concat notification field VALUES in NOTIFICATION order (differs from request order) + PrivateKey, lowercase the WHOLE string, SHA512 hex, compare case-insensitively. Redirect return is NOT trustworthy alone — verify server-side.\",\"raw_status_values\":[\"Complete\",\"Cancelled\",\"Error\",\"Abandoned\",\"Pending\",\"PendingInvestigation\",\"Voided\",\"Refunded\"],\"status_map\":{\"Complete\":\"paid\",\"Pending\":\"pending\",\"PendingInvestigation\":\"pending\",\"Cancelled\":\"failed\",\"Abandoned\":\"failed\",\"Error\":\"failed\",\"Voided\":\"failed\",\"Refunded\":\"refunded\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c37",
+  "text": "Ozow known pain point: HashCheck mismatch (request rejected / webhook rejected). Cause: Fields concatenated in the wrong order, wrong empty-field handling, Amount not '%.2f', IsTest sent as a boolean, or lowercasing only part of the string. Fix/mitigation: Keep TWO hardcoded ordered field lists (request vs notification — they differ). Concatenate VALUES only (no separators, missing→''), append the RAW PrivateKey, then lowercase the WHOLE string before SHA512. Amount must be exactly 2dp; IsTest is the lowercase string 'true'/'false'. Lock it with a golden vector.. Source: https://hub.ozow.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "pain-point",
+   "url": "https://hub.ozow.com/docs"
+  }
+ },
+ {
+  "id": "c38",
+  "text": "Ozow known pain point: Notification hash uses a DIFFERENT field order than the request. Cause: Developers reuse the request field order to verify the inbound notification. Fix/mitigation: Maintain a separate NOTIFICATION field order and recompute the hash with it. ⚠️ The exact notification order is UNVERIFIED here — confirm against live hub.ozow.com.. Source: https://hub.ozow.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "pain-point",
+   "url": "https://hub.ozow.com/docs"
+  }
+ },
+ {
+  "id": "c39",
+  "text": "Ozow known pain point: Trusting the redirect return as proof of payment. Cause: SuccessUrl redirect can be reached without a settled EFT. Fix/mitigation: Treat the NotifyUrl POST (verified by hash) as authoritative and reconcile via GetTransactionByReference polling. Never fulfil on the redirect alone.. Source: https://hub.ozow.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "pain-point",
+   "url": "https://hub.ozow.com/docs"
+  }
+ },
+ {
+  "id": "c40",
+  "text": "Ozow known pain point: Test transactions never trigger the webhook. Cause: Staging/IsTest flows may skip NotifyUrl. Fix/mitigation: Test BOTH the redirect-return and webhook paths; drive reconciliation via polling in test.. Source: https://hub.ozow.com/docs",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "pain-point",
+   "url": "https://hub.ozow.com/docs"
+  }
+ },
+ {
+  "id": "c41",
+  "text": "Ozow known pain point: No official SDK. Cause: Ozow ships REST + hand-rolled SHA512 only. Fix/mitigation: Call REST directly and compute the HashCheck yourself with Node crypto. Community libs: omnipay-ozow (PHP), ozpay.. Source: https://github.com/thephpleague/omnipay",
+  "meta": {
+   "source": "dataset",
+   "gateway": "ozow",
+   "topic": "pain-point",
+   "url": "https://github.com/thephpleague/omnipay"
+  }
+ },
+ {
+  "id": "c42",
+  "text": "PayFast (payfast) overview. Category: sa-gateway. Regions: South Africa. Countries: ZA. Currencies: ZAR. Payment methods supported: card, eft, masterpass, snapscan, zapper, mobicred, moretyme, capitec_pay. Docs: https://developers.payfast.co.za.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "overview",
+   "url": "https://developers.payfast.co.za"
+  }
+ },
+ {
+  "id": "c43",
+  "text": "PayFast authentication: model hash-signed. Credential types: merchant_id, merchant_key, passphrase. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c44",
+  "text": "PayFast payment initiation: flow type \"form-post-redirect\". Endpoint: POST https://www.payfast.co.za/eng/process (live) | https://sandbox.payfast.co.za/eng/process (test). Required parameters: merchant_id, merchant_key, amount, item_name, signature.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c45",
+  "text": "PayFast payment status: {\"mechanisms\":[\"webhook\",\"redirect-return\"],\"webhook_verification\":\"ITN (Instant Transaction Notification) POST to notify_url — FOUR mandatory checks: (1) recompute MD5 signature over the RECEIVED-order fields (PHP urlencode, +passphrase if set) vs posted 'signature'; (2) source-IP allowlist DNS-resolved from www/sandbox/w1w/w2w.payfast.co.za; (3) postback the untouched payload to /eng/query/validate and require body 'VALID'; (4) merchant_id matches AND amount_gross within 0.01 of expected. Must return HTTP 200. A redirect return is NEVER proof of payment.\",\"raw_status_values\":[\"COMPLETE\",\"PENDING\",\"FAILED\",\"CANCELLED\"],\"status_map\":{\"COMPLETE\":\"paid\",\"PENDING\":\"pending\",\"FAILED\":\"failed\",\"CANCELLED\":\"failed\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c46",
+  "text": "PayFast known pain point: Signature mismatch — the #1 PayFast integration failure. Cause: JavaScript encodeURIComponent() is NOT PHP urlencode(): it leaves ! ' ( ) * ~ unescaped, uses %20 for spaces (PHP uses +), and casing can differ. Signing with it produces a hash PayFast rejects.. Fix/mitigation: Use ONE canonical phpUrlEncode() (encodeURIComponent then replace !→%21 '→%27 (→%28 )→%29 *→%2A ~→%7E and %20→+, uppercase hex) for BOTH checkout signing and ITN verify. Ship a signature-debug tool that returns the exact hashed param string.. Source: https://developers.payfast.co.za/docs#step_2_signature_generation",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_2_signature_generation"
+  }
+ },
+ {
+  "id": "c47",
+  "text": "PayFast known pain point: Field-order ambiguity in the signature. Cause: Checkout must sign fields in PayFast's DOCUMENTED order (not alphabetical, not insertion order), but the ITN must be signed in the order the fields were RECEIVED. Mixing them up breaks the hash.. Fix/mitigation: Hardcode the documented checkout order; for the ITN, parse the raw body preserving received order and sign that. Never re-order the ITN fields.. Source: https://developers.payfast.co.za/docs#step_2_signature_generation",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_2_signature_generation"
+  }
+ },
+ {
+  "id": "c48",
+  "text": "PayFast known pain point: Passphrase handling is asymmetric or forgotten. Cause: The passphrase (Salt) is per-merchant and optional, but if it's set on the account it MUST be appended (&passphrase=urlencode(value)) to every signature. Omitting it on one side (or adding it when unset) breaks the hash.. Fix/mitigation: Treat passphrase as a nullable per-merchant credential and apply it symmetrically to checkout AND ITN signatures — append only when non-blank.. Source: https://developers.payfast.co.za/docs#step_2_signature_generation",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_2_signature_generation"
+  }
+ },
+ {
+  "id": "c49",
+  "text": "PayFast known pain point: Legitimate '0' values get stripped from the signature. Cause: Filtering blank fields on JS truthiness drops '0' — but subscription cycles=0 (indefinite) and other zero values are valid and MUST be signed.. Fix/mitigation: Filter on '' / null / undefined (blank-ness after trim), NEVER on truthiness, so '0' survives into the signature.. Source: https://developers.payfast.co.za/docs#recurring_billing",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#recurring_billing"
+  }
+ },
+ {
+  "id": "c50",
+  "text": "PayFast known pain point: Trusting the browser return / skipping ITN validation checks. Cause: Treating the return_url redirect (or an unvalidated ITN) as proof of payment lets an attacker spoof a 'paid' outcome.. Fix/mitigation: Only a fully-validated ITN is proof: enforce all four checks (signature, source-IP allowlist via DNS, postback expecting 'VALID', amount+merchant_id match) non-bypassably, return 200 immediately and process asynchronously.. Source: https://developers.payfast.co.za/docs#step_4_confirm_payment",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_4_confirm_payment"
+  }
+ },
+ {
+  "id": "c51",
+  "text": "PayFast known pain point: ITN rejected by hardcoded source-IP allowlist. Cause: PayFast rotates the IPs its ITN servers send from; a static IP allowlist eventually blocks real notifications.. Fix/mitigation: DNS-resolve the valid hosts (www/sandbox/w1w/w2w.payfast.co.za) at request time and test membership — never hardcode IPs.. Source: https://developers.payfast.co.za/docs#step_4_confirm_payment",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_4_confirm_payment"
+  }
+ },
+ {
+  "id": "c52",
+  "text": "PayFast known pain point: URLs double-encoded in the signature. Cause: Pre-encoding return_url/cancel_url/notify_url before they reach the signer, then encoding again, corrupts the hash.. Fix/mitigation: Pass raw URLs to the signer and urlencode exactly once inside phpUrlEncode().. Source: https://developers.payfast.co.za/docs#step_2_signature_generation",
+  "meta": {
+   "source": "dataset",
+   "gateway": "payfast",
+   "topic": "pain-point",
+   "url": "https://developers.payfast.co.za/docs#step_2_signature_generation"
+  }
+ },
+ {
+  "id": "c53",
+  "text": "PayNow (paynow) overview. Category: zim-aggregator. Regions: Zimbabwe. Countries: ZW. Currencies: USD, ZWL. Payment methods supported: ecocash, onemoney, innbucks, omari, zimswitch, card. Docs: https://developers.paynow.co.zw.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "overview",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c54",
+  "text": "PayNow authentication: model integration-id-key-hashed. Credential types: integrationId, integrationKey. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c55",
+  "text": "PayNow payment initiation: flow type \"redirect\". Endpoint: POST https://www.paynow.co.zw/interface/initiatetransaction (web) | /interface/remotetransaction (express). Required parameters: id, reference, amount, additionalinfo, returnurl, resulturl, status, hash.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c56",
+  "text": "PayNow payment status: {\"mechanisms\":[\"poll\",\"webhook\",\"redirect-return\"],\"webhook_verification\":\"SHA512 hash of concatenated field values + integration key, uppercase hex; verify on every callback/poll response\",\"raw_status_values\":[\"Sent\",\"Created\",\"Paid\",\"Awaiting Delivery\",\"Delivered\",\"Cancelled\",\"Disputed\",\"Refunded\"],\"status_map\":{\"Paid\":\"paid\",\"Awaiting Delivery\":\"paid\",\"Delivered\":\"paid\",\"Created\":\"pending\",\"Sent\":\"pending\",\"Cancelled\":\"failed\",\"Disputed\":\"disputed\",\"Refunded\":\"refunded\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c57",
+  "text": "PayNow known pain point: System.FormatException on amount. Cause: C# SDK sends '2.00' / locale-comma decimals PayNow rejects. Fix/mitigation: Normalize amount to a strict 0.00 invariant string before sending. Source: https://developers.paynow.co.zw",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "pain-point",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c58",
+  "text": "PayNow known pain point: Express checkout silently skips the OTP prompt. Cause: Phone not in 263XXXXXXXXX MSISDN form. Fix/mitigation: Normalize phone to 263 form before forwarding. Source: https://developers.paynow.co.zw",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "pain-point",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c59",
+  "text": "PayNow known pain point: 'Hash mismatch' rejections. Cause: Wrong field order / integration key when computing the SHA512 hash. Fix/mitigation: Compute hash over fields in the exact documented order; expose a hash-debug tool for expected-vs-actual diff. Source: https://developers.paynow.co.zw",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "pain-point",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c60",
+  "text": "PayNow known pain point: 'Merchant still in test' rejections on live. Cause: Integration not switched to Go-Live. Fix/mitigation: Detect the message and tell the merchant to Go Live in PayNow, then add a live credential. Source: https://developers.paynow.co.zw",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "pain-point",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c61",
+  "text": "PayNow known pain point: TEST mode rejects the customer email. Cause: TEST integrations require authemail = the registered merchant email. Fix/mitigation: Store the merchant email per credential and swap it in automatically in test mode. Source: https://developers.paynow.co.zw",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paynow",
+   "topic": "pain-point",
+   "url": "https://developers.paynow.co.zw"
+  }
+ },
+ {
+  "id": "c62",
+  "text": "PayPal (paypal) overview. Category: wallet. Regions: Global. Countries: US, GB, EU, global. Currencies: USD, EUR, GBP, and 20+ other supported currencies. Payment methods supported: paypal, card. Docs: https://developer.paypal.com/docs/api/orders/v2/.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "overview",
+   "url": "https://developer.paypal.com/docs/api/orders/v2/"
+  }
+ },
+ {
+  "id": "c63",
+  "text": "PayPal authentication: model oauth-client-credentials. Credential types: client_id, client_secret, access_token (Bearer, ~9h), webhook_id. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c64",
+  "text": "PayPal payment initiation: flow type \"redirect\". Endpoint: POST https://api-m.paypal.com/v2/checkout/orders. Required parameters: intent, purchase_units[].amount.currency_code, purchase_units[].amount.value.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c65",
+  "text": "PayPal payment status: {\"mechanisms\":[\"webhook\",\"poll\"],\"webhook_verification\":\"Headers PAYPAL-TRANSMISSION-ID/-TIME/-SIG/-CERT-URL/-AUTH-ALGO. Offline: RSA-verify PAYPAL-TRANSMISSION-SIG (base64) over 'transmissionId|transmissionTime|webhookId|crc32(RAW body)' using the cert at PAYPAL-CERT-URL (paypal.com only, cache it). Or online postback POST /v1/notifications/verify-webhook-signature (needs webhook_id; unsupported for the simulator). RAW body required for crc32.\",\"raw_status_values\":[\"CREATED\",\"SAVED\",\"APPROVED\",\"PAYER_ACTION_REQUIRED\",\"COMPLETED\",\"VOIDED\",\"PENDING\",\"DECLINED\",\"FAILED\",\"REFUNDED\",\"PARTIALLY_REFUNDED\"],\"status_map\":{\"CREATED\":\"pending\",\"SAVED\":\"pending\",\"APPROVED\":\"pending\",\"PAYER_ACTION_REQUIRED\":\"pending\",\"PENDING\":\"pending\",\"COMPLETED\":\"paid\",\"VOIDED\":\"failed\",\"DECLINED\":\"failed\",\"FAILED\":\"failed\",\"REFUNDED\":\"refunded\",\"PARTIALLY_REFUNDED\":\"refunded\",\"CUSTOMER.DISPUTE.CREATED\":\"disputed\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c66",
+  "text": "PayPal known pain point: Order marked paid on APPROVED — merchant ships but no money arrives. Cause: For intent=CAPTURE, CHECKOUT.ORDER.APPROVED means the buyer approved but funds are NOT captured yet. Fix/mitigation: Map paid ONLY to a capture COMPLETED; auto-capture (POST /v2/checkout/orders/{id}/capture) on ORDER.APPROVED for CAPTURE intent, then fulfil on PAYMENT.CAPTURE.COMPLETED. Source: https://developer.paypal.com/docs/api/orders/v2/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/docs/api/orders/v2/"
+  }
+ },
+ {
+  "id": "c67",
+  "text": "PayPal known pain point: Webhook signature verification fails. Cause: The crc32 is computed over a re-serialised JSON body instead of the raw bytes. Fix/mitigation: Capture the RAW request body before any JSON parser; build the message 'transmissionId|time|webhookId|crc32(rawBody)' and RSA-verify with the cached cert. Source: https://developer.paypal.com/api/rest/webhooks/rest/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/api/rest/webhooks/rest/"
+  }
+ },
+ {
+  "id": "c68",
+  "text": "PayPal known pain point: Access-token churn / intermittent 401s under load. Cause: Requesting a new OAuth token on every call, or reusing an expired one. Fix/mitigation: Central token cache keyed by (env, client_id), single-flight refresh at ~80% of expires_in (token lasts ~9h). Source: https://developer.paypal.com/api/rest/authentication/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/api/rest/authentication/"
+  }
+ },
+ {
+  "id": "c69",
+  "text": "PayPal known pain point: verify-webhook-signature endpoint fails / needs webhook_id. Cause: Online postback requires the merchant's webhook_id and does not work from the webhook simulator. Fix/mitigation: Store webhook_id per merchant; default to OFFLINE crypto verification which also works with simulated events. Source: https://developer.paypal.com/api/rest/webhooks/rest/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/api/rest/webhooks/rest/"
+  }
+ },
+ {
+  "id": "c70",
+  "text": "PayPal known pain point: Duplicate orders / double captures on retry. Cause: Network retries re-POST create-order or capture. Fix/mitigation: Send a stable PayPal-Request-Id (idempotency key) on create/capture/refund; dedupe inbound webhooks by event id. Source: https://developer.paypal.com/api/rest/reference/idempotency/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/api/rest/reference/idempotency/"
+  }
+ },
+ {
+  "id": "c71",
+  "text": "PayPal known pain point: Sandbox creds hit the live host (or vice-versa) → 401. Cause: Wrong base URL for the environment. Fix/mitigation: Select api-m.sandbox.paypal.com for test vs api-m.paypal.com for live from an env flag; validate creds with a token call on connect. Source: https://developer.paypal.com/api/rest/",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paypal",
+   "topic": "pain-point",
+   "url": "https://developer.paypal.com/api/rest/"
+  }
+ },
+ {
+  "id": "c72",
+  "text": "Paystack (paystack) overview. Category: african-aggregator. Regions: Pan-African. Countries: NG, GH, ZA, KE, CI. Currencies: NGN, GHS, ZAR, KES, USD. Payment methods supported: card, bank_transfer, ussd, mobile_money, bank, qr, eft. Docs: https://paystack.com/docs/api.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "overview",
+   "url": "https://paystack.com/docs/api"
+  }
+ },
+ {
+  "id": "c73",
+  "text": "Paystack authentication: model bearer-secret-key. Credential types: sk_test_, sk_live_, pk_test_, pk_live_. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c74",
+  "text": "Paystack payment initiation: flow type \"redirect\". Endpoint: POST https://api.paystack.co/transaction/initialize. Required parameters: email, amount.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c75",
+  "text": "Paystack payment status: {\"mechanisms\":[\"webhook\",\"poll\",\"redirect-return\"],\"webhook_verification\":\"Header 'x-paystack-signature'; HMAC-SHA512 of the RAW request body using the merchant SECRET KEY (sk_); no separate webhook secret; RAW bytes required; ack 200 fast (Paystack retries up to 72h)\",\"raw_status_values\":[\"success\",\"failed\",\"abandoned\",\"pending\",\"ongoing\",\"processing\",\"queued\",\"reversed\",\"charge.success\",\"refund.processed\",\"refund.pending\",\"refund.failed\",\"dispute.create\",\"dispute.created\"],\"status_map\":{\"success\":\"paid\",\"charge.success\":\"paid\",\"failed\":\"failed\",\"abandoned\":\"failed\",\"refund.failed\":\"failed\",\"pending\":\"pending\",\"ongoing\":\"pending\",\"processing\":\"pending\",\"queued\":\"pending\",\"refund.pending\":\"pending\",\"reversed\":\"refunded\",\"refund.processed\":\"refunded\",\"dispute.create\":\"disputed\",\"dispute.created\":\"disputed\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c76",
+  "text": "Paystack known pain point: 100x over/undercharge. Cause: amount must be sent in SUBUNITS (kobo/pesewas/cents) but merchants send major units — NGN 100 sent as 100 instead of 10000. Fix/mitigation: Expose major units in the ManishaPay API and multiply by 100 to an integer internally; validate the result is a positive integer; never trust the caller to pre-format. Source: https://paystack.com/docs/payments/accept-payments",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/accept-payments"
+  }
+ },
+ {
+  "id": "c77",
+  "text": "Paystack known pain point: Marking an unpaid transaction as paid. Cause: the top-level 'status:true' in a verify response only means the API call succeeded — the real payment outcome is data.status. Fix/mitigation: Key the normalizer ONLY on data.status (must equal 'success'); additionally re-check data.amount and data.currency against the order before fulfilling. Source: https://paystack.com/docs/payments/verify-payments",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/verify-payments"
+  }
+ },
+ {
+  "id": "c78",
+  "text": "Paystack known pain point: Webhook signature verification fails. Cause: HMAC is computed over a re-serialised JSON body instead of the raw bytes, or the wrong key is used. Fix/mitigation: Compute HMAC-SHA512 over the RAW request buffer (before any JSON parser) using the merchant SECRET KEY, and compare against the x-paystack-signature header with a constant-time compare. Source: https://paystack.com/docs/payments/webhooks",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/webhooks"
+  }
+ },
+ {
+  "id": "c79",
+  "text": "Paystack known pain point: Missed webhooks on localhost / slow endpoint / CSRF-protected route. Cause: Paystack cannot reach a local dev URL, times out on a slow handler, or the framework's CSRF filter blocks the POST. Fix/mitigation: Acknowledge with 200 synchronously and do the work asynchronously; exempt the webhook route from CSRF; make side-effects idempotent on the reference; use verify-poll as a backstop. Source: https://paystack.com/docs/payments/webhooks",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/webhooks"
+  }
+ },
+ {
+  "id": "c80",
+  "text": "Paystack known pain point: Redirect return beats the webhook (race) — or vice versa. Cause: the customer's browser redirect (callback_url) and the async webhook are not ordered. Fix/mitigation: Treat the webhook as primary and verify-poll as a backstop; dedupe both on the unique reference with a monotonic state machine; never gate fulfillment on the browser redirect alone. Source: https://paystack.com/docs/payments/verify-payments",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/verify-payments"
+  }
+ },
+ {
+  "id": "c81",
+  "text": "Paystack known pain point: Currency not enabled on the account. Cause: initializing in a currency the merchant has not activated (e.g. USD/GHS/ZAR/KES) returns a 4xx. Fix/mitigation: Validate the requested currency against the merchant's enabled currencies and surface a clear resolution message. Source: https://paystack.com/docs/payments/multicurrency",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/multicurrency"
+  }
+ },
+ {
+  "id": "c82",
+  "text": "Paystack known pain point: Duplicate or reused reference. Cause: reusing a reference across attempts collides — Paystack requires it to be unique. Fix/mitigation: Generate a unique reference per attempt and map it to the ManishaPay transaction id; use it as the idempotency key across initiate/verify/webhook. Source: https://paystack.com/docs/payments/accept-payments",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/accept-payments"
+  }
+ },
+ {
+  "id": "c83",
+  "text": "Paystack known pain point: Failed recurring charge is not retried. Cause: Paystack does not automatically retry a failed subscription/charge_authorization. Fix/mitigation: Implement your own retry/dunning schedule around charge_authorization; monitor invoice.payment_failed events. Source: https://paystack.com/docs/payments/recurring-charges",
+  "meta": {
+   "source": "dataset",
+   "gateway": "paystack",
+   "topic": "pain-point",
+   "url": "https://paystack.com/docs/payments/recurring-charges"
+  }
+ },
+ {
+  "id": "c84",
+  "text": "Pesepay (pesepay) overview. Category: zim-aggregator. Regions: Zimbabwe. Countries: ZW. Currencies: USD, ZWL. Payment methods supported: ecocash, onemoney, innbucks, zimswitch, card. Docs: https://developers.pesepay.com.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "overview",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c85",
+  "text": "Pesepay authentication: model aes-encrypted. Credential types: integrationKey, encryptionKey. Sandbox access is NOT instant (requires approval); KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c86",
+  "text": "Pesepay payment initiation: flow type \"redirect\". Endpoint: POST https://api.pesepay.com/api/payments-engine/v1/payments/initiate. Required parameters: amountDetails.amount, amountDetails.currencyCode, reasonForPayment, resultUrl, returnUrl.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c87",
+  "text": "Pesepay payment status: {\"mechanisms\":[\"webhook\",\"poll\",\"redirect-return\"],\"webhook_verification\":\"resultUrl callback is only a 'go poll now' trigger — the body is NOT trusted. Re-verify server-side via GET /v1/payments/check-payment?referenceNumber= and decrypt the { payload } response.\",\"raw_status_values\":[\"INITIATED\",\"PENDING\",\"PROCESSING\",\"PARTIALLY_PAID\",\"AUTHORIZATION_REQUIRED\",\"SUCCESS\",\"FAILED\",\"DECLINED\",\"CANCELLED\",\"ERROR\",\"INSUFFICIENT_FUNDS\",\"TERMINATED\",\"TIME_OUT\",\"SERVICE_UNAVAILABLE\",\"CLOSED\",\"CLOSED_PERIOD_ELAPSED\",\"REVERSED\"],\"status_map\":{\"SUCCESS\":\"paid\",\"INITIATED\":\"pending\",\"PENDING\":\"pending\",\"PROCESSING\":\"pending\",\"PARTIALLY_PAID\":\"pending\",\"AUTHORIZATION_REQUIRED\":\"pending\",\"FAILED\":\"failed\",\"DECLINED\":\"failed\",\"CANCELLED\":\"failed\",\"ERROR\":\"failed\",\"INSUFFICIENT_FUNDS\":\"failed\",\"TERMINATED\":\"failed\",\"TIME_OUT\":\"failed\",\"SERVICE_UNAVAILABLE\":\"failed\",\"CLOSED\":\"failed\",\"CLOSED_PERIOD_ELAPSED\":\"failed\",\"REVERSED\":\"refunded\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c88",
+  "text": "Pesepay known pain point: All requests/responses fail to decrypt or are rejected outright. Cause: Wrong AES parameters — devs use a random IV or prepend the IV, instead of using the first 16 chars of the Encryption Key as a fixed IV. Fix/mitigation: IV = key.subarray(0,16); AES-CBC + PKCS7 + base64; wrap/unwrap the { payload } envelope on BOTH directions. Covered by an encrypt→decrypt round-trip unit test with a fixed vector.. Source: https://developers.pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c89",
+  "text": "Pesepay known pain point: createCipheriv throws 'Invalid key length'. Cause: Encryption Key copied with trailing spaces or truncated, so it is not 16/24/32 bytes. Fix/mitigation: Validate the key length up-front (assertKeyLength) and choose the AES variant (128/192/256) from the byte length.. Source: https://developers.pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c90",
+  "text": "Pesepay known pain point: 401 Unauthorized even with a correct Integration Key. Cause: The header NAME differs across community SDKs — some expect 'key:', others 'authorization:'. Fix/mitigation: Pin the header name in one const (AUTH_HEADER_NAME) so it can be flipped in a single place; send the raw key (not 'Bearer ').. Source: https://github.com/topics/pesepay",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://github.com/topics/pesepay"
+  }
+ },
+ {
+  "id": "c91",
+  "text": "Pesepay known pain point: Payment method code errors / breakage after Pesepay changes. Cause: Method codes (PZW201 EcoCash, PZW204 Visa, PZW211 mobile, PZW212 InnBucks) are currency-scoped and change. Fix/mitigation: Never hardcode codes — resolve them live via GET /v1/payment-methods/for-currency?currencyCode= and match by rail name; cache per currency.. Source: https://developers.pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c92",
+  "text": "Pesepay known pain point: Order marked paid when it is not. Cause: Trusting the resultUrl callback body, or treating PARTIALLY_PAID/liquidationStatus as completion. Fix/mitigation: Only transactionStatus === 'SUCCESS' is paid; PARTIALLY_PAID stays pending; ignore liquidationStatus (settlement). Re-poll after the callback with a timeout/backoff.. Source: https://developers.pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c93",
+  "text": "Pesepay known pain point: Card payments hang (Visa) / Mastercard unsupported. Cause: Card rail on Pesepay is unreliable in Zimbabwe. Fix/mitigation: Route card elsewhere; use Pesepay primarily for EcoCash/mobile money.. Source: https://pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://pesepay.com"
+  }
+ },
+ {
+  "id": "c94",
+  "text": "Pesepay known pain point: Wrong endpoint version for the flow. Cause: Redirect uses /v1/payments/initiate but seamless mobile-push uses /v2/payments/make-payment. Fix/mitigation: Encode the version per flow — redirect => v1, seamless => v2.. Source: https://developers.pesepay.com",
+  "meta": {
+   "source": "dataset",
+   "gateway": "pesepay",
+   "topic": "pain-point",
+   "url": "https://developers.pesepay.com"
+  }
+ },
+ {
+  "id": "c95",
+  "text": "Stripe (stripe) overview. Category: global-card. Regions: Global. Countries: US, GB, EU, ZA, global. Currencies: USD, EUR, GBP, ZAR, and 135+ presentment currencies. Payment methods supported: card, apple_pay, google_pay, link, bank_debit, bnpl. Docs: https://docs.stripe.com/api.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "overview",
+   "url": "https://docs.stripe.com/api"
+  }
+ },
+ {
+  "id": "c96",
+  "text": "Stripe authentication: model bearer-secret-key. Credential types: sk_test_, sk_live_, pk_test_, pk_live_, rk_, whsec_. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c97",
+  "text": "Stripe payment initiation: flow type \"redirect\". Endpoint: POST https://api.stripe.com/v1/checkout/sessions. Required parameters: mode, line_items, success_url.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c98",
+  "text": "Stripe payment status: {\"mechanisms\":[\"webhook\",\"poll\"],\"webhook_verification\":\"Header 'Stripe-Signature: t=..,v1=..'; HMAC-SHA256 over '{t}.'+rawBody vs whsec_; 300s tolerance; RAW body required\",\"raw_status_values\":[\"paid\",\"unpaid\",\"no_payment_required\",\"succeeded\",\"processing\",\"requires_action\",\"requires_confirmation\",\"requires_capture\",\"requires_payment_method\",\"canceled\"],\"status_map\":{\"paid\":\"paid\",\"succeeded\":\"paid\",\"no_payment_required\":\"paid\",\"unpaid\":\"pending\",\"processing\":\"pending\",\"requires_action\":\"pending\",\"requires_confirmation\":\"pending\",\"requires_capture\":\"pending\",\"requires_payment_method\":\"failed\",\"canceled\":\"failed\",\"charge.dispute.created\":\"disputed\",\"charge.refunded\":\"refunded\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c99",
+  "text": "Stripe known pain point: Webhook signature verification fails. Cause: JSON body-parser mutates the raw body before HMAC. Fix/mitigation: Verify against the raw request bytes, before any JSON parser; dedicate a raw-body route. Source: https://docs.stripe.com/webhooks/signature",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "pain-point",
+   "url": "https://docs.stripe.com/webhooks/signature"
+  }
+ },
+ {
+  "id": "c100",
+  "text": "Stripe known pain point: Duplicate order processing. Cause: Stripe delivers events at-least-once (duplicates). Fix/mitigation: Dedupe on event id; make side-effects idempotent. Source: https://docs.stripe.com/webhooks",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "pain-point",
+   "url": "https://docs.stripe.com/webhooks"
+  }
+ },
+ {
+  "id": "c101",
+  "text": "Stripe known pain point: Out-of-order events / webhook beats redirect. Cause: Events not guaranteed chronological. Fix/mitigation: Monotonic state machine keyed on your txn id; re-fetch object; never gate fulfillment on redirect. Source: https://docs.stripe.com/payments/checkout/fulfill-orders",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "pain-point",
+   "url": "https://docs.stripe.com/payments/checkout/fulfill-orders"
+  }
+ },
+ {
+  "id": "c102",
+  "text": "Stripe known pain point: 100x over/undercharge. Cause: cents vs zero-decimal currency confusion. Fix/mitigation: Single amount format in your API; convert to minor unit internally via a zero-decimal table. Source: https://docs.stripe.com/currencies",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "pain-point",
+   "url": "https://docs.stripe.com/currencies"
+  }
+ },
+ {
+  "id": "c103",
+  "text": "Stripe known pain point: SCA/3DS payments silently stall. Cause: Treating a created PaymentIntent as paid, missing requires_action. Fix/mitigation: Map requires_action -> pending; use hosted Checkout so Stripe handles 3DS. Source: https://docs.stripe.com/payments/paymentintents/lifecycle",
+  "meta": {
+   "source": "dataset",
+   "gateway": "stripe",
+   "topic": "pain-point",
+   "url": "https://docs.stripe.com/payments/paymentintents/lifecycle"
+  }
+ },
+ {
+  "id": "c104",
+  "text": "Yoco (yoco) overview. Category: sa-gateway. Regions: South Africa. Countries: ZA. Currencies: ZAR. Payment methods supported: card. Docs: https://developer.yoco.com/online/api-reference.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "overview",
+   "url": "https://developer.yoco.com/online/api-reference"
+  }
+ },
+ {
+  "id": "c105",
+  "text": "Yoco authentication: model bearer-secret-key. Credential types: sk_test_, sk_live_, pk_test_, pk_live_, whsec_. Sandbox access is instant; KYC is required before going live.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "auth"
+  }
+ },
+ {
+  "id": "c106",
+  "text": "Yoco payment initiation: flow type \"redirect\". Endpoint: POST https://payments.yoco.com/api/checkouts. Required parameters: amount, currency.",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "initiate"
+  }
+ },
+ {
+  "id": "c107",
+  "text": "Yoco payment status: {\"mechanisms\":[\"webhook\",\"poll\",\"redirect-return\"],\"webhook_verification\":\"Svix scheme. Headers 'webhook-id', 'webhook-timestamp', 'webhook-signature'. Strip 'whsec_' prefix, base64-decode the secret, HMAC-SHA256 over '{webhook-id}.{webhook-timestamp}.{rawBody}', base64-compare; signature header is space-separated 'v1,<b64sig>' entries; reject outside a 3-minute replay window. RAW body required.\",\"raw_status_values\":[\"created\",\"started\",\"processing\",\"completed\",\"failed\",\"cancelled\",\"payment.succeeded\",\"payment.failed\",\"refund.succeeded\"],\"status_map\":{\"created\":\"pending\",\"started\":\"pending\",\"processing\":\"pending\",\"completed\":\"paid\",\"payment.succeeded\":\"paid\",\"failed\":\"failed\",\"cancelled\":\"failed\",\"payment.failed\":\"failed\",\"refunded\":\"refunded\",\"refund.succeeded\":\"refunded\"}}",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "status"
+  }
+ },
+ {
+  "id": "c108",
+  "text": "Yoco known pain point: 100x over/undercharge. Cause: amount sent in Rand instead of cents (Yoco expects minor subunits). Fix/mitigation: Single major-unit amount in the ManishaPay API; convert to integer cents internally (× 100) and guard the R2.00 minimum before the call. Source: https://developer.yoco.com/online/api-reference/checkout",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online/api-reference/checkout"
+  }
+ },
+ {
+  "id": "c109",
+  "text": "Yoco known pain point: Charge rejected as below minimum. Cause: amount below R2.00 (200 cents), Yoco's hard floor. Fix/mitigation: Enforce a 200-cent minimum locally and return a clear resolution before hitting the API. Source: https://developer.yoco.com/online/resources/testing",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online/resources/testing"
+  }
+ },
+ {
+  "id": "c110",
+  "text": "Yoco known pain point: Order marked paid on a spoofed / premature successUrl redirect. Cause: treating the browser return to successUrl as proof of payment. Fix/mitigation: Never trust successUrl; confirm on the payment.succeeded webhook or re-fetch GET /checkouts/{id} server-side before fulfilling. Source: https://developer.yoco.com/online/resources/webhooks",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online/resources/webhooks"
+  }
+ },
+ {
+  "id": "c111",
+  "text": "Yoco known pain point: Webhook signature verification fails. Cause: Svix scheme is easy to get wrong — signing the wrong content, not base64-decoding the whsec_ secret, or hashing a re-serialised body. Fix/mitigation: One central Svix verifier: strip whsec_, base64-decode the secret, HMAC-SHA256 over '{id}.{timestamp}.{rawBody}' on the RAW bytes, base64 constant-time compare, 3-minute replay window. Source: https://docs.svix.com/receiving/verifying-payloads/how-manual",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://docs.svix.com/receiving/verifying-payloads/how-manual"
+  }
+ },
+ {
+  "id": "c112",
+  "text": "Yoco known pain point: Double-charge on retry. Cause: no idempotency applied by default; a network retry re-creates the checkout. Fix/mitigation: Attach an Idempotency-Key header on every create/refund (derived from the merchant reference). Source: https://developer.yoco.com/online/api-reference",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online/api-reference"
+  }
+ },
+ {
+  "id": "c113",
+  "text": "Yoco known pain point: Sparse / shifting documentation. Cause: Yoco's online gateway docs are thin and occasionally change endpoints. Fix/mitigation: Hide Yoco behind the ManishaPay neutral API so integrators never touch the raw surface. Source: https://developer.yoco.com/online",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online"
+  }
+ },
+ {
+  "id": "c114",
+  "text": "Yoco known pain point: No native recurring or disputes API. Cause: Yoco Online is single-charge, card-only; disputes are not exposed programmatically. Fix/mitigation: Emulate recurring in ManishaPay (stored consent + scheduled charges) or route recurring elsewhere; disputes cannot be auto-mapped, so 'disputed' is never emitted. Source: https://developer.yoco.com/online/api-reference",
+  "meta": {
+   "source": "dataset",
+   "gateway": "yoco",
+   "topic": "pain-point",
+   "url": "https://developer.yoco.com/online/api-reference"
+  }
+ },
+ {
+  "id": "c115",
+  "text": "PayNow forum issue — A. PayNow fails when called from Supabase  ✅ (architectural)\n> \"Paynow API Access – Supabase IP Restrictions\", \"Paynow failing on supabase\",\n> \"Connection Reset from Supabase Edge Functions (NodeJS SDK)\", \"Connection Reset (os error 104)\"\n\nPayNow has blocked several Supabase egress IP ranges (abuse by other merchants),\nso calling PayNow **directly from Supabase Edge Functions** fails with connection\nresets. **ManishaPay runs every PayNow call from a dedicated Node API (Render /\ncPanel) — never from Supabase.** The merchant's app (or Edge Function) calls\nManishaPay; ManishaPay calls PayNow from non-blocked IPs; Supabase is used only\nas the database. This single design decision removes the most-reported failure.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c116",
+  "text": "PayNow forum issue — B. Amount format — `System.FormatException: '2.00'`  ✅\n> \"System.FormatException: '2.00' was not in a correct format (C#/.NET)\"\n\n`normalizeAmount()` coerces any amount (number, `\"2,50\"`, `\"2.00 \"`) to PayNow's\nrequired `0.00` invariant string before sending. (Unit-tested.)",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c117",
+  "text": "PayNow forum issue — C. Hash mismatch  ✅\n> \"HashMismatchException\", \"Getting a hash error\"\n\n`hash.compute()` / `hash.verify()` build the SHA-512 hash in PayNow's exact field\norder and verify every response — tested byte-for-byte against PayNow's own\npublished example. The `/v1/tools/hash` endpoint returns an expected-vs-actual\ndiff so a merchant can debug their own hashing in seconds.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c118",
+  "text": "PayNow forum issue — D. Express checkout — no PIN prompt  ✅\n> \"In app mobile payment checkout not sending pin prompt\", \"Express payout problems… phone prompts\"\n\n`normalizePhone()` rewrites the number to `2637XXXXXXXX` MSISDN form and sends\n`method` + `phone` together in the `/remotetransaction` payload — without that,\nPayNow silently skips the prompt.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c119",
+  "text": "PayNow forum issue — E. Status not updating  ✅\n> \"Payment Status Not Updating After EcoCash PIN\", \"Payments status updated to paid in db\", \"Status not set error\"\n\nThree layers: (1) PayNow result-URL **webhook** → we update the txn; (2) **poll\nfallback** on `/v1/pay/:ref/status` re-checks PayNow live; (3) `normalizeStatus()`\nmaps PayNow's 8 raw statuses to a stable 5-value enum. \"Status not set\" is avoided\nbecause we always send the required `status` field on initiate. Webhook\n**idempotency** stops PayNow's retries double-processing.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c120",
+  "text": "PayNow forum issue — F. Test vs live confusion  🔶\n> \"The merchant is currently in testing and cannot accept payments\", \"Payment Integration Still in Test Mode\", \"Making Keys Live\"\n\nManishaPay keys are explicitly `mp_test_*` / `mp_live_*`, and the API returns the\nmode on every call, so there's no ambiguity about which integration ran.\n**To improve:** map PayNow's \"merchant is currently in testing\" rejection string\nto a targeted resolution (use a live key + a live PayNow integration, or test the\nsandbox). → implemented in `paynow.js` error mapping.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c121",
+  "text": "PayNow forum issue — G. Network connection resets / timeouts  ✅\n> \"Connection Reset (os error 104)\", intermittent upstream failures\n\n`withRetry()` wraps PayNow calls with exponential backoff; upstream 5xx surfaces a\nclean `UPSTREAM` error rather than a raw stack trace.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c122",
+  "text": "PayNow forum issue — H. Getting started — keys & sandbox  ✅\n> \"API Key – how do I obtain one\", \"Accessing the Integration Sandbox / Test Mode\", \"API request for testing\"\n\nThe ManishaPay dashboard issues API keys and a sandbox. With the **shared sandbox\ntest integration** wired (`PAYNOW_TEST_INTEGRATION_*`), a test key hits real PayNow\ntest with zero per-project setup; without it, the built-in **simulator** lets devs\nonboard in 30s with no PayNow account at all.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c123",
+  "text": "PayNow forum issue — I. Currency (ZWL / USD)  ✅\n> \"Currency code rectification\"\n\nPayNow currency is a property of the integration (the sandbox account is ZWL).\n`/v1/pay` now accepts an optional `currency` (`USD` / `ZWL`), stores it on the\ntransaction, and **echoes it back on every response** (initiate, status, and the\nsigned merchant webhook) — so there's no ambiguity about which currency a payment\nran in. *(Future: store currency per credential to also reject obvious mismatches\nserver-side.)*",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c124",
+  "text": "PayNow forum issue — J. Payment methods — Innbucks / Omari / Zimswitch / QR  ✅\n> \"Innbucks integration\", \"Qr code payment tickets\"\n\n`method` enum supports `ecocash, onemoney, innbucks, omari, zimswitch, card`.\n✅ QR / payment-ticket flow: `/v1/pay` returns a `qr_code` (scannable PNG data URL\nof the checkout URL) so a merchant can show a ticket the customer scans to pay.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c125",
+  "text": "PayNow forum issue — K. Platform plugins (WHMCS / WooCommerce / Shopify / Wix / EDD / Android / captive portal / Firebase / Lovable)  🔶\n> many \"plugin not working\" threads\n\nManishaPay's answer is one clean REST API + SDKs (Node, PHP) + a drop-in\n`checkout.js` widget, so any platform integrates once against a stable surface\ninstead of fighting per-platform plugins. ✅ WordPress/WooCommerce plugin shipped;\n🔶 WHMCS gateway module scaffolded (`whmcs-module/`, BETA — needs a WHMCS test\ninstall); ✅ Shopify integration guide (`docs/SHOPIFY.md`) — note a *native* Shopify\nCheckout gateway is gated behind Shopify Partner approval, so the widget/offsite\nflow is the supported path.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c126",
+  "text": "PayNow forum issue — L. Platform wants \"API Key / API Secret / Webhook Secret\"  ✅\n> \"Paynow API Credentials for Sopraent Integration\" — need an API Key, API Secret &\n> Webhook Secret, can't find where to generate them (2026). Recurs for WHMCS, ISP\n> billing systems, and any Stripe-style platform.\n\nTwo cases, both common:\n\n1. **Wrong gateway's fields.** Inspecting Sopraent's settings page, it bundles *two*\n   processors: **PayNow (Zimbabwe)** and **SopraPay (Uganda, UGX/MTN/Airtel)**. The\n   `API Key` (`spk_live_…`), `API Secret` (`sps_live_…`) and `Webhook Secret` fields\n   belong to **SopraPay**, not PayNow. For PayNow you fill **only Integration ID +\n   Integration Key** (the Result URL auto-sets); leave the SopraPay fields blank.\n   PayNow doesn't issue them, and account verification is **not** needed to test.\n\n2. **Genuine Stripe-style expectation.** Where a platform (WHMCS, ISP billing) really\n   does require an API key/secret + webhook secret in front of PayNow, PayNow only\n   gives an **Integration ID + Key** and authenticates by SHA‑512 hash. ManishaPay\n   **is** that missing layer: it wraps the Integration ID/Key and issues a scoped\n   **API key** (`mp_test_*` / `mp_live_*`) plus **HMAC‑SHA256‑signed webhooks** (the\n   \"webhook secret\"). This is Manisha",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c127",
+  "text": "PayNow forum issue — Open punch-list (to fully \"cover the forum\")\n1. ✅ PayNow error-string → friendly resolution mapping (merchant-in-testing, invalid id, currency) — done in `paynow.js` (`paynowResolution`).\n2. ✅ Surface integration currency on `/v1/pay` responses (initiate + status + webhook). *(Per-credential currency + server-side mismatch rejection = future.)*\n3. ✅ QR-code / payment-ticket flow — `qr_code` on `/v1/pay`.\n4. 🔶 Platform adapters: ✅ WooCommerce (WordPress plugin) · 🔶 WHMCS (`whmcs-module/`, BETA — needs WHMCS test install) · ✅ Shopify guide (`docs/SHOPIFY.md`; native gateway gated by Shopify). Separate artifacts — not part of the Render/Netlify deploy.\n\n_Paste new forum threads here and we'll slot them into this map and close gaps._",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c128",
+  "text": "PayNow forum issue — Mobile payment `response.success` is always `false` (Express Checkout)  ✅\n> \"Response.success is always false\" — `send_mobile(..., \"ecocash\")` keeps returning false\n\nThree things make PayNow reject a mobile (Express Checkout) payment; ManishaPay handles all three:\n- **Wrong test numbers.** PayNow needs its own EcoCash test MSISDNs in test mode\n  (`0771111111` success · `0772222222` delayed · `0773333333` cancelled · `0774444444` insufficient).\n  ManishaPay surfaces these in the **Sandbox** page and the Get-Started guide.\n- **Test-mode `authemail` must equal the merchant's registered email.** ManishaPay stores that email\n  per credential and **swaps it in automatically in test mode** (`services/paynow.js`, \"Forum issue #5\"),\n  so any caller email is accepted.\n- **Wrong Integration ID / Key** (the poster's actual bug). Instead of PayNow's opaque `success = false`,\n  ManishaPay returns a targeted resolution — *\"PayNow could not match this Integration ID. Re-check the\n  Integration ID + Key…\"* — plus `/v1/tools/hash` for a signature diff.",
+  "meta": {
+   "source": "forum-coverage",
+   "gateway": "paynow",
+   "topic": "forum-issue",
+   "url": "https://manishapay.netlify.app/forum-coverage"
+  }
+ },
+ {
+  "id": "c129",
+  "text": "ManishaPay is a payment gateway aggregator: one REST API and no-code payment links in front of 11 gateways (PayNow, Stripe, PayPal, M-Pesa, Paystack, Flutterwave, PayFast, Pesepay, DPO, Ozow, Yoco). You integrate ManishaPay once; each payment method is routed to a gateway you have connected. Merchants connect their OWN gateway accounts (e.g. their PayNow Integration ID/Key or Stripe secret key) under Payment Gateways in the dashboard — funds settle directly to the merchant's own gateway account; ManishaPay never holds funds.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "what-is",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c130",
+  "text": "Method-to-gateway routing: Stripe handles card, Apple Pay, Google Pay. PayNow handles EcoCash, OneMoney, InnBucks, O'mari, ZimSwitch and card for Zimbabwe. Pesepay handles EcoCash and card. Connecting Stripe does NOT enable EcoCash — EcoCash requires a Zimbabwean gateway such as PayNow or Pesepay. Customers see ONE checkout listing all methods from all connected gateways; ManishaPay routes each payment to the right gateway automatically.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "routing",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c131",
+  "text": "Payment links: create in the dashboard under Payment Links — set \"what's it for\", amount, currency, optional method restriction, then share the generated https://manishapay.netlify.app/pay/<id> URL on WhatsApp, Instagram, email or SMS. The payer does NOT need a ManishaPay account, an app, or signup: they open the link, choose a method, pay. Links can be disabled/enabled anytime.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "payment-links",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c132",
+  "text": "Test mode / sandbox: sign up and get a test API key (mp_test_...) instantly — no KYC, no waiting for gateway approval. The built-in payment simulator lets you complete a fake checkout and trigger Paid, Cancelled or Timeout outcomes so you can develop the full flow end to end before connecting any real gateway account. Switch to live keys (mp_live_...) when ready.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "test-mode",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c133",
+  "text": "API quickstart: authenticate with your API key in the Authorization header. Create a payment: POST /v1/pay with amount, currency, method, and your reference. You receive a redirect/checkout URL and a payment id. Poll GET /v1/pay/:id for status, or configure a webhook URL to receive signed status events (HMAC-SHA256 — verify with your webhook secret; a timestamp guards against replay). Full reference: https://manishapay.netlify.app/docs.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "api-quickstart",
+   "url": "https://manishapay.netlify.app/docs"
+  }
+ },
+ {
+  "id": "c134",
+  "text": "ManishaPay webhooks: register your endpoint URL in the dashboard. Events are signed with HMAC-SHA256 over \"timestamp.body\" using your webhook secret; reject events older than your tolerance window to prevent replay. Deliveries are retried on failure. Always treat webhooks as the source of truth for payment status — never trust only the browser redirect.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "webhooks",
+   "url": "https://manishapay.netlify.app/docs"
+  }
+ },
+ {
+  "id": "c135",
+  "text": "Drop-in checkout widget: a ~7KB script — <script src=\"https://manishapay.netlify.app/checkout.js\"></script> — that renders the ManishaPay checkout on YOUR page, so customers pay without leaving your site. Alternative: the hosted checkout page (zero code, just share/redirect to your payment link).",
+  "meta": {
+   "source": "manishapay",
+   "topic": "widget",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c136",
+  "text": "SDKs and plugins: official PHP SDK (composer require manishapay/manishapay), Node examples in the docs, a WordPress/WooCommerce plugin, and a WHMCS module. The open-source Noby Payments Knowledge Base dataset (github.com/nobytechy/manishapay-dataset) documents all 11 gateways and 70+ integration pain points.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "sdks-plugins",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c137",
+  "text": "Getting started is free: sign up at https://manishapay.netlify.app (one tap with Google or GitHub, or email + verification code — check your spam folder if the code doesn't arrive within a minute and mark it \"Not spam\"). Test mode is unlimited and free.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "pricing-signup",
+   "url": "https://manishapay.netlify.app"
+  }
+ },
+ {
+  "id": "c138",
+  "text": "Cross-border payments: a payer abroad (e.g. South Africa) can pay a USD payment link with any Visa/Mastercard — their bank converts from their local currency (like ZAR) automatically at card-network rates. Price links in USD for Zimbabwe merchants. ManishaPay is an aggregator, not a remittance service: funds settle to the merchant's own gateway account.",
+  "meta": {
+   "source": "manishapay",
+   "topic": "cross-border",
+   "url": "https://manishapay.netlify.app"
+  }
+ }
+]

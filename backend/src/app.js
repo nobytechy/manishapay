@@ -37,6 +37,7 @@ const cliRouter = require('./routes/cli');
 const teamRouter = require('./routes/team');
 const providersRouter = require('./routes/providers');
 const gatewayWebhookRouter = require('./routes/gatewayWebhook');
+const aiRouter = require('./routes/ai');
 
 function buildApp() {
   const app = express();
@@ -98,6 +99,7 @@ function buildApp() {
   app.use('/v1/reconcile', reconcileRouter); // Cron-secret-guarded missed-webhook sweep
   app.use('/simulator', simulatorRouter);  // Simulated checkout pages + outcome triggers
   app.use('/v1/providers', providersRouter); // Public gateway catalog (Connect App + docs + SDKs)
+  app.use('/v1/ai', aiRouter);             // ManishaAI — public payments assistant (rate-limited in-route)
 
   // ─── Data-plane (API key auth) ─────────────────────────
   app.use('/v1/pay', devRateLimiter, payRouter);

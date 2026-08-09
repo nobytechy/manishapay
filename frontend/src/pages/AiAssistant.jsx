@@ -6,10 +6,10 @@
  * Answers stream in one shot (no SSE in v1) with de-duplicated source chips.
  */
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Sparkles, Send, Loader2, ExternalLink, Bot, User, ShieldCheck, Zap, Lock,
-  Home, BookOpen, MessagesSquare, Rocket,
+  Home, BookOpen, MessagesSquare, Rocket, Share2, Check, Code2,
 } from 'lucide-react';
 
 const BASE = import.meta.env.VITE_API_BASE || '';
@@ -45,7 +45,12 @@ const STARTERS = [
   'Compare Stripe and Paystack for cards',
 ];
 
-function Message({ role, content, sources }) {
+function Message({ role, content, sources, question, onFollowUp, canFollowUp }) {
+  const [copied, setCopied] = useState(false);
+  const share = () => {
+    const url = `${window.location.origin}/ai?q=${encodeURIComponent(question || '')}`;
+    navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
+  };
   const isUser = role === 'user';
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
@@ -57,8 +62,24 @@ function Message({ role, content, sources }) {
         isUser ? 'bg-brand-600/20 border border-brand-500/25 text-slate-100'
                : 'bg-slate-900/80 border border-slate-800 text-slate-200'}`}>
         {content}
+        {!isUser && (question || canFollowUp) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-2">
+            {canFollowUp && ['Show in Node.js', 'Show in PHP', 'cURL example'].map((c) => (
+              <button key={c} onClick={() => onFollowUp(c)}
+                className="inline-flex items-center gap-1 rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-1 text-[11px] font-medium text-brand-300 hover:bg-brand-500/20">
+                <Code2 size={10} /> {c}
+              </button>
+            ))}
+            {question && (
+              <button onClick={share}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:text-brand-300 hover:border-brand-500/40">
+                {copied ? <Check size={10} /> : <Share2 size={10} />} {copied ? 'Link copied!' : 'Share'}
+              </button>
+            )}
+          </div>
+        )}
         {!isUser && sources?.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-800 pt-2">
+          <div className="mt-2 flex flex-wrap gap-2 border-t border-slate-800 pt-2">
             {sources.map((s, i) => s.url ? (
               <a key={i} href={s.url} target="_blank" rel="noreferrer"
                  className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:text-brand-300 hover:border-brand-500/40">
@@ -77,7 +98,9 @@ function Message({ role, content, sources }) {
 }
 
 export default function AiAssistant() {
+  const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState([]);
+  const autoAsked = useRef(false);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [remaining, setRemaining] = useState(null);
@@ -93,6 +116,13 @@ export default function AiAssistant() {
   }, []);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, busy]);
+
+  // Shareable deep links: /ai?q=<question> auto-asks once on load.
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q && !autoAsked.current) { autoAsked.current = true; ask(q); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function ask(question) {
     const q = (question ?? input).trim();
@@ -115,7 +145,7 @@ export default function AiAssistant() {
       } else if (!res.ok) {
         setMessages((m) => [...m, { role: 'assistant', content: data.error || 'Something went wrong — try again.', sources: [] }]);
       } else {
-        setMessages((m) => [...m, { role: 'assistant', content: data.answer, sources: data.sources }]);
+        setMessages((m) => [...m, { role: 'assistant', content: data.answer, sources: data.sources, question: q }]);
         if (typeof data.remaining === 'number') setRemaining(data.remaining);
       }
     } catch {
@@ -188,7 +218,11 @@ export default function AiAssistant() {
         )}
 
         <div className="mt-6 space-y-5">
-          {messages.map((m, i) => <Message key={i} {...m} />)}
+          {messages.map((m, i) => (
+            <Message key={i} {...m}
+              onFollowUp={(c) => ask(c)}
+              canFollowUp={!busy && !limitReached && m.role === 'assistant' && i === messages.length - 1} />
+          ))}
           {busy && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
               <Loader2 size={14} className="animate-spin" /> ManishaAI is thinking…

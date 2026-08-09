@@ -74,16 +74,27 @@ router.post('/chat', async (req, res) => {
     return res.status(503).json({ error: 'ManishaAI is not configured yet. Please check back soon.' });
   }
 
-  // Scope guard before spending anything.
-  if (!looksOnTopic(message)) {
+  const history = Array.isArray(req.body?.history)
+    ? req.body.history.slice(-MAX_HISTORY_TURNS)
+        .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        .map((m) => ({ role: m.role, content: m.content.slice(0, 1500) }))
+    : [];
+  const isFollowUp = history.length > 0;
+
+  // Scope guard before spending anything. Follow-ups inherit the topic of an
+  // ongoing conversation, so we screen the combined text — "how about in
+  // Zimbabwe?" is on-topic when the previous turn was about gateways.
+  const guardText = isFollowUp ? `${history.map((m) => m.content).join(' ')} ${message}` : message;
+  if (!looksOnTopic(guardText)) {
     return res.json({
       answer: "I'm ManishaAI — I help with online payments and gateway integrations (PayNow, Stripe, M-Pesa and 8 more). Ask me anything in that world! 💚",
       sources: [], remaining: remaining(sid, ip), cached: true,
     });
   }
 
-  // Cache: repeated questions cost nothing and don't consume quota.
-  const cached = cacheGet(message);
+  // Cache is only safe for conversation openers: a follow-up's meaning depends
+  // on its history, so caching it globally would serve wrong answers.
+  const cached = isFollowUp ? null : cacheGet(message);
   if (cached) return res.json({ ...cached, remaining: remaining(sid, ip), cached: true });
 
   const quota = consume(sid, ip);
@@ -97,16 +108,21 @@ router.post('/chat', async (req, res) => {
   }
 
   try {
-    const hits = search(message, 6);
+    // ── Follow-up awareness ──────────────────────────────────────
+    // Short/anaphoric follow-ups ("how about in Zimbabwe?", "and for PHP?")
+    // retrieve poorly on their own. Blend recent user turns into the search
+    // query so retrieval inherits the conversation's subject; the current
+    // message is weighted double so fresh intent still dominates.
+    const priorUserTurns = history
+      .filter((m) => m.role === 'user')
+      .slice(-2)
+      .map((m) => m.content.slice(0, 300));
+    const retrievalQuery = [message, message, ...priorUserTurns].join(' ');
+
+    const hits = search(retrievalQuery, 6);
     const context = hits.map((h, i) =>
       `[CONTEXT ${i + 1}] (${h.meta.source}${h.meta.gateway ? ` · ${h.meta.gateway}` : ''})\n${h.text}`
     ).join('\n\n');
-
-    const history = Array.isArray(req.body?.history)
-      ? req.body.history.slice(-MAX_HISTORY_TURNS)
-          .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-          .map((m) => ({ role: m.role, content: m.content.slice(0, 1500) }))
-      : [];
 
     const { text } = await llm.generate({
       system: SYSTEM_PROMPT,
@@ -128,7 +144,7 @@ router.post('/chat', async (req, res) => {
     }));
 
     const payload = { answer: text, sources };
-    cacheSet(message, payload);
+    if (!isFollowUp) cacheSet(message, payload);
     logger.info({ q: message.slice(0, 80), hits: hits.length, sid: sid.slice(0, 6) }, 'manishaai: answered');
     res.json({ ...payload, remaining: quota.remaining, cached: false });
   } catch (err) {

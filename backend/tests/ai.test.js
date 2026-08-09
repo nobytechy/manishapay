@@ -123,3 +123,44 @@ test('route: status endpoint reports remaining + configured', async () => {
   assert.strictEqual(res.status, 200);
   assert.ok('configured' in res.body && 'remaining' in res.body);
 });
+
+/* ── follow-up intelligence ──────────────────────────────────────── */
+
+test('route: follow-up inherits conversation context for retrieval and guard', async () => {
+  process.env.AI_API_KEY = 'test-key';
+  let seenContext = '';
+  llm._setGenerateForTests(async ({ messages }) => {
+    seenContext = messages.at(-1).content;
+    return { text: 'For Zimbabwe specifically, PayNow is the primary rail.' };
+  });
+  const app = buildApp();
+  const res = await request(app).post('/v1/ai/chat').send({
+    message: 'how about in Zimbabwe?',
+    history: [
+      { role: 'user', content: 'which payment gateway should I use in Africa?' },
+      { role: 'assistant', content: 'It depends on the country — Paystack for Nigeria, M-Pesa for Kenya…' },
+    ],
+  });
+  assert.strictEqual(res.status, 200);
+  // Guard must NOT deflect (no payment keyword in the bare follow-up).
+  assert.ok(!res.body.answer.includes('Ask me anything in that world'));
+  // Retrieval context should include Zimbabwe-relevant chunks (paynow et al).
+  assert.ok(/paynow|zimbabwe/i.test(seenContext), 'retrieval should surface Zimbabwe context');
+  delete process.env.AI_API_KEY;
+});
+
+test('route: follow-ups bypass the global answer cache', async () => {
+  process.env.AI_API_KEY = 'test-key';
+  let calls = 0;
+  llm._setGenerateForTests(async () => { calls += 1; return { text: 'answer ' + calls }; });
+  const app = buildApp();
+  const followUp = {
+    message: 'and which currencies does it support?',
+    history: [{ role: 'user', content: 'tell me about paystack' }],
+  };
+  await request(app).post('/v1/ai/chat').send(followUp);
+  const second = await request(app).post('/v1/ai/chat').send(followUp);
+  assert.strictEqual(calls, 2, 'follow-ups must not be served from cache');
+  assert.notStrictEqual(second.body.cached, true);
+  delete process.env.AI_API_KEY;
+});

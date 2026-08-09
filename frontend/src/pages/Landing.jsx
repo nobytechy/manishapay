@@ -181,6 +181,7 @@ export default function Landing() {
             <a href="#features" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Features</a>
             <a href="#pricing" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Pricing</a>
             <a href="#partners" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Partners</a>
+            <Link to="/ai" className="hidden md:inline-flex items-center gap-1 rounded px-3 py-1.5 text-brand-300 hover:bg-slate-800 hover:text-brand-200"><Sparkles size={13}/> ManishaAI</Link>
             <Link to="/docs" className="hidden md:inline rounded px-3 py-1.5 text-slate-300 hover:bg-slate-800 hover:text-white">Docs</Link>
             <ThemeToggle className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white" />
             {isAuthenticated ? (
@@ -262,6 +263,32 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ── ManishaAI spotlight ─────────────────────────────── */}
+      <FadeInOnScroll>
+        <section className="mx-auto max-w-6xl px-6 pb-24">
+          <Link to="/ai" className="group relative block overflow-hidden rounded-2xl border border-brand-500/30 bg-gradient-to-r from-brand-500/10 via-slate-900/60 to-slate-900/60 p-6 transition hover:border-brand-400/60 md:p-8">
+            <div className="flex flex-col items-start gap-5 md:flex-row md:items-center">
+              <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl border border-brand-500/40 bg-brand-500/15">
+                <Sparkles className="text-brand-300" size={22} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold text-white md:text-xl">Meet ManishaAI — your payments integration expert</h3>
+                  <span className="rounded-full bg-brand-500/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-brand-300">New</span>
+                </div>
+                <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-400">
+                  Instant answers on all 11 gateways — grounded in real documentation and 70+ documented
+                  pain points, with sources cited. No signup required.
+                </p>
+              </div>
+              <span className="inline-flex flex-none items-center gap-2 rounded-lg bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition group-hover:opacity-95">
+                Ask ManishaAI <ArrowRight size={15} />
+              </span>
+            </div>
+          </Link>
+        </section>
+      </FadeInOnScroll>
 
       {/* ── Features ────────────────────────────────────────── */}
       <FadeInOnScroll>
@@ -606,6 +633,7 @@ export default function Landing() {
               <li><a href="#features" className="hover:text-slate-100">Features</a></li>
               <li><a href="#pricing" className="hover:text-slate-100">Pricing</a></li>
               <li><Link to="/forum-coverage" className="hover:text-slate-100">Forum coverage</Link></li>
+              <li><Link to="/ai" className="hover:text-slate-100">ManishaAI assistant</Link></li>
               <li><Link to="/docs" className="hover:text-slate-100">Docs</Link></li>
               <li><Link to="/get-started" className="hover:text-slate-100">Get started</Link></li>
               <li><a href="https://zimrafdms.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-100">Fiscalisation · zimFDMS <ExternalLink size={11} className="ml-0.5 inline"/></a></li>

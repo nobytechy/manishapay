@@ -9,9 +9,32 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, Send, Loader2, ExternalLink, Bot, User, ShieldCheck, Zap, Lock,
+  Home, BookOpen, MessagesSquare, Rocket,
 } from 'lucide-react';
 
 const BASE = import.meta.env.VITE_API_BASE || '';
+
+const NAV = [
+  { to: '/', label: 'Home', icon: Home },
+  { to: '/docs', label: 'Docs', icon: BookOpen },
+  { to: '/forum-coverage', label: 'Forum fixes', icon: MessagesSquare },
+  { to: '/get-started', label: 'Get started', icon: Rocket },
+];
+
+function NavLinks({ className = '', chip = false }) {
+  return (
+    <nav className={className}>
+      {NAV.map(({ to, label, icon: Icon }) => (
+        <Link key={to} to={to}
+          className={chip
+            ? 'inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-300 hover:border-brand-500/50 hover:text-brand-300'
+            : 'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-slate-400 transition hover:bg-slate-900 hover:text-brand-300'}>
+          <Icon size={chip ? 13 : 16} /> {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 
 const STARTERS = [
   'How do I integrate PayNow in Laravel?',
@@ -103,19 +126,37 @@ export default function AiAssistant() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* header */}
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-slate-100 lg:flex">
+      {/* desktop sidebar */}
+      <aside className="hidden lg:flex lg:w-56 lg:flex-none lg:flex-col lg:gap-1 lg:border-r lg:border-slate-800/70 lg:bg-slate-950/60 lg:px-3 lg:py-6 lg:sticky lg:top-0 lg:h-screen">
+        <Link to="/" className="mb-5 flex items-center gap-2 px-3 font-semibold text-slate-100">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-slate-950">M</span>
           ManishaPay
         </Link>
-        {remaining !== null && !limitReached && (
-          <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-400">
-            {remaining} free questions left today
-          </span>
-        )}
-      </header>
+        <NavLinks />
+        <div className="mt-auto px-3">
+          <Link to="/register" className="block rounded-xl bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-slate-950 hover:bg-brand-400">
+            Sign up free
+          </Link>
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        {/* mobile header: logo + quota, then inline nav chips */}
+        <header className="mx-auto max-w-3xl px-4 pt-5 lg:pt-6">
+          <div className="flex items-center justify-between lg:justify-end">
+            <Link to="/" className="flex items-center gap-2 font-semibold text-slate-100 lg:hidden">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-slate-950">M</span>
+              ManishaPay
+            </Link>
+            {remaining !== null && !limitReached && (
+              <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-400">
+                {remaining} free questions left today
+              </span>
+            )}
+          </div>
+          <NavLinks chip className="mt-3 flex flex-wrap gap-2 lg:hidden" />
+        </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-28">
         {messages.length === 0 && (
@@ -167,7 +208,7 @@ export default function AiAssistant() {
       </main>
 
       {/* composer */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-slate-800 bg-slate-950/90 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 border-t border-slate-800 bg-slate-950/90 backdrop-blur lg:left-56">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
           <input
             value={input}
@@ -185,6 +226,7 @@ export default function AiAssistant() {
         <p className="pb-2 text-center text-[10px] text-slate-600">
           ManishaAI can make mistakes — verify critical details in the <Link to="/docs" className="underline hover:text-slate-400">docs</Link>.
         </p>
+      </div>
       </div>
     </div>
   );

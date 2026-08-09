@@ -7,9 +7,11 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import AiMarkdown from '../components/AiMarkdown';
+import WebhookDebugger from '../components/WebhookDebugger';
 import {
   Sparkles, Send, Loader2, ExternalLink, Bot, User, ShieldCheck, Zap, Lock,
-  Home, BookOpen, MessagesSquare, Rocket, Share2, Check, Code2,
+  Home, BookOpen, MessagesSquare, Rocket, Share2, Check, Code2, Wrench,
 } from 'lucide-react';
 
 const BASE = import.meta.env.VITE_API_BASE || '';
@@ -38,11 +40,11 @@ function NavLinks({ className = '', chip = false }) {
 
 const STARTERS = [
   'How do I integrate PayNow in Laravel?',
-  'Which gateway should I use for Kenya?',
-  'How do I verify a ManishaPay webhook?',
+  'Compare PayNow, Pesepay and Stripe in a table',
   'Why is my EcoCash PIN prompt not arriving?',
   'Can I accept Visa without a website?',
-  'Compare Stripe and Paystack for cards',
+  'Ndingagamuchira sei mari neEcoCash pawebsite yangu?',
+  'Which gateway should I use for Kenya?',
 ];
 
 function Message({ role, content, sources, question, onFollowUp, canFollowUp }) {
@@ -58,10 +60,10 @@ function Message({ role, content, sources, question, onFollowUp, canFollowUp }) 
         isUser ? 'bg-slate-700 text-slate-200' : 'bg-brand-500/15 text-brand-300 border border-brand-500/30'}`}>
         {isUser ? <User size={16} /> : <Bot size={16} />}
       </div>
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-        isUser ? 'bg-brand-600/20 border border-brand-500/25 text-slate-100'
+      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+        isUser ? 'whitespace-pre-wrap bg-brand-600/20 border border-brand-500/25 text-slate-100'
                : 'bg-slate-900/80 border border-slate-800 text-slate-200'}`}>
-        {content}
+        {isUser ? content : <AiMarkdown content={content} />}
         {!isUser && (question || canFollowUp) && (
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-2">
             {canFollowUp && ['Show in Node.js', 'Show in PHP', 'cURL example'].map((c) => (
@@ -106,6 +108,7 @@ export default function AiAssistant() {
   const [remaining, setRemaining] = useState(null);
   const [configured, setConfigured] = useState(true);
   const [limitReached, setLimitReached] = useState(false);
+  const [showDebugger, setShowDebugger] = useState(false);
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -209,13 +212,19 @@ export default function AiAssistant() {
                 </button>
               ))}
             </div>
-            <div className="mx-auto mt-8 flex max-w-md items-center justify-center gap-5 text-[11px] text-slate-500">
+            <button onClick={() => setShowDebugger((v) => !v)}
+              className="mx-auto mt-4 flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-900/70 px-4 py-2 text-xs text-slate-400 hover:border-brand-500/50 hover:text-brand-300">
+              <Wrench size={12} /> Webhook signature debugger
+            </button>
+            <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-5 text-[11px] text-slate-500">
               <span className="flex items-center gap-1"><Zap size={12} /> Instant answers</span>
               <span className="flex items-center gap-1"><ShieldCheck size={12} /> Cites its sources</span>
               <span className="flex items-center gap-1"><Lock size={12} /> No signup</span>
             </div>
           </div>
         )}
+
+        {showDebugger && <div className="mt-6"><WebhookDebugger onClose={() => setShowDebugger(false)} /></div>}
 
         <div className="mt-6 space-y-5">
           {messages.map((m, i) => (

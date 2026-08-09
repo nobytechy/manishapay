@@ -64,6 +64,9 @@ const ON_TOPIC = [
   'sdk', 'widget', 'merchant', 'manishapay', 'manisha', 'invoice', 'subscription', 'hash', 'sign',
   'fee', 'pricing', 'kyc', 'error', 'status', 'callback', 'redirect', 'laravel', 'php', 'node',
   'react', 'python', 'flutter', 'wordpress', 'woocommerce', 'whmcs', 'hello', 'hi ', 'help',
+  // Shona / Ndebele payment vocabulary — vernacular questions are first-class.
+  'mari', 'bhadhar', 'kubhadhar', 'tambir', 'kutambir', 'muripo', 'imali', 'khokh', 'ukukhokh',
+  'intengo', 'thumela', 'tumira', 'mhoro', 'sawubona', 'ndeip',
 ];
 
 /** Cheap lexical screen; the system prompt is the real guard. */

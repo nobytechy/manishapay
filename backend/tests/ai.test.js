@@ -164,3 +164,10 @@ test('route: follow-ups bypass the global answer cache', async () => {
   assert.notStrictEqual(second.body.cached, true);
   delete process.env.AI_API_KEY;
 });
+
+/* ── vernacular (Shona/Ndebele) support ──────────────────────────── */
+
+test('guard: Shona payment question passes the scope screen', () => {
+  assert.strictEqual(limits.looksOnTopic('Ndingagamuchira sei mari neEcoCash pawebsite yangu?'), true);
+  assert.strictEqual(limits.looksOnTopic('Ngingayamukela njani imali nge-card?'), true);
+});

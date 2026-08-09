@@ -479,3 +479,18 @@ values
   ('Welcome to ManishaPay', 'Generate your first test key in the API Keys tab and try `curl /v1/pay` from the docs.', 'info'),
   ('Mock mode is live',     'Test keys without PayNow credentials configured run a fully simulated checkout — no PayNow account required.', 'info')
 on conflict do nothing;
+
+-- ─── ManishaAI question log (product insight) ─────────────────────────
+-- Every answered question, persisted fire-and-forget from /v1/ai/chat.
+create table if not exists manishapay_ai_questions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  question text not null,
+  answer_preview text,
+  is_follow_up boolean not null default false,
+  sources jsonb,
+  session text
+);
+create index if not exists idx_mp_ai_questions_created on manishapay_ai_questions (created_at desc);
+alter table manishapay_ai_questions enable row level security;
+-- Service-role only (backend writes/reads); no anon access.

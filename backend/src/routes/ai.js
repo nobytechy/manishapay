@@ -16,6 +16,7 @@ const { search } = require('../ai/retrieve');
 const llm = require('../ai/llm');
 const { consume, remaining, cacheGet, cacheSet, looksOnTopic, DAILY_LIMIT } = require('../ai/limits');
 const { logger } = require('../services/logger');
+const { supabase } = require('../config/supabase');
 
 const SESSION_COOKIE = 'mp_ai_sid';
 const MAX_MESSAGE_LEN = 600;
@@ -148,6 +149,18 @@ router.post('/chat', async (req, res) => {
     const payload = { answer: text, sources };
     if (!isFollowUp) cacheSet(message, payload);
     logger.info({ q: message.slice(0, 80), hits: hits.length, sid: sid.slice(0, 6) }, 'manishaai: answered');
+
+    // Persist the Q&A for product insight (fire-and-forget: analytics must
+    // never slow down or fail an answer). Table: manishapay_ai_questions.
+    supabase.from('manishapay_ai_questions').insert({
+      question: message,
+      answer_preview: text.slice(0, 300),
+      is_follow_up: isFollowUp,
+      sources: sources.map((x) => x.label),
+      session: sid.slice(0, 8),
+    }).then(({ error }) => {
+      if (error) logger.warn({ error: error.message }, 'manishaai: question log insert failed');
+    });
     res.json({ ...payload, remaining: quota.remaining, cached: false });
   } catch (err) {
     logger.error({ err: err.message }, 'manishaai: generation failed');

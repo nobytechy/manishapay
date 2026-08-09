@@ -171,3 +171,8 @@ test('guard: Shona payment question passes the scope screen', () => {
   assert.strictEqual(limits.looksOnTopic('Ndingagamuchira sei mari neEcoCash pawebsite yangu?'), true);
   assert.strictEqual(limits.looksOnTopic('Ngingayamukela njani imali nge-card?'), true);
 });
+
+test('guard: Swahili payment question passes the scope screen', () => {
+  assert.strictEqual(limits.looksOnTopic('Ninawezaje kupokea malipo kwa M-Pesa kwenye tovuti yangu?'), true);
+  assert.strictEqual(limits.looksOnTopic('Nataka kulipa kwa kadi ya Visa'), true);
+});

@@ -44,7 +44,7 @@ const STARTERS = [
   'Why is my EcoCash PIN prompt not arriving?',
   'Can I accept Visa without a website?',
   'Ndingagamuchira sei mari neEcoCash pawebsite yangu?',
-  'Which gateway should I use for Kenya?',
+  'Ninawezaje kupokea malipo kwa M-Pesa?',
 ];
 
 function Message({ role, content, sources, question, onFollowUp, canFollowUp }) {

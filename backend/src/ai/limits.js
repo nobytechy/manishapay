@@ -67,6 +67,9 @@ const ON_TOPIC = [
   // Shona / Ndebele payment vocabulary — vernacular questions are first-class.
   'mari', 'bhadhar', 'kubhadhar', 'tambir', 'kutambir', 'muripo', 'imali', 'khokh', 'ukukhokh',
   'intengo', 'thumela', 'tumira', 'mhoro', 'sawubona', 'ndeip',
+  // Swahili payment vocabulary (M-Pesa heartland: Kenya, Tanzania, Uganda, DRC).
+  'malipo', 'kulipa', 'lipa', 'pesa', 'fedha', 'kupokea', 'pokea', 'kutuma', 'tuma',
+  'benki', 'kadi', 'simu', 'habari', 'jambo', 'mambo',
 ];
 
 /** Cheap lexical screen; the system prompt is the real guard. */

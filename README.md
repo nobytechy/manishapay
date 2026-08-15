@@ -246,3 +246,11 @@ Money never touches ManishaPay. We're a developer-tools company that bills month
 ## License
 
 MIT © [Noby Tebulo](https://noby.aizim.co.zw)
+
+## Screenshots
+
+![manishapay](docs/screenshots/manishapay.jpg)
+
+![manishaai](docs/screenshots/manishaai.jpg)
+
+**Live:** https://manishapay.netlify.app · Built by [Noby Tebulo](https://nobie.netlify.app)

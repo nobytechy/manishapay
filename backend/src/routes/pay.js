@@ -208,11 +208,12 @@ router.get('/:reference/status', async (req, res, next) => {
     // non-terminal state and we have credentials. Cached status is
     // returned if the live poll fails.
     let live = null;
+    let creds = null;
     if (data.poll_url && data.mode !== 'simulated') {
       try {
         const providerId = data.provider || 'paynow';
         const prov = getProvider(providerId);
-        const creds = await credentials.loadActive(req.developer.projectId, providerId, data.mode);
+        creds = await credentials.loadActive(req.developer.projectId, providerId, data.mode);
         if (creds) {
           live = await prov.pollStatus(data.poll_url, creds);
           // Providers return a canonical `status` (+ raw `rawStatus`). Persist a
@@ -248,7 +249,7 @@ router.get('/:reference/status', async (req, res, next) => {
         mode: data.mode,
         // How the gateway was authenticated: the developer's own connected keys,
         // ManishaPay's shared test sandbox, or the built-in PayNow simulator.
-        credential_source: creds ? (creds.source || 'own') : (result.mode === 'simulated' ? 'simulated' : null),
+        credential_source: creds ? (creds.source || 'own') : (data.mode === 'simulated' ? 'simulated' : null),
         method: data.method,
         paynow_reference: data.paynow_reference,
         created_at: data.created_at,

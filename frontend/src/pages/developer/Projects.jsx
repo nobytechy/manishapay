@@ -8,6 +8,17 @@ import { useAuth } from '../../context/AuthContext';
 import { FolderKanban, Plus, Trash2 } from 'lucide-react';
 import { ConfirmModal } from '../../components/ui/Modal';
 
+// Bound every Supabase call: a stalled request surfaces in 12s with a retry
+// path instead of freezing the page.
+function bounded(promise, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out — please retry.`)), 12000),
+    ),
+  ]);
+}
+
 export default function Projects() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
@@ -15,29 +26,52 @@ export default function Projects() {
   const [returnUrl, setReturnUrl] = useState('');
   const [resultUrl, setResultUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [busy, setBusy] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
 
   const refresh = async () => {
     setLoading(true);
-    const { data } = await supabase.from('manishapay_projects').select('*').eq('developer_id', user.id).order('created_at', { ascending: false });
-    setItems(data || []);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const { data, error } = await bounded(
+        supabase.from('manishapay_projects').select('*').eq('developer_id', user.id).order('created_at', { ascending: false }),
+        'Loading projects',
+      );
+      if (error) throw error;
+      setItems(data || []);
+    } catch (e) {
+      setLoadError(e.message || 'Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { if (user) refresh(); /* eslint-disable-next-line */ }, [user]);
 
   const create = async () => {
     if (!name) return toast.error('Name is required');
-    const { error } = await supabase.from('manishapay_projects').insert({
-      developer_id: user.id,
-      name,
-      return_url: returnUrl || null,
-      result_url: resultUrl || null,
-    });
-    if (error) return toast.error(error.message);
-    setName(''); setReturnUrl(''); setResultUrl('');
-    toast.success('Project created');
-    refresh();
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await bounded(
+        supabase.from('manishapay_projects').insert({
+          developer_id: user.id,
+          name,
+          return_url: returnUrl || null,
+          result_url: resultUrl || null,
+        }),
+        'Creating the project',
+      );
+      if (error) throw error;
+      setName(''); setReturnUrl(''); setResultUrl('');
+      toast.success('Project created');
+      refresh();
+    } catch (e) {
+      toast.error(e.message || 'Create failed');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const remove = async (id) => {
@@ -59,12 +93,18 @@ export default function Projects() {
           <Input label="Name" value={name} onChange={(e)=>setName(e.target.value)}/>
           <Input label="Return URL" value={returnUrl} onChange={(e)=>setReturnUrl(e.target.value)} placeholder="https://your.app/return"/>
           <Input label="Result URL" value={resultUrl} onChange={(e)=>setResultUrl(e.target.value)} placeholder="https://api.your.app/webhook"/>
-          <div className="flex items-end"><Button className="w-full" onClick={create}><Plus size={14}/> Create</Button></div>
+          <div className="flex items-end"><Button className="w-full" onClick={create} disabled={busy}><Plus size={14}/> {busy ? 'Creating…' : 'Create'}</Button></div>
         </div>
       </Card>
 
       <Card title="Your projects">
         {loading ? <p className="text-sm text-slate-400">Loading…</p> :
+         loadError ? (
+           <p className="text-sm text-rose-400">
+             {loadError}{' '}
+             <button onClick={refresh} className="underline underline-offset-4">Retry</button>
+           </p>
+         ) :
          items.length === 0 ? <p className="text-sm text-slate-400">No projects yet.</p> :
         <ul className="divide-y divide-slate-800">
           {items.map((p) => (

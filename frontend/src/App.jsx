@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -44,19 +45,39 @@ import AdminLogs from './pages/admin/Logs';
 import AdminWebhooks from './pages/admin/Webhooks';
 import AdminAnnouncements from './pages/admin/Announcements';
 
+function WaitingScreen() {
+  // If connecting drags past 8s, stop pretending: offer a way out instead
+  // of an eternal spinner (the old behaviour when a session read stalled).
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="grid min-h-screen place-items-center bg-slate-950">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        {slow && (
+          <div className="text-center text-sm text-slate-400">
+            <p>Still connecting…</p>
+            <p className="mt-2 flex gap-4">
+              <button onClick={() => window.location.reload()} className="underline underline-offset-4 hover:text-slate-200">Reload</button>
+              <a href="/login" className="underline underline-offset-4 hover:text-slate-200">Go to sign in</a>
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Protected({ children, adminOnly = false }) {
   const { isAuthenticated, isAdmin, loading, profileReady } = useAuth();
   // Spinner only while the SESSION is unknown, or (for admin routes) while the
   // profile that decides admin access is still loading. Regular /app pages render
   // as soon as the session is known — no waiting on a profile round-trip.
   const waiting = loading || (adminOnly && isAuthenticated && !profileReady);
-  if (waiting) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-slate-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-      </div>
-    );
-  }
+  if (waiting) return <WaitingScreen />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (adminOnly && !isAdmin) return <Navigate to="/app" replace />;
   return children;

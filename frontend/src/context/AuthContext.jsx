@@ -60,13 +60,19 @@ export function AuthProvider({ children }) {
     if (!token) return null;
 
     try {
+      // Render's free tier cold-starts in ~a minute; bound the bootstrap so
+      // profileReady is never hostage to a sleeping backend.
+      const ctrl = new AbortController();
+      const bootTimer = setTimeout(() => ctrl.abort(), 10000);
       const res = await fetch(`${API_BASE}/v1/auth/bootstrap`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        signal: ctrl.signal,
       });
+      clearTimeout(bootTimer);
       if (!res.ok) {
         // Don't crash the app — surface in console for debugging,
         // user just won't see app UI until they retry.
@@ -104,7 +110,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    // Bounded: on supabase-js auth-lock stalls this used to spin forever;
+    // now an 8s timeout routes the user to /login instead of a blank spinner.
+    withTimeout(supabase.auth.getSession(), 8000, 'session-timeout').then(({ data }) => {
       if (!active) return;
       setSession(data.session);
       // Render the app immediately once the session is known — don't block the
@@ -119,19 +127,28 @@ export function AuthProvider({ children }) {
         setProfileReady(true);
       }
     }).catch(() => {
-      // getSession should never reject, but if it does, don't spin forever.
+      // Stalled or rejected session read: unblock the UI. If a session later
+      // materialises, onAuthStateChange updates state anyway.
       if (active) { setLoading(false); setProfileReady(true); }
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
       if (!active) return;
       setSession(s);
-      if (s?.user) {
-        const p = await ensureProfile(s.user.id);
-        if (active) { setProfile(p); setProfileReady(true); }
-      } else {
-        setProfile(null); setProfileReady(true);
-      }
+      // CRITICAL: defer all further work out of this callback. The callback
+      // runs while the auth lock is held; awaiting Supabase calls in here
+      // (profile reads, getSession) re-enters that lock and deadlocks EVERY
+      // subsequent query — the classic "app pauses after idle" bug.
+      setTimeout(() => {
+        if (!active) return;
+        if (s?.user) {
+          ensureProfile(s.user.id)
+            .then((p) => { if (active) { setProfile(p); setProfileReady(true); } })
+            .catch(() => { if (active) setProfileReady(true); });
+        } else {
+          setProfile(null); setProfileReady(true);
+        }
+      }, 0);
     });
 
     return () => {

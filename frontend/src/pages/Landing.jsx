@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   ArrowRight, ShieldCheck, Code2, Rocket, CheckCircle2, Terminal,
   Zap, Lock, Globe, Webhook, BarChart3, Github, Mail, ExternalLink,
@@ -156,7 +158,22 @@ const partnerPoints = [
 ];
 
 export default function Landing() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, signInAnonymously } = useAuth();
+  const navigate = useNavigate();
+  const [guestBusy, setGuestBusy] = useState(false);
+
+  // One tap into the dashboard. The account is real and everything built in it
+  // survives when they later attach an email or a provider.
+  const onGuest = async () => {
+    setGuestBusy(true);
+    try {
+      await signInAnonymously();
+      navigate('/app');
+    } catch (err) {
+      toast.error(err.message || 'Could not start — check your connection.');
+      setGuestBusy(false);
+    }
+  };
   return (
     <div id="top" className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Page-wide animated tech backdrop — sits behind every section */}
@@ -230,20 +247,45 @@ export default function Landing() {
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500">
             <span className="font-medium text-slate-300">PayNow Zimbabwe is live in production</span> — and every one of its notorious integration headaches (hash, decimals, mobile OTP, broken webhooks) is already solved at the middleware layer.
           </p>
+          {/*
+            Every CTA here used to lead to /register. Someone arriving from a
+            link, on a phone, with thirty seconds of curiosity, hit a signup
+            form and left — so the one-tap guest path existed but was never
+            reachable by the people it was built for. It leads now.
+          */}
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {isAuthenticated ? (
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
+              >
+                <Rocket size={18}/> Open your dashboard
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={onGuest}
+                disabled={guestBusy}
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95 disabled:opacity-70"
+              >
+                {guestBusy
+                  ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
+                  : <Rocket size={18}/>}
+                See a payment work
+              </button>
+            )}
             <Link
               to={isAuthenticated ? '/app/connect' : '/register'}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-7 py-3.5 font-semibold text-white shadow-glow transition hover:opacity-95"
-            >
-              <Rocket size={18}/> Connect Your App
-            </Link>
-            <Link
-              to="/get-started"
               className="rounded-lg border border-slate-700 bg-slate-900/50 px-7 py-3.5 text-slate-200 hover:bg-slate-800"
             >
-              New here? Start guide
+              {isAuthenticated ? 'Connect your app' : 'Create an account'}
             </Link>
           </div>
+          {!isAuthenticated && (
+            <p className="mt-3 text-xs text-slate-500">
+              No signup, no card. Add an email later and nothing you set up is lost.
+            </p>
+          )}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-400">
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>50 free transactions/month</span>
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={14} className="text-brand"/>No gateway account needed to test</span>

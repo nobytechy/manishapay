@@ -10,6 +10,7 @@ import { formatDate, statusVariant } from '../../lib/utils';
 import GettingStarted from '../../components/onboarding/GettingStarted';
 import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
 import Congrats from '../../components/onboarding/Congrats';
+import FirstRun, { NextStep } from '../../components/home/FirstRun';
 
 function Stat({ icon: Icon, label, value, loading }) {
   return (
@@ -27,7 +28,8 @@ function Stat({ icon: Icon, label, value, loading }) {
 
 export default function DeveloperDashboard() {
   const { user } = useAuth();
-  const [counts, setCounts] = useState({ keys: 0, txns: 0, methods: 0, success: 0 });
+  const [counts, setCounts] = useState({ keys: 0, txns: 0, methods: 0, live: 0, success: 0 });
+  const [reloadKey, setReloadKey] = useState(0);
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   // First-run onboarding: celebrate activation, then the tour. 'congrats' -> 'tour' -> null.
@@ -54,17 +56,38 @@ export default function DeveloperDashboard() {
       if (!active) return;
       const total = txns.count ?? 0;
       const paid = (txns.data || []).filter((t) => t.status?.toLowerCase() === 'paid').length;
+      const activeGw = (gw.data || []).filter((c) => c.status === 'active');
       setCounts({
         keys: keys.count ?? 0,
         txns: total,
-        methods: (gw.data || []).filter((c) => c.status === 'active').length,
+        methods: activeGw.length,
+        live: activeGw.filter((c) => c.mode === 'live').length,
         success: total ? Math.round((paid / total) * 100) : 0,
       });
       setRecent(recentTxns.data || []);
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [user]);
+  }, [user, reloadKey]);
+
+  // A brand-new account gets ONE thing on screen. Stats of zero, an empty
+  // transactions table and a checklist are all noise until there is something
+  // to show — and worse, they read as evidence that the product does nothing.
+  const isFirstRun = !loading && counts.txns === 0 && counts.methods === 0;
+
+  if (isFirstRun) {
+    return (
+      <>
+        <header className="text-center">
+          <h1 className="text-2xl font-semibold text-slate-100">Welcome to ManishaPay</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Before anything else, see what a payment looks like here.
+          </p>
+        </header>
+        <FirstRun onPaid={() => setReloadKey((k) => k + 1)} />
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -75,6 +98,9 @@ export default function DeveloperDashboard() {
         <h1 className="text-2xl font-semibold text-slate-100">Overview</h1>
         <p className="text-sm text-slate-400">Snapshot of your ManishaPay activity.</p>
       </header>
+
+      {/* One next action, never a list of them. Disappears once they're live. */}
+      <NextStep hasMethod={counts.methods > 0} hasLive={counts.live > 0} />
 
       <GettingStarted onStartTour={() => setStage('tour')} />
 
@@ -88,18 +114,6 @@ export default function DeveloperDashboard() {
         <Stat icon={KeyRound} label="API keys" value={counts.keys} loading={loading} />
       </div>
 
-      <Link to="/app/methods" className="block rounded-xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand/15 text-brand"><Plug size={18} /></div>
-            <div>
-              <div className="text-sm font-semibold text-slate-100">One API, many gateways</div>
-              <div className="text-xs text-slate-400">Connect PayNow, Stripe, Paystack, Flutterwave, PayPal, M-Pesa &amp; more — your code never changes.</div>
-            </div>
-          </div>
-          <span className="whitespace-nowrap text-xs font-semibold text-brand">Connect gateways →</span>
-        </div>
-      </Link>
 
       <Card title="Recent transactions">
         {loading ? (

@@ -129,6 +129,10 @@ export const api = {
   revokeCredential: (id) => apiFetchAuthed(`/v1/credentials/${id}`, { method: 'DELETE' }),
 
   // Multi-gateway catalog + per-gateway credentials
+  // One-tap demo payment — session-authed, always simulated, never billable.
+  startDemoPayment: (body = {}) => apiFetchAuthed('/v1/demo/payment', { method: 'POST', body }),
+  getDemoPayment: (reference) => apiFetchAuthed(`/v1/demo/payment/${reference}`, { silent: true }),
+
   listProviders: () => apiFetchAuthed('/v1/providers'),
   listGatewayCredentials: () => apiFetchAuthed('/v1/credentials/gateway'),
   saveGatewayCredential: (body) => apiFetchAuthed('/v1/credentials/gateway', { method: 'POST', body }),

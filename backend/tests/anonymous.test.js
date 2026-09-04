@@ -104,3 +104,32 @@ test('every credentialSchema field declares a required flag', () => {
     }
   }
 });
+
+/* ── Demo payment ─────────────────────────────────────────────────────────
+ * The one-tap "see a payment work" flow must ALWAYS take the simulated branch.
+ * With platform sandbox keys configured, a normal test payment goes to PayNow's
+ * real test environment and can't be completed from our side — the demo would
+ * hang on "waiting for the customer" forever. Passing no credentials is what
+ * pins it, so that's what's worth locking down.
+ */
+const paynowProvider = getProvider('paynow');
+
+test('demo payment takes the simulated branch when no credentials are passed', async () => {
+  const result = await paynowProvider.initiate(
+    { reference: 'DEMO-TEST', amount: '1.00', description: 'Demo payment' },
+    { mode: 'test', creds: null, project: {} },
+  );
+  assert.equal(result.mode, 'simulated');
+  assert.ok(result.providerRef, 'needs a tracker for the simulator to act on');
+  assert.match(result.checkoutUrl, /\/simulator\//);
+});
+
+test('the simulated branch is refused outside test mode', async () => {
+  await assert.rejects(
+    () => paynowProvider.initiate(
+      { reference: 'DEMO-TEST', amount: '1.00' },
+      { mode: 'live', creds: null, project: {} },
+    ),
+    (err) => err.code === 'CREDENTIALS_REQUIRED',
+  );
+});

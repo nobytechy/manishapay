@@ -38,6 +38,7 @@ const teamRouter = require('./routes/team');
 const providersRouter = require('./routes/providers');
 const gatewayWebhookRouter = require('./routes/gatewayWebhook');
 const aiRouter = require('./routes/ai');
+const demoRouter = require('./routes/demo');
 
 function buildApp() {
   const app = express();
@@ -116,6 +117,7 @@ function buildApp() {
   app.use('/v1/subscriptions', subscriptionsRouter);
   app.use('/v1/cli', devRateLimiter, cliRouter);
   app.use('/v1/team', teamRouter);
+  app.use('/v1/demo', devRateLimiter, demoRouter); // One-tap 'see a payment work' — session-authed, simulated only
 
   // 404 — explicit so the error handler can format it.
   app.use((req, _res, next) => {

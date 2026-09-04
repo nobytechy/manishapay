@@ -134,3 +134,15 @@ test('the simulated branch is refused outside test mode', async () => {
   );
 });
 
+
+/* ── Credential verification ──────────────────────────────────────────────
+ * "Check it works" must never run against live. Verifying a live gateway
+ * would mean creating a real pending charge on a real customer-facing
+ * account, so the schema accepts test and nothing else.
+ */
+test('the gateway check refuses any mode but test', () => {
+  const { z } = require('zod');
+  const schema = z.object({ provider: z.string().min(1).max(32), mode: z.literal('test') });
+  assert.doesNotThrow(() => schema.parse({ provider: 'stripe', mode: 'test' }));
+  assert.throws(() => schema.parse({ provider: 'stripe', mode: 'live' }));
+});

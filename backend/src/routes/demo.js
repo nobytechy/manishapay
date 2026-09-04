@@ -28,6 +28,7 @@ const { z } = require('zod');
 const { supabase } = require('../config/supabase');
 const { getProvider } = require('../providers');
 const paynow = require('../services/paynow');
+const credentials = require('../services/credentials');
 const AppError = require('../errors/AppError');
 const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
 
@@ -35,6 +36,7 @@ router.use(jwtAuthenticate);
 
 const DEMO_AMOUNT = '1.00';
 const DEMO_PREFIX = 'DEMO-';
+const VERIFY_PREFIX = 'CHECK-';
 
 const startSchema = z.object({
   description: z.string().max(120).optional(),
@@ -115,6 +117,86 @@ router.post('/payment', requireCapability('payments'), async (req, res, next) =>
         mode: result.mode,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /v1/demo/verify  { provider, mode: 'test' }
+ *
+ * "Do these keys actually work?" — asked from the Payment Methods page, one tap
+ * per connected method.
+ *
+ * A merchant who pastes a Stripe secret key has no way to find out whether it
+ * was right until a customer tries to pay and fails. Storing a credential is
+ * not the same as proving it, and the gap between the two is where trust in
+ * the platform is lost.
+ *
+ * There is no universal "validate credentials" call across eleven gateways, so
+ * this does the only thing that actually proves it: initiates a real one-dollar
+ * TEST payment and reports whether the gateway accepted it. Nothing is
+ * persisted — this is a probe, not a transaction, and it must not pollute the
+ * merchant's payment history.
+ *
+ * Test mode only, deliberately. Verifying live would mean creating a real
+ * pending charge on a real customer-facing account.
+ */
+const verifySchema = z.object({
+  provider: z.string().min(1).max(32),
+  mode: z.literal('test'),
+});
+
+router.post('/verify', requireCapability('payments'), async (req, res, next) => {
+  try {
+    const parsed = verifySchema.parse(req.body || {});
+
+    const { data: project } = await supabase
+      .from('manishapay_projects')
+      .select('id, return_url, result_url')
+      .eq('developer_id', req.developer.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!project) throw AppError.badRequest('No project to run this against.');
+
+    const provider = getProvider(parsed.provider);
+    const creds = await credentials.loadActive(project.id, parsed.provider, 'test');
+
+    try {
+      const result = await provider.initiate(
+        {
+          reference: `${VERIFY_PREFIX}${Date.now().toString(36).toUpperCase()}`,
+          amount: DEMO_AMOUNT,
+          description: 'Credential check',
+          email: 'check@manishapay.dev',
+        },
+        { mode: 'test', creds, project },
+      );
+      res.json({
+        data: {
+          ok: true,
+          provider: parsed.provider,
+          // Which keys answered: the merchant's own, or the shared sandbox.
+          // Without this a merchant who thinks they connected their own account
+          // gets a pass that was really our sandbox saying yes.
+          source: creds?.source === 'platform-sandbox' ? 'platform-sandbox' : 'your-keys',
+          simulated: result.mode === 'simulated',
+        },
+      });
+    } catch (err) {
+      // A gateway rejection is a successful check with a negative answer, not a
+      // server error — the merchant needs to read what the gateway said.
+      res.json({
+        data: {
+          ok: false,
+          provider: parsed.provider,
+          code: err.code || 'GATEWAY_REJECTED',
+          message: err.message || 'The gateway rejected the request.',
+          resolution: err.resolution || err.details?.resolution || null,
+        },
+      });
+    }
   } catch (err) {
     next(err);
   }

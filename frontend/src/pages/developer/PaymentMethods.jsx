@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowRight, Check, Plus, Search, Trash2, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Plus, Search, Trash2, X, Zap } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { ConfirmModal } from '../../components/ui/Modal';
@@ -32,6 +32,25 @@ export default function PaymentMethods() {
   const [loading, setLoading] = useState(true);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [confirm, setConfirm] = useState(null); // { id, legacy, name }
+  const [checking, setChecking] = useState(null); // provider id being verified
+  const [checks, setChecks] = useState({});       // provider id → result
+
+  /**
+   * Storing a credential is not the same as proving it. Without this the first
+   * time a merchant learns their Stripe key was wrong is when a customer fails
+   * to pay — so give them the answer here, on the row, in one tap.
+   */
+  const verify = async (providerId) => {
+    setChecking(providerId);
+    try {
+      const res = await api.verifyGateway(providerId);
+      setChecks((c) => ({ ...c, [providerId]: res?.data || { ok: false, message: 'No response.' } }));
+    } catch (err) {
+      setChecks((c) => ({ ...c, [providerId]: { ok: false, message: err.message || 'Check failed.' } }));
+    } finally {
+      setChecking(null);
+    }
+  };
 
   const refresh = async () => {
     setLoading(true);
@@ -132,14 +151,38 @@ export default function PaymentMethods() {
                     Your keys · {projectName(c.project_id)}
                     {c.hint ? ` · ${c.hint}` : ''}
                   </p>
+                  {checks[c.provider] && (
+                    <p className={`mt-1.5 flex items-start gap-1.5 text-xs ${checks[c.provider].ok ? 'text-brand' : 'text-rose-400'}`}>
+                      {checks[c.provider].ok ? <Check size={13} className="mt-0.5 shrink-0" /> : <AlertCircle size={13} className="mt-0.5 shrink-0" />}
+                      <span>
+                        {checks[c.provider].ok
+                          ? (checks[c.provider].source === 'platform-sandbox'
+                              ? 'Working — but this used our test account, not your keys.'
+                              : 'Your keys work.')
+                          : checks[c.provider].message}
+                        {checks[c.provider].resolution ? ` ${checks[c.provider].resolution}` : ''}
+                      </span>
+                    </p>
+                  )}
                 </div>
-                <button
-                  onClick={() => setConfirm({ id: c.id, legacy: c.legacy, name: nameOf(c.provider) })}
-                  className="shrink-0 p-2 text-slate-500 hover:text-rose-400"
-                  aria-label={`Remove ${nameOf(c.provider)}`}
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  {c.mode === 'test' && (
+                    <button
+                      onClick={() => verify(c.provider)}
+                      disabled={checking === c.provider}
+                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand hover:bg-brand/10 disabled:opacity-60"
+                    >
+                      {checking === c.provider ? 'Checking…' : 'Check it works'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setConfirm({ id: c.id, legacy: c.legacy, name: nameOf(c.provider) })}
+                    className="p-2 text-slate-500 hover:text-rose-400"
+                    aria-label={`Remove ${nameOf(c.provider)}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

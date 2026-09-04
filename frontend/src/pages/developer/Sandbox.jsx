@@ -20,7 +20,7 @@ import {
   FlaskConical, Lightbulb, AlertCircle, Plug,
   ListChecks, Coins, Smartphone, ShieldCheck, Send, Database, QrCode, Sparkles,
 } from 'lucide-react';
-import { api, getActiveKey } from '../../lib/api';
+import { api, getActiveKey, ensureTestKey } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -262,7 +262,24 @@ export default function Sandbox() {
   const [history, setHistory] = useState([]);
   const [flow, setFlow] = useState([]); // animated "behind the scenes" pipeline
 
-  const activeKey = getActiveKey();
+  const [activeKey, setActiveKeyState] = useState(() => getActiveKey());
+  const [mintingKey, setMintingKey] = useState(false);
+
+  // The Sandbox needs a test key. It used to detect that and send the user to
+  // another page to make one — a dead end, since nothing about the decision
+  // needed a human. Now it just makes one.
+  const mintKeyAndContinue = async () => {
+    setMintingKey(true);
+    try {
+      const key = await ensureTestKey();
+      if (key) setActiveKeyState(key);
+      else toast.error('Could not create a test key — try the API Keys page.');
+    } catch {
+      /* api.js already toasted */
+    } finally {
+      setMintingKey(false);
+    }
+  };
   const scenario = SCENARIOS.find((s) => s.id === scenarioId) || null;
 
   // Load the multi-gateway catalog once, keep only the LIVE providers.
@@ -485,16 +502,23 @@ export default function Sandbox() {
               <KeyRound size={20} />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-slate-100">No active API key</p>
+              <p className="font-medium text-slate-100">You need a test key for this</p>
               <p className="mt-1 text-sm text-slate-400">
-                The Sandbox needs an active test key to call <code className="rounded bg-slate-800 px-1.5 py-0.5 text-xs">/v1/pay</code>. Create one and click <em>"Use as active"</em>.
+                The Sandbox calls <code className="rounded bg-slate-800 px-1.5 py-0.5 text-xs">/v1/pay</code> the
+                same way your code would, so it needs a test key. There's nothing to decide — we can make one now.
               </p>
-              <Link
-                to="/app/keys"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2 text-sm font-medium text-white shadow-glow hover:opacity-95"
+              <button
+                type="button"
+                onClick={mintKeyAndContinue}
+                disabled={mintingKey}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2 text-sm font-medium text-white shadow-glow hover:opacity-95 disabled:opacity-60"
               >
-                Go to API Keys <ExternalLink size={14} />
-              </Link>
+                {mintingKey ? 'Creating…' : 'Create a test key and continue'}
+              </button>
+              <p className="mt-3 text-xs text-slate-500">
+                Or manage keys yourself on the{' '}
+                <Link to="/app/keys" className="text-brand hover:underline">API Keys</Link> page.
+              </p>
             </div>
           </div>
         </div>

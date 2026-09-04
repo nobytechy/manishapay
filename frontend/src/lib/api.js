@@ -122,6 +122,35 @@ export async function ensureProject(known) {
   return created?.data?.id || created?.id || null;
 }
 
+/**
+ * Returns a usable TEST key, minting one if the developer has none.
+ *
+ * Pages that call /v1/pay used to detect a missing key and then tell the user
+ * to go to another page and make one — refusing to do a thing they had all the
+ * information to do. If we know a test key is needed and we're allowed to
+ * create it, creating it is the answer.
+ *
+ * Live keys are deliberately not covered: those are a decision, not plumbing.
+ */
+export async function ensureTestKey() {
+  const cached = getActiveKey();
+  if (cached) return cached;
+
+  const synced = await syncActiveKey();
+  if (synced?.key) return synced.key;
+
+  const projectId = await ensureProject();
+  if (!projectId) return null;
+
+  const created = await apiFetchAuthed('/v1/keys', {
+    method: 'POST',
+    body: { project_id: projectId, mode: 'test', label: 'Dashboard' },
+  });
+  const key = created?.data?.key || created?.key || null;
+  if (key) setActiveKey(key);
+  return key;
+}
+
 export const api = {
   // Data-plane
   pay: (body) => apiFetch('/v1/pay', { method: 'POST', body }),
@@ -152,6 +181,7 @@ export const api = {
   // One-tap demo payment — session-authed, always simulated, never billable.
   startDemoPayment: (body = {}) => apiFetchAuthed('/v1/demo/payment', { method: 'POST', body }),
   getDemoPayment: (reference) => apiFetchAuthed(`/v1/demo/payment/${reference}`, { silent: true }),
+  verifyGateway: (provider) => apiFetchAuthed('/v1/demo/verify', { method: 'POST', body: { provider, mode: 'test' }, silent: true }),
 
   listProviders: () => apiFetchAuthed('/v1/providers'),
   listGatewayCredentials: () => apiFetchAuthed('/v1/credentials/gateway'),

@@ -8,7 +8,6 @@ import { useAuth } from '../../context/AuthContext';
 import { Receipt, KeyRound, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
 import ShareReceipt from '../../components/ShareReceipt';
-import GettingStarted from '../../components/onboarding/GettingStarted';
 import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
 import Congrats from '../../components/onboarding/Congrats';
 import FirstRun, { NextStep } from '../../components/home/FirstRun';
@@ -100,10 +99,16 @@ export default function DeveloperDashboard() {
         <p className="text-sm text-slate-400">Snapshot of your ManishaPay activity.</p>
       </header>
 
-      {/* One next action, never a list of them. Disappears once they're live. */}
-      <NextStep hasMethod={counts.methods > 0} hasLive={counts.live > 0} />
+      {/*
+        One next action, never a list of them.
 
-      <GettingStarted onStartTour={() => setStage('tour')} />
+        This sat directly above a GettingStarted checklist that named the same
+        steps — add a method, take a test payment, secure the account, go live —
+        so Home told the merchant what to do next twice, in two different
+        shapes, and contradicted the whole point of the card. The checklist is
+        gone; the tour it launched is now a quiet link at the bottom.
+      */}
+      <NextStep hasMethod={counts.methods > 0} hasLive={counts.live > 0} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Payments and success rate mean something to a shop owner. Key and
@@ -150,6 +155,16 @@ export default function DeveloperDashboard() {
           </table>
         )}
       </Card>
+
+      <p className="text-center">
+        <button
+          type="button"
+          onClick={() => setStage('tour')}
+          className="text-xs text-slate-500 hover:text-slate-300"
+        >
+          Take a quick tour of the dashboard
+        </button>
+      </p>
     </div>
   );
 }

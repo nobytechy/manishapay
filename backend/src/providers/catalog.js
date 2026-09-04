@@ -36,8 +36,13 @@ const CATALOG = [
         help: 'PayNow → Receive Payments → your integration → Integration ID.' },
       { key: 'integrationKey', label: 'Integration Key', type: 'password', required: true,
         help: 'Same screen as the Integration ID. Keep it secret.' },
-      { key: 'merchantEmail', label: 'Merchant email', type: 'text', required: false,
-        help: 'The email registered on this PayNow integration (used for TEST-mode payments).' },
+      // Optional on a LIVE integration, but PayNow rejects any authemail that
+      // isn't the registered one on a TEST integration — so skipping it here
+      // produces a confusing failure at the first EcoCash test payment rather
+      // than at setup. `requiredInTest` lets the connect wizard enforce that
+      // without hardcoding provider-specific rules in the UI.
+      { key: 'merchantEmail', label: 'Merchant email', type: 'text', required: false, requiredInTest: true,
+        help: 'The email registered on this PayNow account. PayNow only accepts this address on a test integration.' },
     ],
   },
   {

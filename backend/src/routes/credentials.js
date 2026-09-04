@@ -170,8 +170,11 @@ router.post('/gateway', requireCapability('manage'), async (req, res, next) => {
     // Resolve the provider (throws for unknown) and validate required fields
     // against ITS credentialSchema — the same schema the Connect App renders.
     const provider = getProvider(parsed.provider);
+    // `requiredInTest` fields are mandatory only in test mode — PayNow's
+    // merchant email is optional on a live integration but rejected by PayNow
+    // if absent or mismatched on a test one.
     const missing = (provider.credentialSchema || [])
-      .filter((f) => f.required && !parsed.config[f.key])
+      .filter((f) => (f.required || (parsed.mode === 'test' && f.requiredInTest)) && !parsed.config[f.key])
       .map((f) => f.key);
     if (missing.length) {
       throw AppError.badRequest(`Missing required credential fields for ${parsed.provider}: ${missing.join(', ')}`, { missing });

@@ -79,3 +79,28 @@ test('PayNow declares its shared sandbox like every other gateway', () => {
     else process.env.PAYNOW_TEST_AUTHEMAIL = saved.email;
   }
 });
+
+/* ── Mode-specific required fields ────────────────────────────────────────
+ * PayNow's merchant email is optional on a live integration but PayNow itself
+ * rejects a test integration without it, so the connect wizard and the API
+ * both have to enforce it in test mode only.
+ */
+const { getProvider } = require('../src/providers');
+
+test('PayNow merchant email is required in test mode only', () => {
+  const paynow = getProvider('paynow');
+  const field = paynow.credentialSchema.find((f) => f.key === 'merchantEmail');
+  assert.ok(field, 'merchantEmail should exist on the PayNow schema');
+  assert.equal(field.required, false, 'must stay optional for live integrations');
+  assert.equal(field.requiredInTest, true, 'must be enforced for test integrations');
+});
+
+test('every credentialSchema field declares a required flag', () => {
+  // A field with `required` undefined silently becomes optional, which is how
+  // a merchant ends up with a half-configured gateway that fails at pay time.
+  for (const id of ['paynow', 'stripe', 'paystack', 'paypal', 'flutterwave']) {
+    for (const f of getProvider(id).credentialSchema || []) {
+      assert.equal(typeof f.required, 'boolean', `${id}.${f.key} has no required flag`);
+    }
+  }
+});

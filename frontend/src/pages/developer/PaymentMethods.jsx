@@ -72,6 +72,15 @@ export default function PaymentMethods() {
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const nameOf = (id) => providers.find((p) => p.id === id)?.displayName || id;
+
+  // Gateways that can be tested with no keys at all. Without showing these the
+  // page looks empty after a merchant picks "ManishaPay's test account" — there
+  // is nothing to store, so nothing appeared, and it read like a failure.
+  const testReady = providers.filter(
+    (p) => p.status === 'live'
+      && p.sandboxAvailable
+      && !connections.some((c) => c.provider === p.id && c.mode === 'test'),
+  );
   const projectName = (id) => projects.find((p) => p.id === id)?.name || '—';
 
   const remove = async ({ id, legacy }) => {
@@ -98,6 +107,11 @@ export default function PaymentMethods() {
           <Button size="lg" onClick={() => setWizardOpen(true)}>
             <Plus size={18} /> Add a payment method
           </Button>
+          {testReady.length > 0 && (
+            <p className="mt-4 max-w-sm text-center text-xs text-slate-500">
+              {testReady.length} of them can be tested right now without any keys.
+            </p>
+          )}
         </div>
       ) : (
         <>
@@ -115,7 +129,7 @@ export default function PaymentMethods() {
                     </span>
                   </div>
                   <p className="truncate text-xs text-slate-500">
-                    {projectName(c.project_id)}
+                    Your keys · {projectName(c.project_id)}
                     {c.hint ? ` · ${c.hint}` : ''}
                   </p>
                 </div>
@@ -129,6 +143,18 @@ export default function PaymentMethods() {
               </li>
             ))}
           </ul>
+
+          {testReady.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Also ready to test — no keys needed
+              </h2>
+              <p className="text-sm text-slate-400">
+                {testReady.map((p) => p.displayName).join(', ')}. Add any of them with your
+                own test keys instead if you'd rather test against your own account.
+              </p>
+            </div>
+          )}
 
           <div className="grid place-items-center">
             <Button size="lg" onClick={() => setWizardOpen(true)}>
@@ -170,7 +196,7 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
   const [provider, setProvider] = useState(null);
   const [mode, setMode] = useState(null);
   const [projectId, setProjectId] = useState(projects[0]?.id || '');
-  const [ownKeys, setOwnKeys] = useState(false);
+  const [ownKeys, setOwnKeys] = useState(null); // null = not asked, false = ours, true = theirs
   const [values, setValues] = useState({});
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
@@ -188,19 +214,24 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
     );
   }, [live, query]);
 
-  // Testing on a gateway with a shared sandbox needs no keys at all — so those
-  // screens are not built, rather than built and skipped.
-  const sandboxPath = mode === 'test' && provider?.sandboxAvailable && !ownKeys;
+  // In test mode on a gateway we hold sandbox keys for, the merchant gets a
+  // real choice: our practice account, or their own sandbox account. Both are
+  // legitimate — ours is faster to start, theirs tests against the data and
+  // settings in their actual gateway dashboard. Neither moves real money.
+  //
+  // `ownKeys === null` means the question hasn't been answered yet.
+  const canOfferSandbox = mode === 'test' && !!provider?.sandboxAvailable;
+  const sandboxPath = canOfferSandbox && ownKeys === false;
   const fields = sandboxPath ? [] : provider?.credentialSchema || [];
 
   const steps = useMemo(() => {
     const s = ['method', 'mode'];
     if (projects.length > 1) s.push('project');
-    if (sandboxPath) s.push('sandbox');
-    else fields.forEach((f) => s.push(`field:${f.key}`));
+    if (canOfferSandbox) s.push('keysource');
+    if (!sandboxPath) fields.forEach((f) => s.push(`field:${f.key}`));
     s.push('review');
     return s;
-  }, [projects.length, sandboxPath, fields]);
+  }, [projects.length, canOfferSandbox, sandboxPath, fields]);
 
   const current = steps[Math.min(step, steps.length - 1)];
   const back = () => setStep((s) => Math.max(0, s - 1));
@@ -209,13 +240,17 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
   const choose = (setter) => (v) => { setter(v); next(); };
 
   const fieldFor = (key) => fields.find((f) => f.key === key);
+  // Some fields are only mandatory in one mode — PayNow's merchant email is
+  // optional live but enforced by PayNow itself on a test integration.
+  const isRequired = (f) => !!f && (f.required || (mode === 'test' && f.requiredInTest));
   const canNext = (() => {
     if (current === 'method') return !!provider;
     if (current === 'mode') return !!mode;
     if (current === 'project') return !!projectId;
+    if (current === 'keysource') return ownKeys !== null;
     if (current?.startsWith('field:')) {
       const f = fieldFor(current.slice(6));
-      return !f?.required || !!values[f.key]?.trim();
+      return !isRequired(f) || !!values[f.key]?.trim();
     }
     return true;
   })();
@@ -297,7 +332,9 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
                   // browser cache. Catch it here rather than letting them type
                   // their live keys and hit a 403 at the end.
                   if (id === 'live' && isAnonymous) return promptSecure();
-                  setOwnKeys(false);
+                  // Live always needs their own keys — there is no shared live
+                  // account and there never will be.
+                  setOwnKeys(id === 'live' ? true : null);
                   choose(setMode)(id);
                 }}
               />
@@ -319,24 +356,28 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
             </Step>
           )}
 
-          {current === 'sandbox' && (
-            <Step question="Ready to test.">
-              <div className="rounded-xl border border-brand/25 bg-brand/5 p-4">
-                <p className="flex items-start gap-2 text-sm text-slate-300">
-                  <Check size={16} className="mt-0.5 shrink-0 text-brand" />
-                  <span>
-                    {provider.displayName} testing runs on our shared practice account, so there is
-                    nothing to enter. Take a test payment right away.
-                  </span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOwnKeys(true)}
-                className="mt-3 text-sm text-slate-400 underline hover:text-slate-200"
-              >
-                Use my own {provider.displayName} keys instead
-              </button>
+          {current === 'keysource' && (
+            <Step question={`Which ${provider.displayName} test account?`}>
+              <ChoiceList
+                options={[
+                  {
+                    id: 'ours',
+                    label: 'ManishaPay\u2019s test account',
+                    sub: 'Nothing to enter. Start testing straight away.',
+                  },
+                  {
+                    id: 'mine',
+                    label: `My own ${provider.displayName} test keys`,
+                    sub: `Test against your own ${provider.displayName} sandbox, with your settings and your test data.`,
+                  },
+                ]}
+                selected={ownKeys === null ? null : ownKeys ? 'mine' : 'ours'}
+                onSelect={(id) => { setOwnKeys(id === 'mine'); next(); }}
+              />
+              <p className="mt-3 text-xs text-slate-500">
+                Either way no real money moves. You can switch later by adding this
+                payment method again.
+              </p>
             </Step>
           )}
 
@@ -349,17 +390,20 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
                   type={f.type === 'password' ? 'password' : 'text'}
                   value={values[f.key] || ''}
                   onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                  placeholder={f.required ? '' : 'Leave blank to skip'}
+                  placeholder={isRequired(f) ? '' : 'Leave blank to skip'}
                 />
               </Step>
             );
           })()}
 
           {current === 'review' && (
-            <Step question="Add this payment method?">
+            <Step question={sandboxPath ? 'Ready to test.' : 'Add this payment method?'}>
               <dl className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/40 px-4">
                 <Row label="Method" value={provider.displayName} />
                 <Row label="Used for" value={MODES.find((m) => m.id === mode)?.label} />
+                {canOfferSandbox && (
+                  <Row label="Test account" value={sandboxPath ? 'ManishaPay\u2019s' : 'Yours'} />
+                )}
                 {projects.length > 1 && <Row label="Project" value={projects.find((p) => p.id === projectId)?.name} />}
                 {fields
                   .filter((f) => values[f.key]?.trim())
@@ -371,11 +415,11 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
                     />
                   ))}
               </dl>
-              {!sandboxPath && (
-                <p className="mt-3 text-xs text-slate-500">
-                  Your keys are encrypted before they are stored and are never shown again.
-                </p>
-              )}
+              <p className="mt-3 text-xs text-slate-500">
+                {sandboxPath
+                  ? `There are no keys to save — ${provider.displayName} testing is already available on this account. Make a payment link and pay it yourself to see it work.`
+                  : 'Your keys are encrypted before they are stored and are never shown again.'}
+              </p>
             </Step>
           )}
         </div>
@@ -389,7 +433,7 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
           </Button>
           {current === 'review' ? (
             <Button className="flex-1" onClick={finish} loading={saving}>
-              <Check size={15} /> Add it
+              <Check size={15} /> {sandboxPath ? 'Start testing' : 'Add it'}
             </Button>
           ) : (
             <Button className="flex-1" onClick={next} disabled={!canNext}>

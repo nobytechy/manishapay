@@ -4,7 +4,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { ConfirmModal } from '../../components/ui/Modal';
-import { api, setActiveKey, getActiveKey, syncActiveKey } from '../../lib/api';
+import { api, ensureProject, setActiveKey, getActiveKey, syncActiveKey } from '../../lib/api';
 import { KeyRound, Plus, Trash2, ClipboardCopy, CheckCircle2 } from 'lucide-react';
 import { copyToClipboard, formatDate } from '../../lib/utils';
 
@@ -44,11 +44,17 @@ export default function ApiKeys() {
   useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
 
   const create = async () => {
-    if (!projectId) return toast.error('Create a project first');
+    // No project? Make one rather than sending the merchant away to do it.
+    let pid = projectId;
+    if (!pid) {
+      pid = await ensureProject(projects).catch(() => null);
+      if (!pid) return toast.error('Could not set up a project for this account.');
+      setProjectId(pid);
+    }
     setCreating(true);
     try {
       const r = await api.createKey({
-        project_id: projectId,
+        project_id: pid,
         mode,
         label,
         scopes: readOnly ? ['read'] : ['pay', 'read'],
@@ -129,7 +135,7 @@ export default function ApiKeys() {
             <label className="mb-1 block text-sm font-medium text-slate-300">Project</label>
             <select value={projectId} onChange={(e)=>setProjectId(e.target.value)} className="input">
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              {!projects.length && <option value="">No projects yet</option>}
+              {!projects.length && <option value="">Setting one up…</option>}
             </select>
           </div>
           <div className="flex items-end">

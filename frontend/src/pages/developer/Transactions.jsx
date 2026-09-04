@@ -7,10 +7,13 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useAccount } from '../../context/AccountContext';
 import { formatDate, statusVariant } from '../../lib/utils';
+import ShareReceipt from '../../components/ShareReceipt';
 import { Search } from 'lucide-react';
 
 export default function Transactions() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  // Names the receipt so a customer recognises who it's from.
+  const businessName = profile?.full_name || null;
   const { accountId } = useAccount();
   const [items, setItems] = useState([]);
   const [q, setQ] = useState('');
@@ -95,13 +98,16 @@ export default function Transactions() {
                   <td className="text-slate-400">{formatDate(t.created_at)}</td>
                   <td className="text-right">
                     {t.status_normalized === 'paid' && (
-                      <button
+                      <span className="inline-flex items-center gap-3">
+                        <ShareReceipt txn={t} businessName={businessName} />
+                        <button
                         onClick={() => refund(t)}
                         disabled={refundingRef === t.merchant_reference}
                         className="text-xs text-rose-400 hover:underline disabled:opacity-50"
                       >
                         {refundingRef === t.merchant_reference ? 'Refunding…' : 'Refund'}
-                      </button>
+                        </button>
+                      </span>
                     )}
                   </td>
                 </tr>

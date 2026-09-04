@@ -7,6 +7,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Receipt, KeyRound, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
+import ShareReceipt from '../../components/ShareReceipt';
 import GettingStarted from '../../components/onboarding/GettingStarted';
 import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
 import Congrats from '../../components/onboarding/Congrats';
@@ -27,7 +28,7 @@ function Stat({ icon: Icon, label, value, loading }) {
 }
 
 export default function DeveloperDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [counts, setCounts] = useState({ keys: 0, txns: 0, methods: 0, live: 0, success: 0 });
   const [reloadKey, setReloadKey] = useState(0);
   const [recent, setRecent] = useState([]);
@@ -48,7 +49,7 @@ export default function DeveloperDashboard() {
         api.listGatewayCredentials().catch(() => ({ data: [] })),
         supabase
           .from('manishapay_transactions')
-          .select('id, merchant_reference, merchant_amount, status, created_at')
+          .select('id, merchant_reference, merchant_amount, currency, status, status_normalized, mode, paynow_reference, created_at')
           .eq('developer_id', user.id)
           .order('created_at', { ascending: false })
           .limit(8),
@@ -129,7 +130,7 @@ export default function DeveloperDashboard() {
         ) : (
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-slate-500">
-              <tr><th className="text-left py-2">Reference</th><th className="text-left">Amount</th><th className="text-left">Status</th><th className="text-left">When</th></tr>
+              <tr><th className="text-left py-2">Reference</th><th className="text-left">Amount</th><th className="text-left">Status</th><th className="text-left">When</th><th /></tr>
             </thead>
             <tbody>
               {recent.map((t) => (
@@ -138,6 +139,11 @@ export default function DeveloperDashboard() {
                   <td className="text-slate-300">${t.merchant_amount}</td>
                   <td><span className={`badge-${statusVariant(t.status)}`}>{t.status}</span></td>
                   <td className="text-slate-400">{formatDate(t.created_at)}</td>
+                  <td className="text-right">
+                    {t.status_normalized === 'paid' && (
+                      <ShareReceipt txn={t} businessName={profile?.full_name || null} />
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

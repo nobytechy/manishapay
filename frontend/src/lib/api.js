@@ -102,6 +102,26 @@ export async function apiFetchAuthed(path, { method = 'GET', body, silent = fals
   return rawFetch(path, headers, { method, body, silent });
 }
 
+/**
+ * Returns a usable project id, creating one if the account somehow has none.
+ *
+ * Bootstrap creates a default project on first sign-in, so this is a safety
+ * net rather than the normal path — it covers a bootstrap that timed out on a
+ * cold start. The pages that need a project used to give up here and tell the
+ * merchant to go and create one themselves, which is the app refusing to do
+ * something it already knows how to do.
+ */
+export async function ensureProject(known) {
+  if (known?.length) return known[0].id;
+  const listed = await apiFetchAuthed('/v1/projects', { silent: true }).catch(() => null);
+  if (listed?.data?.length) return listed.data[0].id;
+  const created = await apiFetchAuthed('/v1/projects', {
+    method: 'POST',
+    body: { name: 'My business', description: 'Created automatically so you can start straight away.' },
+  });
+  return created?.data?.id || created?.id || null;
+}
+
 export const api = {
   // Data-plane
   pay: (body) => apiFetch('/v1/pay', { method: 'POST', body }),

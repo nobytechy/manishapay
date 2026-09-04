@@ -5,7 +5,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
-import { api } from '../../lib/api';
+import { api, ensureProject } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useAccount } from '../../context/AccountContext';
 
@@ -60,12 +60,18 @@ export default function PaymentLinks() {
     setEnabledMethods((cur) => (cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]));
 
   const create = async () => {
-    if (!projectId) return toast.error('Create a project first');
+    // No project? Make one rather than sending the merchant away to do it.
+    let pid = projectId;
+    if (!pid) {
+      pid = await ensureProject(projects).catch(() => null);
+      if (!pid) return toast.error('Could not set up a project for this account.');
+      setProjectId(pid);
+    }
     if (!title.trim() || !amount) return toast.error('Title and amount are required');
     setCreating(true);
     try {
       await api.createLink({
-        project_id: projectId,
+        project_id: pid,
         title: title.trim(),
         amount,
         currency,
@@ -115,7 +121,7 @@ export default function PaymentLinks() {
             <label className="mb-1 block text-sm font-medium text-slate-300">Project</label>
             <select className="input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
               {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              {!projects.length && <option value="">No projects yet</option>}
+              {!projects.length && <option value="">Setting one up…</option>}
             </select>
           </div>
         </div>

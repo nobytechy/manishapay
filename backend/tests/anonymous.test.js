@@ -133,3 +133,4 @@ test('the simulated branch is refused outside test mode', async () => {
     (err) => err.code === 'CREDENTIALS_REQUIRED',
   );
 });
+

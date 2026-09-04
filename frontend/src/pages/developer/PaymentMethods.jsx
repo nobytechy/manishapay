@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, Plus, Search, Trash2, X } from 'lucide-re
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { ConfirmModal } from '../../components/ui/Modal';
-import { api } from '../../lib/api';
+import { api, ensureProject } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useSecureAccount } from '../../components/auth/SecureAccount';
 
@@ -258,12 +258,14 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
   const save = async () => {
     setSaving(true);
     try {
+      const pid = projectId || (await ensureProject(projects));
+      if (!pid) throw new Error('Could not set up a project for this account.');
       const config = Object.fromEntries(
         Object.entries(values)
           .filter(([, v]) => String(v).trim() !== '')
           .map(([k, v]) => [k, String(v).trim()]),
       );
-      await api.saveGatewayCredential({ project_id: projectId, provider: provider.id, mode, config });
+      await api.saveGatewayCredential({ project_id: pid, provider: provider.id, mode, config });
       toast.success(`${provider.displayName} added`);
       await onDone();
     } catch {

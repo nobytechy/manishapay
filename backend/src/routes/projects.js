@@ -73,6 +73,23 @@ router.patch('/:id', requireCapability('manage'), async (req, res, next) => {
 
 router.delete('/:id', requireCapability('manage'), async (req, res, next) => {
   try {
+    // Every write path — gateway credentials, payment links, API keys —
+    // requires a project. Deleting the last one leaves the account in a state
+    // where nothing works and each page just says "create a project first".
+    // Bootstrap creates one for a reason; keep the invariant it establishes.
+    const { count } = await supabase
+      .from('manishapay_projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('developer_id', req.developer.id);
+    if ((count ?? 0) <= 1) {
+      throw new AppError({
+        status: 400,
+        code: 'LAST_PROJECT',
+        message: 'This is your only project, and payment methods and links need one to live in.',
+        resolution: 'Create another project first, then delete this one. You can rename this one instead if that is what you meant.',
+      });
+    }
+
     const { error } = await supabase
       .from('manishapay_projects')
       .delete()

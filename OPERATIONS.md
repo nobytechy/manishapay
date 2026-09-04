@@ -314,6 +314,44 @@ where developer_id = '<uuid>'
   and created_at >= date_trunc('month', now());
 ```
 
+### Sweep abandoned guest accounts
+
+Anonymous sign-in leaves a developer row, a project, an API key and a demo
+transaction behind for every visitor who taps "See a payment work". That's the
+right trade — the alternative is a signup form nobody fills in — but the rows
+outlive the visitors, and a developer count that's mostly people who glanced at
+a link is a count of nothing.
+
+Dry run first. It changes nothing and prints what it would remove:
+
+```bash
+curl -X POST https://<api>/v1/reconcile/anonymous \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+Read `examined`, `wouldDelete` and `keptReasons` before going further. When the
+numbers look right:
+
+```bash
+curl -X POST https://<api>/v1/reconcile/anonymous \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H 'Content-Type: application/json' \
+  -d '{"confirm":true}'
+```
+
+Then schedule the confirming version weekly (Render Cron Job, cron-job.org, or
+whatever already pings the API to keep it warm).
+
+**What it will never delete**, regardless of age: any account that isn't
+`status = 'anonymous'`; any guest with an active gateway credential (they put in
+real effort and may return on the same phone); any guest with a billable
+transaction (the demo payment is written `billable: false` precisely so the two
+can be told apart).
+
+`older_than_days` defaults to 30 and is floored at 1 — passing 0 would take
+today's visitors. `limit` defaults to 500 and caps at 2000, so a first run on a
+large backlog is several calls rather than one long one.
+
 ### Generate the monthly invoice (manual SQL — until the cron is built)
 
 Replace the period with the last fully-completed month:

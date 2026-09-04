@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Circle, FlaskConical, Plug, ShieldCheck, Rocket, Sparkles, X, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, Link2, Plug, ShieldCheck, Rocket, Sparkles, X, ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -63,9 +63,9 @@ export default function GettingStarted({ onStartTour }) {
     { key: 'gateway', icon: Plug, done: counts.gateways > 0,
       title: 'Add a payment method', desc: 'PayNow, Stripe, Paystack, M-Pesa — pick the ones your customers use.',
       to: '/app/methods', cta: 'Add' },
-    { key: 'test', icon: FlaskConical, done: counts.txns > 0,
-      title: 'Take a test payment', desc: 'Watch a payment run end to end. No real money moves.',
-      to: '/app/sandbox', cta: 'Try it' },
+    { key: 'test', icon: Link2, done: counts.txns > 0,
+      title: 'Take a test payment', desc: 'Make a payment link, open it, and pay it yourself. No real money moves, no API key needed.',
+      to: '/app/links', cta: 'Try it' },
     ...(isAnonymous ? [{
       key: 'secure', icon: ShieldCheck, done: false,
       title: 'Secure your account', desc: 'Add an email so you can sign in from any phone. Nothing you set up changes.',

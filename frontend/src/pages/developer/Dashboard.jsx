@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Skeleton from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
-import { Receipt, KeyRound, Webhook, Activity, Plug } from 'lucide-react';
+import { Receipt, KeyRound, Activity, Plug } from 'lucide-react';
 import { formatDate, statusVariant } from '../../lib/utils';
 import GettingStarted from '../../components/onboarding/GettingStarted';
 import WelcomeTour, { TOUR_SEEN_KEY } from '../../components/onboarding/WelcomeTour';
@@ -26,7 +27,7 @@ function Stat({ icon: Icon, label, value, loading }) {
 
 export default function DeveloperDashboard() {
   const { user } = useAuth();
-  const [counts, setCounts] = useState({ keys: 0, txns: 0, hooks: 0, success: 0 });
+  const [counts, setCounts] = useState({ keys: 0, txns: 0, methods: 0, success: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   // First-run onboarding: celebrate activation, then the tour. 'congrats' -> 'tour' -> null.
@@ -38,10 +39,11 @@ export default function DeveloperDashboard() {
     if (!user) return;
     let active = true;
     (async () => {
-      const [keys, txns, hooks, recentTxns] = await Promise.all([
+      const [keys, txns, gw, recentTxns] = await Promise.all([
         supabase.from('manishapay_api_keys').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
         supabase.from('manishapay_transactions').select('status', { count: 'exact' }).eq('developer_id', user.id),
-        supabase.from('manishapay_webhook_endpoints').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
+        // Through the API — gateway credentials are service-role only.
+        api.listGatewayCredentials().catch(() => ({ data: [] })),
         supabase
           .from('manishapay_transactions')
           .select('id, merchant_reference, merchant_amount, status, created_at')
@@ -55,7 +57,7 @@ export default function DeveloperDashboard() {
       setCounts({
         keys: keys.count ?? 0,
         txns: total,
-        hooks: hooks.count ?? 0,
+        methods: (gw.data || []).filter((c) => c.status === 'active').length,
         success: total ? Math.round((paid / total) * 100) : 0,
       });
       setRecent(recentTxns.data || []);
@@ -77,10 +79,13 @@ export default function DeveloperDashboard() {
       <GettingStarted onStartTour={() => setStage('tour')} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={KeyRound} label="API keys" value={counts.keys} loading={loading} />
-        <Stat icon={Receipt} label="Transactions" value={counts.txns} loading={loading} />
-        <Stat icon={Webhook} label="Webhook endpoints" value={counts.hooks} loading={loading} />
+        {/* Payments and success rate mean something to a shop owner. Key and
+            webhook counts are developer plumbing — they moved to the grouped
+            nav with the rest of it. */}
+        <Stat icon={Receipt} label="Payments" value={counts.txns} loading={loading} />
         <Stat icon={Activity} label="Success rate" value={`${counts.success}%`} loading={loading} />
+        <Stat icon={Plug} label="Payment methods" value={counts.methods} loading={loading} />
+        <Stat icon={KeyRound} label="API keys" value={counts.keys} loading={loading} />
       </div>
 
       <Link to="/app/methods" className="block rounded-xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
@@ -102,7 +107,11 @@ export default function DeveloperDashboard() {
             <Skeleton /><Skeleton /><Skeleton />
           </div>
         ) : recent.length === 0 ? (
-          <p className="text-sm text-slate-400">No transactions yet — generate a key and call <code className="text-brand">/v1/pay</code> to see one here.</p>
+          <p className="text-sm text-slate-400">
+            No payments yet.{' '}
+            <Link to="/app/links" className="text-brand hover:underline">Make a payment link</Link>{' '}
+            and pay it yourself in test mode — it'll show up here.
+          </p>
         ) : (
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-slate-500">

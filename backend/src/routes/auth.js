@@ -102,6 +102,35 @@ router.post('/bootstrap', async (req, res, next) => {
       });
     }
 
+    // ── Default project ──────────────────────────────────────────────────
+    // A project is required by every write path (gateway credentials, payment
+    // links, API keys) but it is pure plumbing — the merchant did not come here
+    // to model a project hierarchy. Without this, a brand-new account reached
+    // the payment-method wizard, filled in their keys, and got a validation
+    // error on an empty project_id at the very last step.
+    //
+    // Created once, only when they have none. Anyone who wants several still
+    // makes them on the Projects page, and the wizards show the picker as soon
+    // as a second one exists.
+    const { count: projectCount } = await supabase
+      .from('manishapay_projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('developer_id', user.id);
+    if (!projectCount) {
+      const { error: projErr } = await supabase
+        .from('manishapay_projects')
+        .insert({
+          developer_id: user.id,
+          name: fullName ? `${fullName.split(' ')[0]}'s business` : 'My business',
+          description: 'Created automatically so you can start straight away.',
+        });
+      if (projErr) {
+        // Non-fatal: the dashboard still loads and the Projects page can create
+        // one by hand. Log it so a schema drift here is visible.
+        logger.warn({ err: projErr.message, userId: user.id }, 'bootstrap: default project not created');
+      }
+    }
+
     // Accept any pending team invites addressed to this email — link the
     // membership to this user and activate it. Best-effort.
     if (user.email) {

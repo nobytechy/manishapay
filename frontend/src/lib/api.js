@@ -68,7 +68,14 @@ async function rawFetch(path, headers, { method, body, silent }) {
   if (!res.ok) {
     const err = (json && json.error) || { message: `HTTP ${res.status}`, code: 'NETWORK' };
     if (!silent) {
-      toast.error(`${err.code || 'ERROR'}: ${err.message}${err.resolution ? ` — ${err.resolution}` : ''}`);
+      // Some codes are prompts rather than faults. Prefixing them with a
+      // shouty machine code makes a normal next step look like a crash.
+      const isPrompt = err.code === 'ACCOUNT_NOT_SECURED';
+      const text = isPrompt
+        ? err.message
+        : `${err.code || 'ERROR'}: ${err.message}${err.resolution ? ` — ${err.resolution}` : ''}`;
+      if (isPrompt) toast(text, { icon: '🔒' });
+      else toast.error(text);
     }
     throw Object.assign(new Error(err.message), err);
   }

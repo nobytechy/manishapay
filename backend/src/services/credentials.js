@@ -40,6 +40,18 @@ function sandboxFromEnv(provider) {
   const e = process.env;
   const has = (...ks) => ks.every((k) => e[k]);
   switch (provider) {
+    case 'paynow':
+      // PayNow's shared sandbox was previously only reachable inside
+      // loadPaynow(), so the catalog wrongly reported sandboxAvailable:false
+      // and the UI had to special-case it. Declaring it here makes PayNow
+      // look like every other gateway to the catalog and the dashboard.
+      return has('PAYNOW_TEST_INTEGRATION_ID', 'PAYNOW_TEST_INTEGRATION_KEY')
+        ? {
+            integrationId: String(e.PAYNOW_TEST_INTEGRATION_ID),
+            integrationKey: e.PAYNOW_TEST_INTEGRATION_KEY,
+            merchantEmail: e.PAYNOW_TEST_AUTHEMAIL || null,
+          }
+        : null;
     case 'stripe':
       return e.STRIPE_TEST_SECRET_KEY
         ? { secretKey: e.STRIPE_TEST_SECRET_KEY, webhookSecret: e.STRIPE_TEST_WEBHOOK_SECRET || null }
@@ -229,6 +241,33 @@ async function loadPaynow(projectId, mode) {
   if (!projectId) throw new Error('loadActive: projectId is required');
   if (mode !== 'test' && mode !== 'live') {
     throw new Error(`loadActive: invalid mode '${mode}'`);
+  }
+
+  // PayNow connected through the SAME generic path as every other gateway
+  // (manishapay_gateway_credentials) wins. This is what lets one dashboard
+  // screen connect all eleven gateways. The legacy manishapay_credentials
+  // table below still serves every credential saved before this change, so
+  // nothing a merchant already configured stops working.
+  try {
+    const generic = await loadGatewayConfig(projectId, 'paynow', mode);
+    if (generic && generic.integrationId && generic.integrationKey) {
+      return {
+        credentialId: null,
+        integrationId: String(generic.integrationId),
+        integrationKey: generic.integrationKey,
+        integrationIdLast4: String(generic.integrationId).slice(-4),
+        merchantEmail: generic.merchantEmail || null,
+        addedAt: null,
+        source: 'gateway-credentials',
+      };
+    }
+  } catch (err) {
+    // Pre-migration installs have no gateway table yet — fall through to the
+    // legacy lookup. Any other failure must surface rather than silently
+    // downgrading a configured merchant to "simulated".
+    const msg = String((err && err.message) || '');
+    if (!/does not exist|relation .*gateway_credentials|42P01/i.test(msg)) throw err;
+    logger.warn({ projectId }, 'gateway_credentials table missing — using legacy PayNow credentials');
   }
 
   const { data, error } = await supabase

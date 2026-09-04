@@ -35,10 +35,7 @@ export default function Connect() {
   const [returnUrl, setReturnUrl] = useState('');
 
   // Step 2
-  const [connectMode, setConnectMode] = useState('sandbox'); // 'sandbox' | 'own'
   const [email, setEmail] = useState('');
-  const [integrationId, setIntegrationId] = useState('');
-  const [integrationKey, setIntegrationKey] = useState('');
 
   // Result
   const [created, setCreated] = useState(null); // { projectId }
@@ -50,10 +47,7 @@ export default function Connect() {
   };
 
   const canNext1 = name.trim().length > 0;
-  const canFinish =
-    connectMode === 'sandbox'
-      ? email.trim().length > 3
-      : integrationId.trim() && integrationKey.trim() && email.trim().length > 3;
+  const canFinish = email.trim().length > 3;
 
   const finish = async () => {
     setBusy(true);
@@ -65,17 +59,6 @@ export default function Connect() {
       });
       const projectId = project?.data?.id || project?.id;
 
-      // Bring-your-own PayNow → save the credential (starts in test).
-      if (connectMode === 'own' && projectId) {
-        await api.saveCredential({
-          project_id: projectId,
-          mode: 'test',
-          integration_id: integrationId.trim(),
-          integration_key: integrationKey.trim(),
-          merchant_email: email.trim(),
-        });
-      }
-
       // Mint a test key right here so they never leave the flow.
       let testKey = null;
       if (projectId) {
@@ -84,7 +67,7 @@ export default function Connect() {
           testKey = keyRes?.data?.key || keyRes?.key || null;
         } catch { /* non-fatal — they can mint one on the API Keys page */ }
       }
-      setCreated({ projectId, testKey, email: email.trim(), sandbox: connectMode === 'sandbox' });
+      setCreated({ projectId, testKey, email: email.trim(), sandbox: true });
       setStep(3);
       toast.success('Connected — you’re ready to test.');
     } catch (err) {
@@ -154,49 +137,20 @@ export default function Connect() {
       {step === 2 && (
         <Card>
           <div className="space-y-5">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">How should it take payments?</label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <ChoiceCard
-                  active={connectMode === 'sandbox'}
-                  onClick={() => setConnectMode('sandbox')}
-                  title="Use ManishaPay Sandbox"
-                  badge="Recommended to start"
-                  body="No PayNow account needed. Test the full flow with signed webhooks instantly."
-                />
-                <ChoiceCard
-                  active={connectMode === 'own'}
-                  onClick={() => setConnectMode('own')}
-                  title="Connect my PayNow account"
-                  body="Use your own PayNow Integration ID + Key for real payments."
-                />
-              </div>
-            </div>
-
             <Input
-              label={connectMode === 'sandbox' ? 'Your email (used for test receipts / authemail)' : 'PayNow-registered email'}
+              label="Your email"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              hint="Used for test receipts. Nothing is charged."
             />
 
-            {connectMode === 'own' && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input label="Integration ID" placeholder="e.g. 11627" value={integrationId} onChange={(e) => setIntegrationId(e.target.value)} />
-                <Input label="Integration Key" type="password" placeholder="838c7e4e-…" value={integrationKey} onChange={(e) => setIntegrationKey(e.target.value)} />
-                <p className="text-xs text-slate-500 sm:col-span-2">
-                  Get these from{' '}
-                  <a href="https://www.paynow.co.zw/Home/Receive" target="_blank" rel="noopener noreferrer" className="underline">
-                    PayNow → Receive Payments → Manage Shopping Carts
-                  </a>. Your key is encrypted and never shown back.
-                </p>
-              </div>
-            )}
-
             <p className="text-xs text-slate-500">
-              Want Stripe, Paystack, Flutterwave, PayPal, M-Pesa and more? Connect them on the{' '}
-              <Link to="/app/gateways" className="text-brand underline">Payment Gateways</Link> page once your app is set up — your code never changes.
+              Your app starts on our practice account, so you can take a test payment straight
+              away. Add PayNow, Stripe, Paystack, M-Pesa and the rest on the{' '}
+              <Link to="/app/methods" className="text-brand underline">Payment Methods</Link> page
+              whenever you're ready — your code never changes.
             </p>
 
             <div className="flex items-center justify-between">
@@ -236,7 +190,7 @@ export default function Connect() {
             <div className="flex flex-wrap gap-3 border-t border-slate-800 pt-4">
               <Button onClick={() => nav('/app/keys')}>Get your test API key</Button>
               <Link to="/app/sandbox" className="btn btn-secondary">Open the Sandbox</Link>
-              <Link to="/app/gateways" className="btn btn-secondary">Connect payment gateways</Link>
+              <Link to="/app/methods" className="btn btn-secondary">Add payment methods</Link>
             </div>
           </div>
         </Card>
@@ -264,24 +218,6 @@ function Stepper({ step }) {
         );
       })}
     </div>
-  );
-}
-
-function ChoiceCard({ active, onClick, title, body, badge }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-xl border p-4 text-left transition ${
-        active ? 'border-brand bg-brand/10' : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-100">{title}</span>
-        {badge && <span className="rounded-full bg-brand/20 px-2 py-0.5 text-[10px] font-semibold text-brand">{badge}</span>}
-      </div>
-      <p className="mt-1 text-xs text-slate-400">{body}</p>
-    </button>
   );
 }
 

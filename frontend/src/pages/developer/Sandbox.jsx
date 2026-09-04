@@ -744,7 +744,7 @@ export default function Sandbox() {
                   <Plug size={12} /> {providerName}
                 </span>{' '}
                 runs against the credentials you connected on the{' '}
-                <Link to="/app/gateways" className="text-brand-300 hover:underline">Payment Gateways</Link>{' '}
+                <Link to="/app/methods" className="text-brand-300 hover:underline">Payment Methods</Link>{' '}
                 page (or the platform sandbox keys while in test mode). After initiating you’ll get a
                 checkout link and a normalized status you can poll — the PayNow paid/cancelled/timeout
                 triggers apply to PayNow only.

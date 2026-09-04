@@ -26,8 +26,7 @@ import Team from './pages/developer/Team';
 import Fiscalise from './pages/developer/Fiscalise';
 import Projects from './pages/developer/Projects';
 import ApiKeys from './pages/developer/ApiKeys';
-import Credentials from './pages/developer/Credentials';
-import Gateways from './pages/developer/Gateways';
+import PaymentMethods from './pages/developer/PaymentMethods';
 import Webhooks from './pages/developer/Webhooks';
 import Transactions from './pages/developer/Transactions';
 import Tools from './pages/developer/Tools';
@@ -112,8 +111,10 @@ export default function App() {
         <Route path="links" element={<PaymentLinks />} />
         <Route path="projects" element={<Projects />} />
         <Route path="keys" element={<ApiKeys />} />
-        <Route path="gateways" element={<Gateways />} />
-        <Route path="credentials" element={<Credentials />} />
+        <Route path="methods" element={<PaymentMethods />} />
+        {/* Old split screens — both jobs now live on one page. */}
+        <Route path="gateways" element={<Navigate to="/app/methods" replace />} />
+        <Route path="credentials" element={<Navigate to="/app/methods" replace />} />
         <Route path="webhooks" element={<Webhooks />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="health" element={<Health />} />

@@ -103,8 +103,8 @@ export default function Docs() {
           default hosted flow. The response returns a <code>browser_url</code> and a normalized <code>status</code>.
         </p>
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-brand/20 bg-brand/5 p-3 text-xs text-slate-300">
-          <Plug size={14} className="text-brand" /> Connect a gateway once on the
-          {' '}<a href="/app/gateways" className="text-brand underline">Payment Gateways</a> page — then route to it just by naming it here.
+          <Plug size={14} className="text-brand" /> Add a payment method once on the
+          {' '}<a href="/app/methods" className="text-brand underline">Payment Methods</a> page — then route to it just by naming it here.
         </div>
       </Card>
 

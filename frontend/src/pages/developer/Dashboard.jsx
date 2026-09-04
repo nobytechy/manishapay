@@ -83,7 +83,7 @@ export default function DeveloperDashboard() {
         <Stat icon={Activity} label="Success rate" value={`${counts.success}%`} loading={loading} />
       </div>
 
-      <Link to="/app/gateways" className="block rounded-xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
+      <Link to="/app/methods" className="block rounded-xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand/15 text-brand"><Plug size={18} /></div>

@@ -62,7 +62,7 @@ export default function GettingStarted({ onStartTour }) {
       to: '/app/sandbox', cta: 'Open Sandbox' },
     { key: 'gateway', icon: Plug, done: counts.gateways > 0, optional: true,
       title: 'Connect a payment gateway', desc: 'Add PayNow, Stripe, Paystack and more to take real payments.',
-      to: '/app/gateways', cta: 'Connect' },
+      to: '/app/methods', cta: 'Connect' },
   ];
 
   const coreDone = steps.filter((s) => !s.optional).every((s) => s.done);

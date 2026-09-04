@@ -34,7 +34,7 @@ const SLIDES = [
     icon: Plug, accent: 'text-sky-300', bg: 'bg-sky-500/15',
     title: 'Payment Gateways',
     body: 'Connect the gateways you want. One connection unlocks all its methods, and your code never changes — just pass a provider.',
-    to: '/app/gateways', cta: 'Connect a gateway',
+    to: '/app/methods', cta: 'Add a payment method',
   },
   {
     icon: Link2, accent: 'text-fuchsia-300', bg: 'bg-fuchsia-500/15',

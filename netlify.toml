@@ -18,3 +18,32 @@
 # Redirects (API/simulator proxy + SPA fallback) live in frontend/public/_redirects.
 # That file is processed BEFORE netlify.toml, so it is the single source of truth —
 # defining proxies here too would be shadowed by it. Update the Render URL there.
+
+# ─── Caching ──────────────────────────────────────────────────────────────
+# Netlify's default is `max-age=0, must-revalidate`, which costs a round trip
+# per file on every visit — even though Vite already fingerprints every asset.
+# Hashed filenames make the content immutable by construction: a change
+# produces a new URL, so the old one can be cached forever and a returning
+# merchant re-downloads nothing.
+#
+# index.html is deliberately left uncached. It's the manifest that points at
+# the hashed chunks; caching it would pin people to an old deploy.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

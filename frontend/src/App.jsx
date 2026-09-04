@@ -3,46 +3,104 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import DashboardLayout from './components/layout/DashboardLayout';
 
+/*
+ * Route-level code splitting.
+ *
+ * Everything used to ship in one 805 KB bundle: a merchant on a Samsung over
+ * Zimbabwean mobile data downloaded the 960-line Sandbox, the docs, the forum
+ * archive and the whole admin console before the login screen could paint.
+ *
+ * Only the two entry points a first-time visitor actually sees are eager.
+ * Every other route is fetched on navigation — small enough to arrive during
+ * the tap, and cached from then on.
+ */
+import { lazy, Suspense } from 'react';
+
+/**
+ * Split routes have one failure mode worth handling: after a deploy, a browser
+ * still holding the previous index.html asks for a chunk whose hashed filename
+ * no longer exists. The dynamic import rejects and the route renders nothing —
+ * a blank screen, on the tap that should have worked.
+ *
+ * One retry covers a flaky network. If it fails again the page really is stale,
+ * so reload to pick up the new index.html. The sessionStorage guard means a
+ * genuinely broken deploy shows an error instead of reloading forever.
+ */
+const RELOAD_GUARD = 'mp_chunk_reload';
+function lazyRoute(loader) {
+  return lazy(() =>
+    loader()
+      .then((mod) => {
+        sessionStorage.removeItem(RELOAD_GUARD);
+        return mod;
+      })
+      .catch(async (err) => {
+        try {
+          return await loader();
+        } catch {
+          if (!sessionStorage.getItem(RELOAD_GUARD)) {
+            sessionStorage.setItem(RELOAD_GUARD, '1');
+            window.location.reload();
+            // Never resolves — the reload takes over.
+            return new Promise(() => {});
+          }
+          throw err;
+        }
+      })
+  );
+}
+
+// Eager: the front door and the sign-in screen. Splitting these would only
+// add a round trip to the very first paint.
 import Landing from './pages/Landing';
 import Login from './pages/Login';
-import AdminLogin from './pages/AdminLogin';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import GetStarted from './pages/GetStarted';
-import DocsHome from './pages/DocsHome';
-import ForumCoverage from './pages/ForumCoverage';
-import AiAssistant from './pages/AiAssistant';
 
-import Overview from './pages/developer/Dashboard';
-import Connect from './pages/developer/Connect';
-import PaymentLinks from './pages/developer/PaymentLinks';
-import PayLink from './pages/PayLink';
-import Status from './pages/Status';
-import Health from './pages/developer/Health';
-import Billing from './pages/developer/Billing';
-import Subscriptions from './pages/developer/Subscriptions';
-import Team from './pages/developer/Team';
-import Fiscalise from './pages/developer/Fiscalise';
-import Projects from './pages/developer/Projects';
-import ApiKeys from './pages/developer/ApiKeys';
-import PaymentMethods from './pages/developer/PaymentMethods';
-import Webhooks from './pages/developer/Webhooks';
-import Transactions from './pages/developer/Transactions';
-import Tools from './pages/developer/Tools';
-import Sandbox from './pages/developer/Sandbox';
-import Docs from './pages/developer/Docs';
-import Support from './pages/developer/Support';
-import Settings from './pages/developer/Settings';
+const AdminLogin = lazyRoute(() => import('./pages/AdminLogin'));
+const Register = lazyRoute(() => import('./pages/Register'));
+const ForgotPassword = lazyRoute(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazyRoute(() => import('./pages/ResetPassword'));
+const GetStarted = lazyRoute(() => import('./pages/GetStarted'));
+const DocsHome = lazyRoute(() => import('./pages/DocsHome'));
+const ForumCoverage = lazyRoute(() => import('./pages/ForumCoverage'));
+const AiAssistant = lazyRoute(() => import('./pages/AiAssistant'));
+const PayLink = lazyRoute(() => import('./pages/PayLink'));
+const Status = lazyRoute(() => import('./pages/Status'));
 
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminDevelopers from './pages/admin/Developers';
-import AdminAudit from './pages/admin/Audit';
-import AdminSupport from './pages/admin/Support';
-import AdminSettings from './pages/admin/Settings';
-import AdminLogs from './pages/admin/Logs';
-import AdminWebhooks from './pages/admin/Webhooks';
-import AdminAnnouncements from './pages/admin/Announcements';
+const Overview = lazyRoute(() => import('./pages/developer/Dashboard'));
+const Connect = lazyRoute(() => import('./pages/developer/Connect'));
+const PaymentLinks = lazyRoute(() => import('./pages/developer/PaymentLinks'));
+const Health = lazyRoute(() => import('./pages/developer/Health'));
+const Billing = lazyRoute(() => import('./pages/developer/Billing'));
+const Subscriptions = lazyRoute(() => import('./pages/developer/Subscriptions'));
+const Team = lazyRoute(() => import('./pages/developer/Team'));
+const Fiscalise = lazyRoute(() => import('./pages/developer/Fiscalise'));
+const Projects = lazyRoute(() => import('./pages/developer/Projects'));
+const ApiKeys = lazyRoute(() => import('./pages/developer/ApiKeys'));
+const PaymentMethods = lazyRoute(() => import('./pages/developer/PaymentMethods'));
+const Webhooks = lazyRoute(() => import('./pages/developer/Webhooks'));
+const Transactions = lazyRoute(() => import('./pages/developer/Transactions'));
+const Tools = lazyRoute(() => import('./pages/developer/Tools'));
+const Sandbox = lazyRoute(() => import('./pages/developer/Sandbox'));
+const Docs = lazyRoute(() => import('./pages/developer/Docs'));
+const Support = lazyRoute(() => import('./pages/developer/Support'));
+const Settings = lazyRoute(() => import('./pages/developer/Settings'));
+
+const AdminDashboard = lazyRoute(() => import('./pages/admin/Dashboard'));
+const AdminDevelopers = lazyRoute(() => import('./pages/admin/Developers'));
+const AdminAudit = lazyRoute(() => import('./pages/admin/Audit'));
+const AdminSupport = lazyRoute(() => import('./pages/admin/Support'));
+const AdminSettings = lazyRoute(() => import('./pages/admin/Settings'));
+const AdminLogs = lazyRoute(() => import('./pages/admin/Logs'));
+const AdminWebhooks = lazyRoute(() => import('./pages/admin/Webhooks'));
+const AdminAnnouncements = lazyRoute(() => import('./pages/admin/Announcements'));
+
+/*
+ * Route chunks land in a few hundred milliseconds, so a spinner would flash
+ * and draw the eye for no reason. A quiet placeholder holds the space instead.
+ */
+function RouteFallback() {
+  return <div className="min-h-[40vh]" aria-busy="true" />;
+}
 
 function WaitingScreen() {
   // If connecting drags past 8s, stop pretending: offer a way out instead
@@ -84,7 +142,8 @@ function Protected({ children, adminOnly = false }) {
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/get-started" element={<GetStarted />} />
       <Route path="/docs" element={<DocsHome />} />
@@ -147,7 +206,8 @@ export default function App() {
         <Route path="announcements" element={<AdminAnnouncements />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

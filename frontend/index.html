@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  ManishaPay — PayNow Zimbabwe middleware
+  ManishaPay — payment gateway aggregator
 
   © 2026 Noby Tebulo. All rights reserved.
   Platform source: private (commercial).
@@ -102,15 +102,32 @@
     <meta name="application-name" content="ManishaPay" />
     <meta name="msapplication-TileColor" content="#22a65a" />
     <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
-    <meta name="msapplication-tooltip" content="ManishaPay — PayNow Zimbabwe middleware by Noby Tebulo" />
+    <meta name="msapplication-tooltip" content="ManishaPay — payment gateway aggregator by Noby Tebulo" />
 
-    <!-- Fonts -->
+    <!--
+      Fonts — loaded WITHOUT blocking first paint.
+
+      A plain <link rel="stylesheet"> to Google Fonts blocks rendering on two
+      round trips (googleapis for the CSS, gstatic for the files). On mobile
+      data that was the single biggest delay before anything appeared on
+      screen. Loading it as print media and flipping to all on load makes it
+      non-blocking; display=swap means text renders immediately in the system
+      font and reflows when Inter arrives.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all';this.onload=null"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <!-- Structured data (JSON-LD) — names Noby Tebulo as the creator unambiguously -->
     <script type="application/ld+json">
@@ -161,7 +178,7 @@
               "@id": "https://nobie.netlify.app/#person"
             },
             "copyrightYear": 2026,
-            "description": "ManishaPay is a middleware platform that fixes common PayNow Zimbabwe integration issues — hash mismatches, decimal-format bugs, mobile OTP failures, broken webhooks — at the integration layer so developers don't have to. Includes an in-dashboard sandbox, signed webhooks with retries, encrypted credential storage, and SDKs for Node.js and PHP."
+            "description": "ManishaPay is a payment gateway aggregator that fixes common PayNow Zimbabwe integration issues — hash mismatches, decimal-format bugs, mobile OTP failures, broken webhooks — at the integration layer so developers don't have to. Includes an in-dashboard sandbox, signed webhooks with retries, encrypted credential storage, and SDKs for Node.js and PHP."
           },
           {
             "@type": "WebSite",

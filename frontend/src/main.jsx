@@ -8,6 +8,26 @@ import { AccountProvider } from './context/AccountContext';
 import InstallBanner from './components/InstallBanner';
 import './index.css';
 
+/*
+ * Wake the backend the moment the page loads.
+ *
+ * The API sleeps on Render's free tier, so the first request after idle pays a
+ * cold start. That request used to be the merchant's — they'd tap "sign in" and
+ * wait on a machine that was still booting. Pinging /health while they're still
+ * reading the landing page moves that wait somewhere they don't feel it.
+ *
+ * Deliberately fire-and-forget and deliberately after `load`, so it never
+ * competes with rendering or delays anything the user is waiting on.
+ */
+const API_BASE = import.meta.env.VITE_API_BASE;
+if (API_BASE) {
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      fetch(`${API_BASE}/health`, { method: 'GET', mode: 'cors', cache: 'no-store' }).catch(() => {});
+    }, 0);
+  });
+}
+
 // Register the PWA service worker (installability + offline shell).
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

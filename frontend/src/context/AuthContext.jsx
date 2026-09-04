@@ -59,34 +59,44 @@ export function AuthProvider({ children }) {
     const token = data.session?.access_token;
     if (!token) return null;
 
-    try {
-      // Render's free tier cold-starts in ~a minute; bound the bootstrap so
-      // profileReady is never hostage to a sleeping backend.
-      const ctrl = new AbortController();
-      const bootTimer = setTimeout(() => ctrl.abort(), 10000);
-      const res = await fetch(`${API_BASE}/v1/auth/bootstrap`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        signal: ctrl.signal,
-      });
-      clearTimeout(bootTimer);
-      if (!res.ok) {
-        // Don't crash the app — surface in console for debugging,
-        // user just won't see app UI until they retry.
+    // Render's free tier sleeps, and the request that wakes it is exactly the
+    // one a brand-new merchant makes. Bootstrap is what creates their developer
+    // row AND their default project, so quietly giving up after one timeout
+    // left them signed in but unable to do anything — every call 403s with
+    // NOT_A_MANISHAPAY_DEVELOPER. Three attempts spans a typical cold start;
+    // each is bounded so the UI is never hostage to a hung socket.
+    const ATTEMPTS = [8000, 15000, 20000];
+    for (let i = 0; i < ATTEMPTS.length; i += 1) {
+      try {
+        const ctrl = new AbortController();
+        const bootTimer = setTimeout(() => ctrl.abort(), ATTEMPTS[i]);
+        const res = await fetch(`${API_BASE}/v1/auth/bootstrap`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          signal: ctrl.signal,
+        });
+        clearTimeout(bootTimer);
+        if (res.ok) {
+          const json = await res.json();
+          return json?.developer || null;
+        }
+        // A 4xx is a real answer — the server is awake and refusing. Retrying
+        // won't change it, so stop and let the caller surface the state.
+        if (res.status < 500) {
+          // eslint-disable-next-line no-console
+          console.warn('bootstrap rejected', res.status, await res.text().catch(() => ''));
+          return null;
+        }
+      } catch (err) {
         // eslint-disable-next-line no-console
-        console.warn('bootstrap failed', res.status, await res.text().catch(() => ''));
-        return null;
+        console.warn(`bootstrap attempt ${i + 1} failed`, err?.name || err);
       }
-      const json = await res.json();
-      return json?.developer || null;
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('bootstrap error', err);
-      return null;
+      if (i < ATTEMPTS.length - 1) await new Promise((r) => setTimeout(r, 1200 * (i + 1)));
     }
+    return null;
   }, [loadProfile]);
 
   // Surface OAuth failures. When Google/GitHub sign-in fails (provider not

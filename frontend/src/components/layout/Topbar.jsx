@@ -5,7 +5,7 @@ import { useAccount } from '../../context/AccountContext';
 import ThemeToggle from '../ThemeToggle';
 
 export default function Topbar({ onMenu = () => {} }) {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isAnonymous } = useAuth();
   const { accountId, accounts, setAccountId } = useAccount();
   const [open, setOpen] = useState(false);
 
@@ -21,7 +21,9 @@ export default function Topbar({ onMenu = () => {} }) {
           <Menu size={20} />
         </button>
         <div className="truncate text-sm text-slate-400">
-          Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span>
+          {isAnonymous
+            ? <span className="text-slate-100">Guest account</span>
+            : <>Welcome back, <span className="text-slate-100">{profile?.full_name || user?.email || 'developer'}</span></>}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -51,11 +53,18 @@ export default function Topbar({ onMenu = () => {} }) {
           {open && (
             <div className="absolute right-0 mt-2 w-52 rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-xl">
               <div className="border-b border-slate-800 px-3 py-2 text-xs text-slate-400">
-                {user?.email}
+                {isAnonymous ? 'Not secured yet' : user?.email}
               </div>
+              {/* For an unsecured account this button is not "sign out", it is
+                  "delete everything" — there is no identity to sign back in with. */}
               <button
-                onClick={signOut}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+                onClick={() => {
+                  if (isAnonymous && !window.confirm(
+                    'This account has no email or sign-in method yet, so signing out will end it permanently — your payment methods and links cannot be recovered.\n\nSign out anyway?'
+                  )) return;
+                  signOut();
+                }}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-800 ${isAnonymous ? 'text-rose-300' : 'text-slate-200'}`}
               >
                 <LogOut size={14} /> Sign out
               </button>

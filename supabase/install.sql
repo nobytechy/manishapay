@@ -45,10 +45,14 @@ $$ language plpgsql;
 -- One row per signed-up ManishaPay user. FK to auth.users.
 create table if not exists public.manishapay_developers (
   id              uuid primary key references auth.users(id) on delete cascade,
-  email           text not null unique,
+  -- Null ONLY while status = 'anonymous' (see 0002_anonymous_signin.sql). A
+  -- merchant can start with signInAnonymously() and link an email later; the
+  -- id never changes, so nothing they built is lost on conversion.
+  email           text unique,
   full_name       text,
   role            text not null default 'developer' check (role in ('developer', 'admin')),
-  status          text not null default 'pending'   check (status in ('pending', 'active', 'suspended', 'deleted')),
+  status          text not null default 'pending'   check (status in ('anonymous', 'pending', 'active', 'suspended', 'deleted')),
+  constraint manishapay_developers_email_required check (status = 'anonymous' or email is not null),
   plan            text not null default 'free'      check (plan in ('free', 'pro', 'enterprise')),
 
   -- Billing state

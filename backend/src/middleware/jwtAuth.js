@@ -49,6 +49,12 @@ async function jwtAuthenticate(req, _res, next) {
         message: 'Sign up via the ManishaPay app to create a developer profile.',
       });
     }
+    // An anonymous merchant is a real account with a real id — they just have
+    // no way to prove who they are yet. They can do everything in TEST mode;
+    // requirePermanentAccount() below blocks the handful of routes where a
+    // recoverable identity actually matters (real money, real keys, billing).
+    const isAnonymous = !!user.is_anonymous || dev.status === 'anonymous';
+
     if (dev.status === 'suspended' || dev.status === 'deleted') {
       throw new AppError({ status: 403, code: 'DEVELOPER_SUSPENDED', message: `Account ${dev.status}` });
     }
@@ -84,6 +90,7 @@ async function jwtAuthenticate(req, _res, next) {
       role: dev.role,         // platform role (super-admin gate)
       teamRole,               // owner | admin | member | viewer
       billingStatus: dev.billing_status,
+      isAnonymous,
     };
     next();
   } catch (err) {
@@ -111,6 +118,31 @@ function requireCapability(cap) {
   };
 }
 
+/**
+ * Blocks a route for merchants who have not yet secured their account.
+ *
+ * Anonymous accounts exist so a merchant can be inside the dashboard in one
+ * tap and take a TEST payment within minutes. The line is real money: if an
+ * account can be lost by clearing browser data, it must not be able to hold
+ * live gateway credentials, mint live API keys, or run up a bill. Hitting this
+ * is not an error state — it's the prompt to link an email or a provider, and
+ * the client turns ACCOUNT_NOT_SECURED into the "Secure your account" step.
+ */
+function assertPermanentAccount(developer) {
+  if (developer?.isAnonymous) {
+    throw new AppError({
+      status: 403,
+      code: 'ACCOUNT_NOT_SECURED',
+      message: 'Add an email or sign-in method to your account first — everything you have set up stays exactly as it is.',
+    });
+  }
+}
+
+function requirePermanentAccount(req, _res, next) {
+  if (!req.developer) return next(AppError.unauthorized());
+  try { assertPermanentAccount(req.developer); next(); } catch (err) { next(err); }
+}
+
 function requireAdmin(req, _res, next) {
   if (!req.developer) return next(AppError.unauthorized());
   if (req.developer.role !== 'admin') {
@@ -119,4 +151,4 @@ function requireAdmin(req, _res, next) {
   next();
 }
 
-module.exports = { jwtAuthenticate, requireAdmin, requireCapability, ROLE_CAPS };
+module.exports = { jwtAuthenticate, requireAdmin, requireCapability, requirePermanentAccount, assertPermanentAccount, ROLE_CAPS };

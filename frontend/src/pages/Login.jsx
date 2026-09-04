@@ -9,7 +9,7 @@ import GoogleButton from '../components/auth/GoogleButton';
 import GithubButton from '../components/auth/GithubButton';
 
 export default function Login() {
-  const { signIn, signInWithGoogle, signInWithGithub, isAuthenticated, loading, hasPin, pinEmail, unlockWithPin } = useAuth();
+  const { signIn, signInWithGoogle, signInWithGithub, signInAnonymously, isAuthenticated, loading, hasPin, pinEmail, unlockWithPin } = useAuth();
   const nav = useNavigate();
   const [params] = useSearchParams();
   const justVerified = params.get('verified') === '1';
@@ -30,6 +30,7 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [guestBusy, setGuestBusy] = useState(false);
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [pinBusy, setPinBusy] = useState(false);
@@ -77,6 +78,13 @@ export default function Login() {
     setGithubBusy(true);
     try { await signInWithGithub(); }
     catch (err) { toast.error(err.message || 'GitHub sign-in failed'); setGithubBusy(false); }
+  };
+  // Guest entry. The redirect is handled by the isAuthenticated effect above,
+  // same as every other sign-in path.
+  const onGuest = async () => {
+    setGuestBusy(true);
+    try { await signInAnonymously(); }
+    catch (err) { toast.error(err.message || 'Could not start'); setGuestBusy(false); }
   };
 
   return (
@@ -141,6 +149,15 @@ export default function Login() {
             <div className="grid grid-cols-2 gap-3">
               <GoogleButton onClick={onGoogle} busy={googleBusy} />
               <GithubButton onClick={onGithub} busy={githubBusy} />
+            </div>
+
+            <div className="border-t border-slate-800 pt-4">
+              <Button variant="ghost" className="w-full" onClick={onGuest} loading={guestBusy}>
+                Have a look first — no signup
+              </Button>
+              <p className="mt-2 text-center text-[11px] text-slate-500">
+                Opens a guest account you can add an email to later. Nothing you set up is lost.
+              </p>
             </div>
 
             <p className="text-center text-xs text-slate-400">

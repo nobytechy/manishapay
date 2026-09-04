@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Circle, FolderKanban, KeyRound, FlaskConical, Plug, Sparkles, X, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, FlaskConical, Plug, ShieldCheck, Rocket, Sparkles, X, ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { useSecureAccount } from '../auth/SecureAccount';
 
 const DISMISS_KEY = 'mp_getting_started_dismissed_v1';
 
@@ -13,7 +15,8 @@ const DISMISS_KEY = 'mp_getting_started_dismissed_v1';
  * welcome tour. Auto-hides once the core steps are done, or when dismissed.
  */
 export default function GettingStarted({ onStartTour }) {
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
+  const { prompt: promptSecure } = useSecureAccount();
   const [counts, setCounts] = useState(null);
   const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(DISMISS_KEY));
 
@@ -30,19 +33,22 @@ export default function GettingStarted({ onStartTour }) {
       if (projErr) return; // fail quiet — the checklist is best-effort
       const projectIds = (projRows || []).map((p) => p.id);
 
-      const [keys, txns, gw] = await Promise.all([
-        supabase.from('manishapay_api_keys').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
+      const [txns, gw, legacy] = await Promise.all([
         supabase.from('manishapay_transactions').select('id', { count: 'exact', head: true }).eq('developer_id', user.id),
-        projectIds.length
-          ? supabase.from('manishapay_paynow_credentials').select('id', { count: 'exact', head: true }).in('project_id', projectIds)
-          : Promise.resolve({ count: 0 }),
+        // Via the API: manishapay_gateway_credentials is service-role only, so
+        // querying it from the client saw legacy PayNow rows and nothing else —
+        // a merchant who connected Stripe never got the tick.
+        api.listGatewayCredentials().catch(() => ({ data: [] })),
+        api.listCredentials().catch(() => ({ data: [] })),
       ]);
       if (!active) return;
+      const active_ = (r) => (r.data || []).filter((c) => c.status === 'active');
+      const connected = [...active_(gw), ...active_(legacy)];
       setCounts({
         projects: projectIds.length,
-        keys: keys.count ?? 0,
         txns: txns.count ?? 0,
-        gateways: gw.count ?? 0,
+        gateways: connected.length,
+        live: connected.filter((c) => c.mode === 'live').length,
       });
     })();
     return () => { active = false; };
@@ -50,22 +56,26 @@ export default function GettingStarted({ onStartTour }) {
 
   if (dismissed || !counts) return null;
 
+  // The order a merchant actually travels: pick how you get paid, prove it
+  // works, then turn on real money. Projects and API keys used to sit at the
+  // top of this list; they're plumbing, and the wizards create them anyway.
   const steps = [
-    { key: 'project', icon: FolderKanban, done: counts.projects > 0,
-      title: 'Create your first project', desc: 'A project groups your keys, gateways and transactions.',
-      to: '/app/projects', cta: 'New project' },
-    { key: 'key', icon: KeyRound, done: counts.keys > 0,
-      title: 'Generate a test API key', desc: 'Use an mp_test_… key to authenticate your API calls.',
-      to: '/app/keys', cta: 'Create key' },
-    { key: 'sandbox', icon: FlaskConical, done: counts.txns > 0,
-      title: 'Run a test payment in the Sandbox', desc: 'Send a payment and watch the full lifecycle — no gateway account needed.',
-      to: '/app/sandbox', cta: 'Open Sandbox' },
-    { key: 'gateway', icon: Plug, done: counts.gateways > 0, optional: true,
-      title: 'Connect a payment gateway', desc: 'Add PayNow, Stripe, Paystack and more to take real payments.',
-      to: '/app/methods', cta: 'Connect' },
+    { key: 'gateway', icon: Plug, done: counts.gateways > 0,
+      title: 'Add a payment method', desc: 'PayNow, Stripe, Paystack, M-Pesa — pick the ones your customers use.',
+      to: '/app/methods', cta: 'Add' },
+    { key: 'test', icon: FlaskConical, done: counts.txns > 0,
+      title: 'Take a test payment', desc: 'Watch a payment run end to end. No real money moves.',
+      to: '/app/sandbox', cta: 'Try it' },
+    ...(isAnonymous ? [{
+      key: 'secure', icon: ShieldCheck, done: false,
+      title: 'Secure your account', desc: 'Add an email so you can sign in from any phone. Nothing you set up changes.',
+      action: promptSecure, cta: 'Secure' }] : []),
+    { key: 'live', icon: Rocket, done: counts.live > 0,
+      title: 'Go live', desc: 'Add your own keys in real-money mode and start getting paid.',
+      to: '/app/methods', cta: 'Go live' },
   ];
 
-  const coreDone = steps.filter((s) => !s.optional).every((s) => s.done);
+  const coreDone = steps.every((s) => s.done);
   if (coreDone) return null; // fully activated — get out of the way
 
   const doneCount = steps.filter((s) => s.done).length;
@@ -80,7 +90,7 @@ export default function GettingStarted({ onStartTour }) {
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand/15 text-brand"><Sparkles size={18} /></span>
           <div>
             <h2 className="text-base font-semibold text-slate-100">Get started with ManishaPay</h2>
-            <p className="text-xs text-slate-400">A few quick steps and you'll be taking test payments in minutes.</p>
+            <p className="text-xs text-slate-400">Three steps to taking real payments.</p>
           </div>
         </div>
         <button onClick={dismiss} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-200" aria-label="Dismiss" title="Dismiss">
@@ -120,11 +130,16 @@ export default function GettingStarted({ onStartTour }) {
                 </p>
                 <p className="truncate text-xs text-slate-500">{s.desc}</p>
               </div>
-              {!s.done && (
+              {!s.done && (s.action ? (
+                <button type="button" onClick={s.action}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95">
+                  {s.cta} <ArrowRight size={12} />
+                </button>
+              ) : (
                 <Link to={s.to} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95">
                   {s.cta} <ArrowRight size={12} />
                 </Link>
-              )}
+              ))}
             </li>
           );
         })}

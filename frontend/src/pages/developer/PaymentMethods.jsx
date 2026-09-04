@@ -5,6 +5,8 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { ConfirmModal } from '../../components/ui/Modal';
 import { api } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
+import { useSecureAccount } from '../../components/auth/SecureAccount';
 
 /**
  * Payment Methods — the ONE place a merchant connects any gateway.
@@ -162,6 +164,8 @@ export default function PaymentMethods() {
    ──────────────────────────────────────────────────────────────────────────── */
 
 function ConnectWizard({ providers, projects, onCancel, onDone }) {
+  const { isAnonymous } = useAuth();
+  const { prompt: promptSecure } = useSecureAccount();
   const [step, setStep] = useState(0);
   const [provider, setProvider] = useState(null);
   const [mode, setMode] = useState(null);
@@ -288,8 +292,20 @@ function ConnectWizard({ providers, projects, onCancel, onDone }) {
               <ChoiceList
                 options={MODES}
                 selected={mode}
-                onSelect={(id) => { setOwnKeys(false); choose(setMode)(id); }}
+                onSelect={(id) => {
+                  // Real money needs an account that can't vanish with the
+                  // browser cache. Catch it here rather than letting them type
+                  // their live keys and hit a 403 at the end.
+                  if (id === 'live' && isAnonymous) return promptSecure();
+                  setOwnKeys(false);
+                  choose(setMode)(id);
+                }}
               />
+              {isAnonymous && (
+                <p className="mt-3 text-xs text-slate-500">
+                  Real money needs an email on your account first. Testing works right now.
+                </p>
+              )}
             </Step>
           )}
 

@@ -245,6 +245,67 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = () => signInWithProvider('google');
   const signInWithGithub = () => signInWithProvider('github');
 
+  /**
+   * One-tap entry. Supabase creates a real auth.users row with a stable id, so
+   * /v1/auth/bootstrap makes the matching developer row exactly as it would for
+   * any signup — just marked `anonymous` with a null email.
+   *
+   * The account is REAL. What it lacks is a way to prove ownership, which means
+   * it lives only in this browser's storage. Everything below exists to get the
+   * merchant out of that state before it costs them anything.
+   */
+  const signInAnonymously = async () => {
+    const { error } = await withTimeout(
+      supabase.auth.signInAnonymously({ options: { data: { app: APP_MARKER } } }),
+      20000,
+      'Could not start — check your connection and try again.',
+    );
+    if (error) throw error;
+  };
+
+  /**
+   * Attach an email to the CURRENT user. This is not a signup: Supabase links
+   * the identity to the same auth.users row, so the developer id is unchanged
+   * and every project, gateway credential, key and transaction stays attached.
+   *
+   * The catch: the identity is not upgraded until the merchant confirms. Until
+   * then `user.is_anonymous` stays true, which is why the caller has to show a
+   * pending state rather than declaring success.
+   */
+  const linkEmail = async (email) => {
+    const { error } = await withTimeout(supabase.auth.updateUser({
+      email: email.trim(),
+      data: { app: APP_MARKER },
+    }, {
+      emailRedirectTo: `${window.location.origin}/app?secured=1`,
+    }), 20000, 'Timed out — check your connection and try again.');
+    if (error) throw error;
+  };
+
+  /** Confirm the 6-digit code from the link-email, for merchants on another device. */
+  const confirmLinkedEmail = async (email, token) => {
+    const { error } = await withTimeout(
+      supabase.auth.verifyOtp({ email: email.trim(), token: String(token).trim(), type: 'email_change' }),
+      20000,
+      'Verification timed out — check your connection and try again.',
+    );
+    if (error) throw error;
+    setProfile(await ensureProfile(session?.user?.id));
+  };
+
+  /**
+   * Attach a provider to the current user. Same row, same id — but resolves in
+   * one tap with no inbox involved, so it's the reliable path while email
+   * deliverability is still a weak spot.
+   */
+  const linkProvider = async (provider) => {
+    const { error } = await supabase.auth.linkIdentity({
+      provider,
+      options: { redirectTo: `${window.location.origin}/app?secured=1` },
+    });
+    if (error) throw error;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -260,6 +321,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!session) return;
+    // Never idle-out an unsecured account. For a permanent user this is a
+    // 30-minute inconvenience; for an anonymous one it is the irreversible
+    // loss of everything they just built, triggered by walking away from
+    // the phone.
+    if (session.user?.is_anonymous) return;
     lastActivityRef.current = Date.now();
 
     const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'pointermove'];
@@ -287,6 +353,9 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     isAuthenticated: !!session,
     isAdmin: profile?.role === 'admin',
+    // True until the merchant links an email or a provider. Drives the
+    // "secure your account" prompts and the live-mode gates.
+    isAnonymous: !!session?.user?.is_anonymous,
     loading,
     profileReady,
     signIn,
@@ -295,6 +364,10 @@ export function AuthProvider({ children }) {
     resendVerification,
     signInWithGoogle,
     signInWithGithub,
+    signInAnonymously,
+    linkEmail,
+    confirmLinkedEmail,
+    linkProvider,
     signOut,
     // PIN easy-login (device-local)
     enablePinLogin,

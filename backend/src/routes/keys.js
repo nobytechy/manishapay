@@ -12,7 +12,7 @@ const router = require('express').Router();
 const { z } = require('zod');
 const bcrypt = require('bcryptjs');
 const nodeCrypto = require('crypto');
-const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability, assertPermanentAccount } = require('../middleware/jwtAuth');
 const { supabase } = require('../config/supabase');
 const crypto = require('../services/crypto');
 const AppError = require('../errors/AppError');
@@ -104,6 +104,9 @@ router.post('/:id/activate', async (req, res, next) => {
 router.post('/', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = createSchema.parse(req.body);
+    // A live key charges real customers. An account that can vanish with the
+    // browser cache doesn't get one until it's secured.
+    if (parsed.mode === 'live') assertPermanentAccount(req.developer);
 
     // Confirm the project belongs to this developer.
     const { data: proj } = await supabase

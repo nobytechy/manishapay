@@ -12,7 +12,7 @@
 
 const router = require('express').Router();
 const { z } = require('zod');
-const { jwtAuthenticate, requireCapability } = require('../middleware/jwtAuth');
+const { jwtAuthenticate, requireCapability, assertPermanentAccount } = require('../middleware/jwtAuth');
 const credentials = require('../services/credentials');
 const { getProvider } = require('../providers');
 const { supabase } = require('../config/supabase');
@@ -61,6 +61,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = saveSchema.parse(req.body);
+    if (parsed.mode === 'live') assertPermanentAccount(req.developer);
 
     // Confirm project ownership.
     const { data: proj, error: projErr } = await supabase
@@ -152,6 +153,9 @@ router.get('/gateway', async (req, res, next) => {
 router.post('/gateway', requireCapability('manage'), async (req, res, next) => {
   try {
     const parsed = gatewaySaveSchema.parse(req.body);
+    // Test mode is wide open — that's the whole point of the fast start. Live
+    // credentials mean real money, so the account has to be recoverable first.
+    if (parsed.mode === 'live') assertPermanentAccount(req.developer);
 
     // Ownership.
     const { data: proj, error: projErr } = await supabase

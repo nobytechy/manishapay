@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -22,30 +23,55 @@ import {
   CreditCard,
   Repeat,
   Plug,
+  ChevronDown,
   X,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 
-const developerNav = [
-  { to: '/app', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/app/connect', icon: Rocket, label: 'Connect Your App' },
-  { to: '/app/links', icon: Link2, label: 'Payment Links' },
-  { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
-  { to: '/app/keys', icon: KeyRound, label: 'API Keys' },
+/*
+ * Nineteen flat links meant a new merchant had to read the whole list and guess
+ * which one led to taking a payment. The four that make up that path are always
+ * visible; everything else folds into two groups that stay shut until someone
+ * goes looking. Nothing was removed — every page is still one tap away, it just
+ * stopped competing with the thing the merchant came to do.
+ */
+
+// The path to money: connect a method, send a link, watch it land.
+const primaryNav = [
+  { to: '/app', icon: LayoutDashboard, label: 'Home', end: true },
   { to: '/app/methods', icon: Plug, label: 'Payment Methods' },
-  { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
-  { to: '/app/transactions', icon: Receipt, label: 'Transactions' },
-  { to: '/app/fiscalise', icon: ScrollText, label: 'Fiscalisation' },
-  { to: '/app/health', icon: Activity, label: 'Health' },
-  { to: '/app/billing', icon: CreditCard, label: 'Billing' },
-  { to: '/app/subscriptions', icon: Repeat, label: 'Subscriptions' },
-  { to: '/app/team', icon: Users, label: 'Team' },
-  { to: '/app/sandbox', icon: FlaskConical, label: 'Sandbox' },
-  { to: '/app/tools', icon: Wrench, label: 'Problem solvers' },
-  { to: '/app/docs', icon: BookOpen, label: 'Documentation' },
-  { to: '/app/support', icon: MessageCircle, label: 'Support' },
-  { to: '/app/settings', icon: Settings, label: 'Settings' },
+  { to: '/app/links', icon: Link2, label: 'Payment Links' },
+  { to: '/app/transactions', icon: Receipt, label: 'Payments' },
+];
+
+const groups = [
+  {
+    id: 'build',
+    label: 'For developers',
+    items: [
+      { to: '/app/connect', icon: Rocket, label: 'Connect your app' },
+      { to: '/app/keys', icon: KeyRound, label: 'API keys' },
+      { to: '/app/webhooks', icon: Webhook, label: 'Webhooks' },
+      { to: '/app/sandbox', icon: FlaskConical, label: 'Sandbox' },
+      { to: '/app/tools', icon: Wrench, label: 'Problem solvers' },
+      { to: '/app/docs', icon: BookOpen, label: 'Documentation' },
+      { to: '/app/health', icon: Activity, label: 'Health' },
+    ],
+  },
+  {
+    id: 'account',
+    label: 'Account',
+    items: [
+      { to: '/app/projects', icon: FolderKanban, label: 'Projects' },
+      { to: '/app/team', icon: Users, label: 'Team' },
+      { to: '/app/billing', icon: CreditCard, label: 'Billing' },
+      { to: '/app/subscriptions', icon: Repeat, label: 'Subscriptions' },
+      { to: '/app/fiscalise', icon: ScrollText, label: 'Fiscalisation' },
+      { to: '/app/settings', icon: Settings, label: 'Settings' },
+      { to: '/app/support', icon: MessageCircle, label: 'Support' },
+    ],
+  },
 ];
 
 const adminNav = [
@@ -59,9 +85,20 @@ const adminNav = [
   { to: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
 ];
 
+const linkClass = ({ isActive }) =>
+  cn(
+    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    isActive ? 'bg-brand/10 text-brand' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
+  );
+
 export default function Sidebar({ open = false, onClose = () => {} }) {
   const { isAdmin } = useAuth();
-  const items = isAdmin ? adminNav : developerNav;
+  // A group starts open if the merchant is already inside it, so a deep link
+  // never lands them somewhere the nav appears to deny exists.
+  const [openGroup, setOpenGroup] = useState(() => {
+    const path = window.location.pathname;
+    return groups.find((g) => g.items.some((i) => path.startsWith(i.to)))?.id || null;
+  });
 
   return (
     <>
@@ -97,25 +134,50 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         </div>
 
         <nav className="flex-1 space-y-1">
-          {items.map(({ to, icon: Icon, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={onClose}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-brand/10 text-brand'
-                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
-                )
-              }
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
+          {isAdmin ? (
+            adminNav.map(({ to, icon: Icon, label, end }) => (
+              <NavLink key={to} to={to} end={end} onClick={onClose} className={linkClass}>
+                <Icon size={16} />
+                {label}
+              </NavLink>
+            ))
+          ) : (
+            <>
+              {primaryNav.map(({ to, icon: Icon, label, end }) => (
+                <NavLink key={to} to={to} end={end} onClick={onClose} className={linkClass}>
+                  <Icon size={16} />
+                  {label}
+                </NavLink>
+              ))}
+
+              {groups.map((g) => {
+                const isOpen = openGroup === g.id;
+                return (
+                  <div key={g.id} className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setOpenGroup(isOpen ? null : g.id)}
+                      aria-expanded={isOpen}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-300"
+                    >
+                      {g.label}
+                      <ChevronDown size={14} className={cn('transition-transform', isOpen && 'rotate-180')} />
+                    </button>
+                    {isOpen && (
+                      <div className="mt-1 space-y-1">
+                        {g.items.map(({ to, icon: Icon, label }) => (
+                          <NavLink key={to} to={to} onClick={onClose} className={linkClass}>
+                            <Icon size={16} />
+                            {label}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
         </nav>
 
       <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900 p-3">

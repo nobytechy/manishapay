@@ -60,11 +60,33 @@ router.post('/bootstrap', async (req, res, next) => {
     // Idempotent upsert keyed on the auth.users id (PK + FK on developers).
     // A configured super-admin email is force-promoted on every bootstrap, so
     // the owner is admin again immediately after any data reset — no manual SQL.
+    //
+    // Anonymous users (supabase.auth.signInAnonymously) have no email yet. They
+    // get a real auth.users row with a stable id, so the developer row is
+    // created exactly like anyone else's — just marked `anonymous` and with a
+    // null email. When the merchant later links an email or an OAuth identity,
+    // Supabase attaches it to the SAME auth user, this endpoint runs again, and
+    // the row is promoted in place. The id never changes, so every project,
+    // credential, key and transaction stays attached. Nothing is migrated
+    // because nothing moves.
     const row = {
       id: user.id,
-      email: user.email,
       full_name: fullName,
     };
+    if (user.is_anonymous) {
+      row.status = 'anonymous';
+    } else {
+      row.email = user.email;
+      // Promote an account that was anonymous until this moment. Untouched for
+      // accounts that were already permanent, so a suspended account can't
+      // launder itself back to active by re-bootstrapping.
+      const { data: prior } = await supabase
+        .from('manishapay_developers')
+        .select('status')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!prior || prior.status === 'anonymous') row.status = 'active';
+    }
     if (isSuperadmin(user.email)) {
       row.role = 'admin';
       row.status = 'active';
